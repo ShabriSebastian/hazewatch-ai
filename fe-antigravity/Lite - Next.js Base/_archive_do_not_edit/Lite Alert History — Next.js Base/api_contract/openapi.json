@@ -1,0 +1,2684 @@
+{
+  "components": {
+    "schemas": {
+      "Alert": {
+        "properties": {
+          "affected_population": {
+            "title": "Affected Population",
+            "type": "integer"
+          },
+          "alert_id": {
+            "title": "Alert Id",
+            "type": "string"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "forecast_peak_at": {
+            "title": "Forecast Peak At",
+            "type": "string"
+          },
+          "forecast_peak_pm25": {
+            "description": "Peak of the value the alert triggered on - the upper prediction band, not the central estimate. `severity` is derived from this, so the two always agree. The central forecast is in the forecast endpoint.",
+            "title": "Forecast Peak Pm25",
+            "type": "number"
+          },
+          "institution_id": {
+            "title": "Institution Id",
+            "type": "string"
+          },
+          "institution_name": {
+            "title": "Institution Name",
+            "type": "string"
+          },
+          "institution_type": {
+            "$ref": "#/components/schemas/InstitutionType"
+          },
+          "lead_time_hours": {
+            "description": "Hours between the alert firing and conditions being expected to cross the threshold - the time the recipient has to act. This is the headline number; display it prominently.",
+            "title": "Lead Time Hours",
+            "type": "integer"
+          },
+          "peak_lead_hours": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Hours until the forecast peak, which is later.",
+            "title": "Peak Lead Hours"
+          },
+          "recommended_actions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Recommended Actions",
+            "type": "array"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/AqiCategory"
+          },
+          "source_country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Country"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AlertStatus"
+          },
+          "threshold_crossed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the threshold is expected to be crossed.",
+            "title": "Threshold Crossed At"
+          },
+          "threshold_pm25": {
+            "title": "Threshold Pm25",
+            "type": "number"
+          },
+          "transboundary": {
+            "title": "Transboundary",
+            "type": "boolean"
+          },
+          "triggered_at": {
+            "title": "Triggered At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "alert_id",
+          "institution_id",
+          "institution_name",
+          "institution_type",
+          "country",
+          "severity",
+          "status",
+          "triggered_at",
+          "forecast_peak_pm25",
+          "forecast_peak_at",
+          "lead_time_hours",
+          "threshold_pm25",
+          "transboundary",
+          "recommended_actions",
+          "affected_population"
+        ],
+        "title": "Alert",
+        "type": "object"
+      },
+      "AlertList": {
+        "properties": {
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "title": "Alerts",
+            "type": "array"
+          },
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "count",
+          "alerts"
+        ],
+        "title": "AlertList",
+        "type": "object"
+      },
+      "AlertMetrics": {
+        "properties": {
+          "events_evaluated": {
+            "title": "Events Evaluated",
+            "type": "integer"
+          },
+          "false_alarm_rate": {
+            "title": "False Alarm Rate",
+            "type": "number"
+          },
+          "hit_rate": {
+            "title": "Hit Rate",
+            "type": "number"
+          },
+          "median_lead_time_hours": {
+            "title": "Median Lead Time Hours",
+            "type": "number"
+          }
+        },
+        "required": [
+          "hit_rate",
+          "false_alarm_rate",
+          "median_lead_time_hours",
+          "events_evaluated"
+        ],
+        "title": "AlertMetrics",
+        "type": "object"
+      },
+      "AlertStatus": {
+        "enum": [
+          "active",
+          "pending",
+          "resolved"
+        ],
+        "title": "AlertStatus",
+        "type": "string"
+      },
+      "AlertStatusResponse": {
+        "description": "Current alert state for one institution; `alert` is null when clear.",
+        "properties": {
+          "alert": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Alert"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "institution": {
+            "$ref": "#/components/schemas/InstitutionCompact"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AlertStatus"
+          }
+        },
+        "required": [
+          "institution",
+          "status"
+        ],
+        "title": "AlertStatusResponse",
+        "type": "object"
+      },
+      "AqiCategory": {
+        "enum": [
+          "GOOD",
+          "MODERATE",
+          "UNHEALTHY_SENSITIVE",
+          "UNHEALTHY",
+          "VERY_UNHEALTHY",
+          "HAZARDOUS"
+        ],
+        "title": "AqiCategory",
+        "type": "string"
+      },
+      "Attribution": {
+        "description": "Why the model expects this. The transboundary claim, made visible in the\nproduct rather than only asserted in a slide deck.",
+        "properties": {
+          "contributing_hotspot_count": {
+            "default": 0,
+            "title": "Contributing Hotspot Count",
+            "type": "integer"
+          },
+          "dominant_source_region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dominant Source Region"
+          },
+          "estimated_transport_hours": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimated Transport Hours"
+          },
+          "source_country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "ISO-3166-1 alpha-2 of the dominant source region.",
+            "title": "Source Country"
+          },
+          "top_feature_contributions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/FeatureContribution"
+            },
+            "title": "Top Feature Contributions",
+            "type": "array"
+          },
+          "transboundary": {
+            "description": "True when the dominant contributing hotspots lie in another country.",
+            "title": "Transboundary",
+            "type": "boolean"
+          },
+          "upwind_fire_exposure_index": {
+            "description": "Normalised 0-1 upwind fire exposure at this receptor.",
+            "title": "Upwind Fire Exposure Index",
+            "type": "number"
+          }
+        },
+        "required": [
+          "upwind_fire_exposure_index",
+          "transboundary"
+        ],
+        "title": "Attribution",
+        "type": "object"
+      },
+      "Baselines": {
+        "description": "Model error against trivial baselines. Reported so a reviewer can see the\nmodel earns its place rather than restating persistence.",
+        "properties": {
+          "climatology_mae": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Climatology Mae"
+          },
+          "model_mae": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Mae"
+          },
+          "persistence_mae": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Persistence Mae"
+          }
+        },
+        "title": "Baselines",
+        "type": "object"
+      },
+      "Bookmark": {
+        "properties": {
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "timestamp",
+          "description"
+        ],
+        "title": "Bookmark",
+        "type": "object"
+      },
+      "Channel": {
+        "enum": [
+          "sms",
+          "whatsapp"
+        ],
+        "title": "Channel",
+        "type": "string"
+      },
+      "DeliveryStatus": {
+        "enum": [
+          "queued",
+          "sent",
+          "delivered",
+          "failed"
+        ],
+        "title": "DeliveryStatus",
+        "type": "string"
+      },
+      "ExtrapolationReason": {
+        "description": "Why a forecast point is flagged as beyond the model's trained range.",
+        "enum": [
+          "band_saturated",
+          "feature_out_of_range",
+          "both"
+        ],
+        "title": "ExtrapolationReason",
+        "type": "string"
+      },
+      "FeatureContribution": {
+        "properties": {
+          "contribution": {
+            "description": "Normalised importance, 0-1",
+            "title": "Contribution",
+            "type": "number"
+          },
+          "feature": {
+            "title": "Feature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "feature",
+          "contribution"
+        ],
+        "title": "FeatureContribution",
+        "type": "object"
+      },
+      "Forecast": {
+        "properties": {
+          "attribution": {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          "baselines": {
+            "$ref": "#/components/schemas/Baselines"
+          },
+          "current": {
+            "$ref": "#/components/schemas/Observation"
+          },
+          "forecast": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastPoint"
+            },
+            "title": "Forecast",
+            "type": "array"
+          },
+          "institution": {
+            "$ref": "#/components/schemas/InstitutionCompact"
+          },
+          "issued_at": {
+            "title": "Issued At",
+            "type": "string"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ModelInfo"
+          },
+          "peak": {
+            "$ref": "#/components/schemas/ForecastPoint"
+          },
+          "uncertainty": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Uncertainty"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "institution",
+          "issued_at",
+          "model",
+          "current",
+          "forecast",
+          "peak",
+          "attribution",
+          "baselines"
+        ],
+        "title": "Forecast",
+        "type": "object"
+      },
+      "ForecastPoint": {
+        "properties": {
+          "aqi_category": {
+            "$ref": "#/components/schemas/AqiCategory"
+          },
+          "aqi_us": {
+            "title": "Aqi Us",
+            "type": "integer"
+          },
+          "beyond_training_range": {
+            "default": false,
+            "description": "True when this point has left the range the model was trained on - either the band has saturated against the forest's structural ceiling or an input feature was outside its training range. Render 'beyond the model's trained range' rather than the bare number: during extreme episodes the value is a floor, not a severity estimate.",
+            "title": "Beyond Training Range",
+            "type": "boolean"
+          },
+          "extrapolation_reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExtrapolationReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Which signal fired. Null when the point is in range."
+          },
+          "lead_hours": {
+            "title": "Lead Hours",
+            "type": "integer"
+          },
+          "pm25": {
+            "description": "Point forecast: the mean across the forest's trees, in ug/m3.",
+            "title": "Pm25",
+            "type": "number"
+          },
+          "pm25_lower": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Lower prediction band - p10 across the trees.",
+            "title": "Pm25 Lower"
+          },
+          "pm25_p50": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Median across the trees. Completes the p10/p50/p90 band.",
+            "title": "Pm25 P50"
+          },
+          "pm25_upper": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Upper prediction band - p90 across the trees. This is the value alerting triggers on, not `pm25`.",
+            "title": "Pm25 Upper"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "lead_hours",
+          "pm25",
+          "aqi_category",
+          "aqi_us"
+        ],
+        "title": "ForecastPoint",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Health": {
+        "properties": {
+          "api_version": {
+            "title": "Api Version",
+            "type": "string"
+          },
+          "clock": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clock"
+          },
+          "data_source": {
+            "default": "fixtures",
+            "description": "'scenario_db' once precomputed data is in place, 'fixtures' before then.",
+            "title": "Data Source",
+            "type": "string"
+          },
+          "data_version": {
+            "title": "Data Version",
+            "type": "string"
+          },
+          "mode": {
+            "description": "replay | live",
+            "title": "Mode",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "scenario_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Id"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "mode",
+          "data_version",
+          "model_version",
+          "api_version"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "HorizonMetrics": {
+        "properties": {
+          "climatology_mae": {
+            "title": "Climatology Mae",
+            "type": "number"
+          },
+          "improvement_vs_persistence": {
+            "description": "Fraction, e.g. 0.18 = 18% better",
+            "title": "Improvement Vs Persistence",
+            "type": "number"
+          },
+          "lead_hours": {
+            "title": "Lead Hours",
+            "type": "integer"
+          },
+          "model_mae": {
+            "title": "Model Mae",
+            "type": "number"
+          },
+          "persistence_mae": {
+            "title": "Persistence Mae",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lead_hours",
+          "model_mae",
+          "persistence_mae",
+          "climatology_mae",
+          "improvement_vs_persistence"
+        ],
+        "title": "HorizonMetrics",
+        "type": "object"
+      },
+      "Hotspot": {
+        "properties": {
+          "acq_time": {
+            "description": "ISO-8601 UTC",
+            "examples": [
+              "2023-09-03T06:12:00Z"
+            ],
+            "title": "Acq Time",
+            "type": "string"
+          },
+          "confidence": {
+            "examples": [
+              "high"
+            ],
+            "title": "Confidence",
+            "type": "string"
+          },
+          "country": {
+            "examples": [
+              "ID"
+            ],
+            "title": "Country",
+            "type": "string"
+          },
+          "daynight": {
+            "examples": [
+              "D"
+            ],
+            "title": "Daynight",
+            "type": "string"
+          },
+          "frp": {
+            "description": "Fire radiative power, MW",
+            "title": "Frp",
+            "type": "number"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "instrument": {
+            "examples": [
+              "VIIRS"
+            ],
+            "title": "Instrument",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "satellite": {
+            "examples": [
+              "Suomi-NPP"
+            ],
+            "title": "Satellite",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "lat",
+          "lon",
+          "acq_time",
+          "frp",
+          "confidence",
+          "satellite",
+          "instrument",
+          "country",
+          "daynight"
+        ],
+        "title": "Hotspot",
+        "type": "object"
+      },
+      "HotspotGridCell": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "frp_sum": {
+            "title": "Frp Sum",
+            "type": "number"
+          },
+          "lat": {
+            "description": "Cell centre latitude",
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "description": "Cell centre longitude",
+            "title": "Lon",
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon",
+          "count",
+          "frp_sum"
+        ],
+        "title": "HotspotGridCell",
+        "type": "object"
+      },
+      "HotspotList": {
+        "properties": {
+          "count": {
+            "description": "Number returned (after `limit`).",
+            "title": "Count",
+            "type": "integer"
+          },
+          "hotspots": {
+            "items": {
+              "$ref": "#/components/schemas/Hotspot"
+            },
+            "title": "Hotspots",
+            "type": "array"
+          },
+          "query": {
+            "$ref": "#/components/schemas/HotspotQuery"
+          },
+          "total_available": {
+            "description": "Number matching before `limit` was applied.",
+            "title": "Total Available",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "query",
+          "count",
+          "total_available",
+          "hotspots"
+        ],
+        "title": "HotspotList",
+        "type": "object"
+      },
+      "HotspotQuery": {
+        "properties": {
+          "bbox": {
+            "description": "[lon_min, lat_min, lon_max, lat_max]",
+            "items": {
+              "type": "number"
+            },
+            "title": "Bbox",
+            "type": "array"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "min_frp": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min Frp"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end",
+          "bbox"
+        ],
+        "title": "HotspotQuery",
+        "type": "object"
+      },
+      "HotspotSummary": {
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/HotspotGridCell"
+            },
+            "title": "Cells",
+            "type": "array"
+          },
+          "count": {
+            "description": "Total detections aggregated",
+            "title": "Count",
+            "type": "integer"
+          },
+          "grid": {
+            "description": "Cell size in degrees",
+            "title": "Grid",
+            "type": "number"
+          },
+          "query": {
+            "$ref": "#/components/schemas/HotspotQuery"
+          }
+        },
+        "required": [
+          "query",
+          "grid",
+          "count",
+          "cells"
+        ],
+        "title": "HotspotSummary",
+        "type": "object"
+      },
+      "Institution": {
+        "properties": {
+          "admin_region": {
+            "examples": [
+              "Sarawak"
+            ],
+            "title": "Admin Region",
+            "type": "string"
+          },
+          "city": {
+            "examples": [
+              "Kuching"
+            ],
+            "title": "City",
+            "type": "string"
+          },
+          "contact_channels": {
+            "items": {
+              "$ref": "#/components/schemas/Channel"
+            },
+            "title": "Contact Channels",
+            "type": "array"
+          },
+          "country": {
+            "description": "ISO-3166-1 alpha-2",
+            "examples": [
+              "MY"
+            ],
+            "title": "Country",
+            "type": "string"
+          },
+          "country_name": {
+            "examples": [
+              "Malaysia"
+            ],
+            "title": "Country Name",
+            "type": "string"
+          },
+          "id": {
+            "examples": [
+              "my-kch-greenroad"
+            ],
+            "title": "Id",
+            "type": "string"
+          },
+          "languages": {
+            "examples": [
+              [
+                "ms",
+                "en"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "name": {
+            "examples": [
+              "SMK Green Road"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "population_served": {
+            "description": "Indirect beneficiaries protected by decisions taken at this site.",
+            "title": "Population Served",
+            "type": "integer"
+          },
+          "recipient_group": {
+            "default": "",
+            "description": "Mock last-mile distribution list identifier.",
+            "title": "Recipient Group",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "type": {
+            "$ref": "#/components/schemas/InstitutionType"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "country",
+          "country_name",
+          "admin_region",
+          "city",
+          "lat",
+          "lon",
+          "population_served",
+          "role",
+          "contact_channels",
+          "languages"
+        ],
+        "title": "Institution",
+        "type": "object"
+      },
+      "InstitutionCompact": {
+        "properties": {
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "lat": {
+            "title": "Lat",
+            "type": "number"
+          },
+          "lon": {
+            "title": "Lon",
+            "type": "number"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/InstitutionType"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "country",
+          "city",
+          "lat",
+          "lon"
+        ],
+        "title": "InstitutionCompact",
+        "type": "object"
+      },
+      "InstitutionList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "institutions": {
+            "items": {
+              "$ref": "#/components/schemas/Institution"
+            },
+            "title": "Institutions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "institutions"
+        ],
+        "title": "InstitutionList",
+        "type": "object"
+      },
+      "InstitutionType": {
+        "enum": [
+          "school",
+          "hospital",
+          "authority"
+        ],
+        "title": "InstitutionType",
+        "type": "string"
+      },
+      "ModelInfo": {
+        "properties": {
+          "horizon_hours": {
+            "title": "Horizon Hours",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "gru-multisite"
+            ],
+            "title": "Name",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "version",
+          "horizon_hours"
+        ],
+        "title": "ModelInfo",
+        "type": "object"
+      },
+      "ModelMetrics": {
+        "properties": {
+          "alert_trigger_percentile": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Percentile of the prediction spread that alerts fire on. Above the point forecast, because a missed episode costs more than a false alarm.",
+            "title": "Alert Trigger Percentile"
+          },
+          "alerts": {
+            "$ref": "#/components/schemas/AlertMetrics"
+          },
+          "horizons": {
+            "items": {
+              "$ref": "#/components/schemas/HorizonMetrics"
+            },
+            "title": "Horizons",
+            "type": "array"
+          },
+          "model_name": {
+            "title": "Model Name",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "notes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "r2_attribution": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "R-squared of the fire-and-weather-only model, in log space. Log space is the primary figure because the held-out episode peaks above the training maximum, which a tree ensemble cannot extrapolate past.",
+            "title": "R2 Attribution"
+          },
+          "r2_attribution_raw": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The same figure in raw ug/m3 space, for completeness.",
+            "title": "R2 Attribution Raw"
+          },
+          "test_period": {
+            "title": "Test Period",
+            "type": "string"
+          },
+          "test_period_held_out": {
+            "default": true,
+            "description": "The demo event is excluded from training - forecasts over it are out-of-sample.",
+            "title": "Test Period Held Out",
+            "type": "boolean"
+          },
+          "top_features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureContribution"
+            },
+            "title": "Top Features",
+            "type": "array"
+          },
+          "train_period": {
+            "title": "Train Period",
+            "type": "string"
+          },
+          "trained_at": {
+            "title": "Trained At",
+            "type": "string"
+          },
+          "trigger_sweep": {
+            "default": [],
+            "description": "The full hit-rate/false-alarm trade-off curve, so the chosen operating point is visible rather than implicit.",
+            "items": {
+              "$ref": "#/components/schemas/TriggerOperatingPoint"
+            },
+            "title": "Trigger Sweep",
+            "type": "array"
+          }
+        },
+        "required": [
+          "model_name",
+          "model_version",
+          "trained_at",
+          "train_period",
+          "test_period",
+          "horizons",
+          "alerts",
+          "top_features"
+        ],
+        "title": "ModelMetrics",
+        "type": "object"
+      },
+      "Notification": {
+        "properties": {
+          "alert_id": {
+            "title": "Alert Id",
+            "type": "string"
+          },
+          "channel": {
+            "$ref": "#/components/schemas/Channel"
+          },
+          "country": {
+            "title": "Country",
+            "type": "string"
+          },
+          "institution_id": {
+            "title": "Institution Id",
+            "type": "string"
+          },
+          "institution_name": {
+            "title": "Institution Name",
+            "type": "string"
+          },
+          "language": {
+            "examples": [
+              "ms"
+            ],
+            "title": "Language",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "notification_id": {
+            "title": "Notification Id",
+            "type": "string"
+          },
+          "recipient_count": {
+            "title": "Recipient Count",
+            "type": "integer"
+          },
+          "recipient_group": {
+            "title": "Recipient Group",
+            "type": "string"
+          },
+          "sent_at": {
+            "title": "Sent At",
+            "type": "string"
+          },
+          "simulated": {
+            "default": true,
+            "description": "Always true in this MVP. No real SMS/WhatsApp integration exists.",
+            "title": "Simulated",
+            "type": "boolean"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DeliveryStatus"
+          }
+        },
+        "required": [
+          "notification_id",
+          "alert_id",
+          "institution_id",
+          "institution_name",
+          "country",
+          "channel",
+          "recipient_group",
+          "recipient_count",
+          "language",
+          "sent_at",
+          "status",
+          "message"
+        ],
+        "title": "Notification",
+        "type": "object"
+      },
+      "NotificationList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "notifications": {
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            },
+            "title": "Notifications",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "notifications"
+        ],
+        "title": "NotificationList",
+        "type": "object"
+      },
+      "Observation": {
+        "properties": {
+          "aqi_category": {
+            "$ref": "#/components/schemas/AqiCategory"
+          },
+          "aqi_us": {
+            "title": "Aqi Us",
+            "type": "integer"
+          },
+          "pm25": {
+            "title": "Pm25",
+            "type": "number"
+          },
+          "source": {
+            "$ref": "#/components/schemas/Pm25Source"
+          },
+          "timestamp": {
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "pm25",
+          "aqi_category",
+          "aqi_us",
+          "source"
+        ],
+        "title": "Observation",
+        "type": "object"
+      },
+      "PlayRequest": {
+        "properties": {
+          "speed": {
+            "default": 120.0,
+            "title": "Speed",
+            "type": "number"
+          }
+        },
+        "title": "PlayRequest",
+        "type": "object"
+      },
+      "Pm25Source": {
+        "description": "Provenance of a PM2.5 value. Surfaced deliberately: CAMS is a reanalysis\nmodel, not a ground station, and the product says so rather than implying\nthese are measurements.",
+        "enum": [
+          "cams_reanalysis",
+          "model_forecast",
+          "ground_station"
+        ],
+        "title": "Pm25Source",
+        "type": "string"
+      },
+      "ReplayState": {
+        "properties": {
+          "bookmarks": {
+            "items": {
+              "$ref": "#/components/schemas/Bookmark"
+            },
+            "title": "Bookmarks",
+            "type": "array"
+          },
+          "clock": {
+            "title": "Clock",
+            "type": "string"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "playing": {
+            "title": "Playing",
+            "type": "boolean"
+          },
+          "scenario_id": {
+            "title": "Scenario Id",
+            "type": "string"
+          },
+          "scenario_name": {
+            "title": "Scenario Name",
+            "type": "string"
+          },
+          "speed": {
+            "title": "Speed",
+            "type": "number"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario_id",
+          "scenario_name",
+          "clock",
+          "start",
+          "end",
+          "speed",
+          "playing",
+          "bookmarks"
+        ],
+        "title": "ReplayState",
+        "type": "object"
+      },
+      "Role": {
+        "enum": [
+          "source_region",
+          "affected_region"
+        ],
+        "title": "Role",
+        "type": "string"
+      },
+      "Scenario": {
+        "properties": {
+          "bookmarks": {
+            "items": {
+              "$ref": "#/components/schemas/Bookmark"
+            },
+            "title": "Bookmarks",
+            "type": "array"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "institutions": {
+            "title": "Institutions",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "start",
+          "end",
+          "institutions",
+          "bookmarks"
+        ],
+        "title": "Scenario",
+        "type": "object"
+      },
+      "ScenarioList": {
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "scenarios": {
+            "items": {
+              "$ref": "#/components/schemas/Scenario"
+            },
+            "title": "Scenarios",
+            "type": "array"
+          }
+        },
+        "required": [
+          "count",
+          "scenarios"
+        ],
+        "title": "ScenarioList",
+        "type": "object"
+      },
+      "SeekRequest": {
+        "properties": {
+          "bookmark": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bookmark"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "title": "SeekRequest",
+        "type": "object"
+      },
+      "SimulateNotificationRequest": {
+        "properties": {
+          "channel": {
+            "$ref": "#/components/schemas/Channel",
+            "default": "whatsapp"
+          },
+          "institution_id": {
+            "title": "Institution Id",
+            "type": "string"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          }
+        },
+        "required": [
+          "institution_id"
+        ],
+        "title": "SimulateNotificationRequest",
+        "type": "object"
+      },
+      "TriggerOperatingPoint": {
+        "properties": {
+          "false_alarm_rate": {
+            "title": "False Alarm Rate",
+            "type": "number"
+          },
+          "hit_rate": {
+            "title": "Hit Rate",
+            "type": "number"
+          },
+          "median_lead_time_hours": {
+            "title": "Median Lead Time Hours",
+            "type": "number"
+          },
+          "percentile": {
+            "title": "Percentile",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "percentile",
+          "hit_rate",
+          "false_alarm_rate",
+          "median_lead_time_hours"
+        ],
+        "title": "TriggerOperatingPoint",
+        "type": "object"
+      },
+      "Uncertainty": {
+        "description": "Where the prediction band comes from, and where the model runs out of range.\n\nThe band is not a fitted confidence interval: it is the spread of the\nforest's own trees, which disagree most where the training data was thinnest.\nThat has a hard consequence worth stating in the payload rather than only in\na README. Each tree returns an average of training targets in a leaf, so the\nensemble cannot output a value above `model_ceiling_pm25` no matter how bad\nthe air gets. When the band reaches that bound, the forecast has become a\nfloor and should be labelled as one.",
+        "properties": {
+          "any_point_beyond_training_range": {
+            "description": "True when any point in this forecast is flagged. Drive a banner off this.",
+            "title": "Any Point Beyond Training Range",
+            "type": "boolean"
+          },
+          "beyond_training_range_from_lead_hours": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Earliest flagged lead time, or null when none is.",
+            "title": "Beyond Training Range From Lead Hours"
+          },
+          "lower_percentile": {
+            "description": "Percentile across trees for `pm25_lower`.",
+            "title": "Lower Percentile",
+            "type": "integer"
+          },
+          "method": {
+            "examples": [
+              "random_forest_tree_quantiles"
+            ],
+            "title": "Method",
+            "type": "string"
+          },
+          "model_ceiling_pm25": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Highest upper-band value the forest can structurally emit, measured from its leaves. Lower than `training_target_max_pm25`, because every leaf averages at least 20 training rows and none is a pure extreme.",
+            "title": "Model Ceiling Pm25"
+          },
+          "n_estimators": {
+            "description": "Trees in the forest the band is taken across.",
+            "title": "N Estimators",
+            "type": "integer"
+          },
+          "note": {
+            "description": "A sentence written to be rendered to a user as-is.",
+            "title": "Note",
+            "type": "string"
+          },
+          "training_target_max_pm25": {
+            "description": "Largest PM2.5 target seen in training, in ug/m3.",
+            "title": "Training Target Max Pm25",
+            "type": "number"
+          },
+          "upper_percentile": {
+            "description": "Percentile across trees for `pm25_upper`.",
+            "title": "Upper Percentile",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "method",
+          "lower_percentile",
+          "upper_percentile",
+          "n_estimators",
+          "training_target_max_pm25",
+          "any_point_beyond_training_range",
+          "note"
+        ],
+        "title": "Uncertainty",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "Oxford Sa\u00efd Global Climate Tech Challenge 2026 entry"
+    },
+    "description": "\nShort-horizon PM2.5 forecasting and last-mile alerting for institutions exposed\nto transboundary haze from Indonesian land and forest fires.\n\n**What this system does**: consumes public satellite hotspot detections and\nreanalysis weather, forecasts PM2.5 up to 24 hours ahead at specific schools,\nhospitals and disaster-management offices in West Kalimantan (Indonesia) and\nSarawak (Malaysia), and raises alerts with an explicit warning lead time.\n\n**What it does not do**: it does not detect fires from raw satellite imagery -\nit consumes NASA FIRMS detections as input. Notifications are simulated; there\nis no live SMS or WhatsApp integration. PM2.5 values are drawn from the ECMWF\nCAMS reanalysis and are labelled `cams_reanalysis`, not ground-station\nmeasurements.\n\n**Replay mode**: the API serves a precomputed scenario against a virtual clock\nso a recorded demonstration is reproducible and needs no network access. See\nthe `replay` endpoints.\n",
+    "title": "Transboundary Haze Early-Warning API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/alerts": {
+      "get": {
+        "operationId": "list_alerts_api_v1_alerts_get",
+        "parameters": [
+          {
+            "description": "active | pending | resolved | all",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "active",
+              "description": "active | pending | resolved | all",
+              "title": "Status",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ISO-3166-1 alpha-2, e.g. 'MY'",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO-3166-1 alpha-2, e.g. 'MY'",
+              "title": "Country"
+            }
+          },
+          {
+            "description": "Filter to alerts whose dominant source is another country.",
+            "in": "query",
+            "name": "transboundary",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to alerts whose dominant source is another country.",
+              "title": "Transboundary"
+            }
+          },
+          {
+            "description": "Override the replay clock (ISO-8601 UTC).",
+            "in": "query",
+            "name": "at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Override the replay clock (ISO-8601 UTC).",
+              "title": "At"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Alerts",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/api/v1/hotspots": {
+      "get": {
+        "operationId": "list_hotspots_api_v1_hotspots_get",
+        "parameters": [
+          {
+            "description": "ISO-8601 UTC. Defaults to 24h before `end`.",
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO-8601 UTC. Defaults to 24h before `end`.",
+              "title": "Start"
+            }
+          },
+          {
+            "description": "ISO-8601 UTC. Defaults to the replay clock.",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO-8601 UTC. Defaults to the replay clock.",
+              "title": "End"
+            }
+          },
+          {
+            "description": "lon_min,lat_min,lon_max,lat_max",
+            "in": "query",
+            "name": "bbox",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "lon_min,lat_min,lon_max,lat_max",
+              "title": "Bbox"
+            }
+          },
+          {
+            "description": "Minimum fire radiative power, MW",
+            "in": "query",
+            "name": "min_frp",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Minimum fire radiative power, MW",
+              "title": "Min Frp"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 5000,
+              "maximum": 50000,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotspotList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Hotspots",
+        "tags": [
+          "hotspots"
+        ]
+      }
+    },
+    "/api/v1/hotspots/summary": {
+      "get": {
+        "description": "Gridded aggregation so a map can show a whole season without rendering\ntens of thousands of individual points.",
+        "operationId": "summarise_hotspots_api_v1_hotspots_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "End"
+            }
+          },
+          {
+            "in": "query",
+            "name": "bbox",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bbox"
+            }
+          },
+          {
+            "in": "query",
+            "name": "min_frp",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Frp"
+            }
+          },
+          {
+            "description": "Cell size in degrees",
+            "in": "query",
+            "name": "grid",
+            "required": false,
+            "schema": {
+              "default": 0.25,
+              "description": "Cell size in degrees",
+              "exclusiveMinimum": 0.01,
+              "maximum": 5.0,
+              "title": "Grid",
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HotspotSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Summarise Hotspots",
+        "tags": [
+          "hotspots"
+        ]
+      }
+    },
+    "/api/v1/institutions": {
+      "get": {
+        "operationId": "list_institutions_api_v1_institutions_get",
+        "parameters": [
+          {
+            "description": "Filter by ISO-3166-1 alpha-2, e.g. 'MY'",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by ISO-3166-1 alpha-2, e.g. 'MY'",
+              "title": "Country"
+            }
+          },
+          {
+            "description": "school | hospital | authority",
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "school | hospital | authority",
+              "title": "Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstitutionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Institutions",
+        "tags": [
+          "institutions"
+        ]
+      }
+    },
+    "/api/v1/institutions/{institution_id}": {
+      "get": {
+        "operationId": "get_institution_api_v1_institutions__institution_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "institution_id",
+            "required": true,
+            "schema": {
+              "title": "Institution Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Institution"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Institution",
+        "tags": [
+          "institutions"
+        ]
+      }
+    },
+    "/api/v1/institutions/{institution_id}/alert": {
+      "get": {
+        "operationId": "get_institution_alert_api_v1_institutions__institution_id__alert_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "institution_id",
+            "required": true,
+            "schema": {
+              "title": "Institution Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Override the replay clock (ISO-8601 UTC).",
+            "in": "query",
+            "name": "at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Override the replay clock (ISO-8601 UTC).",
+              "title": "At"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Current alert status for one institution",
+        "tags": [
+          "alerts"
+        ]
+      }
+    },
+    "/api/v1/institutions/{institution_id}/forecast": {
+      "get": {
+        "description": "The core endpoint. Returns the hourly PM2.5 trajectory, the forecast\npeak, and an `attribution` block naming the source region and whether the\nsmoke is crossing a national border.",
+        "operationId": "get_forecast_api_v1_institutions__institution_id__forecast_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "institution_id",
+            "required": true,
+            "schema": {
+              "title": "Institution Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "horizon_hours",
+            "required": false,
+            "schema": {
+              "default": 24,
+              "maximum": 24,
+              "minimum": 1,
+              "title": "Horizon Hours",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Override the replay clock (ISO-8601 UTC).",
+            "in": "query",
+            "name": "at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Override the replay clock (ISO-8601 UTC).",
+              "title": "At"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Forecast"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Short-horizon PM2.5 forecast at one institution",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/v1/institutions/{institution_id}/observation": {
+      "get": {
+        "operationId": "get_observation_api_v1_institutions__institution_id__observation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "institution_id",
+            "required": true,
+            "schema": {
+              "title": "Institution Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Override the replay clock (ISO-8601 UTC).",
+            "in": "query",
+            "name": "at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Override the replay clock (ISO-8601 UTC).",
+              "title": "At"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Observation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Current PM2.5 at one institution",
+        "tags": [
+          "forecast"
+        ]
+      }
+    },
+    "/api/v1/model/metrics": {
+      "get": {
+        "operationId": "model_metrics_api_v1_model_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelMetrics"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Honest held-out performance, for display in the dashboard",
+        "tags": [
+          "meta"
+        ]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "description": "Messages that would reach indirect beneficiaries - parents, patients, the\npublic. Nothing is actually sent: every entry carries `simulated: true`.",
+        "operationId": "list_notifications_api_v1_notifications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "institution_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Institution Id"
+            }
+          },
+          {
+            "description": "ISO-3166-1 alpha-2",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO-3166-1 alpha-2",
+              "title": "Country"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Override the replay clock (ISO-8601 UTC).",
+            "in": "query",
+            "name": "at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Override the replay clock (ISO-8601 UTC).",
+              "title": "At"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Mocked last-mile notification feed",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/simulate": {
+      "post": {
+        "description": "Sends one message for the institution's current forecast. Used in the\ndemo to show the last-mile step happening live.",
+        "operationId": "simulate_notification_api_v1_notifications_simulate_post",
+        "parameters": [
+          {
+            "description": "Override the replay clock (ISO-8601 UTC).",
+            "in": "query",
+            "name": "at",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Override the replay clock (ISO-8601 UTC).",
+              "title": "At"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateNotificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notification"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Fire a single simulated notification on demand",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/replay/pause": {
+      "post": {
+        "operationId": "pause_api_v1_replay_pause_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Pause",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/v1/replay/play": {
+      "post": {
+        "operationId": "play_api_v1_replay_play_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/PlayRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Play",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/v1/replay/reset": {
+      "post": {
+        "operationId": "reset_api_v1_replay_reset_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Return to the opening bookmark, paused - used between recording takes",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/v1/replay/seek": {
+      "post": {
+        "operationId": "seek_api_v1_replay_seek_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SeekRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Jump the virtual clock to a timestamp or a named bookmark",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/v1/replay/state": {
+      "get": {
+        "operationId": "get_state_api_v1_replay_state_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get State",
+        "tags": [
+          "replay"
+        ]
+      }
+    },
+    "/api/v1/scenarios": {
+      "get": {
+        "operationId": "list_scenarios_api_v1_scenarios_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Scenarios",
+        "tags": [
+          "replay"
+        ]
+      }
+    }
+  }
+}

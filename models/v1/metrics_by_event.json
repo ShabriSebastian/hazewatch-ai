@@ -1,0 +1,482 @@
+{
+  "generated_at": "2026-08-12T13:35:46Z",
+  "purpose": "Generalisation evidence: one pipeline, two independent held-out events, identical metrics. Internal reporting - not served by the API.",
+  "validation_model": {
+    "holdouts": [
+      "2023-08-16..2023-10-15",
+      "2024-08-16..2024-10-15"
+    ],
+    "embargo_hours": 24,
+    "n_train_rows": 100512,
+    "n_train_rows_served_model": 109728,
+    "hyperparameters": {
+      "n_estimators": 300,
+      "min_samples_leaf": 20,
+      "max_features": "sqrt",
+      "random_state": 42
+    },
+    "identical_to_served_pipeline": true,
+    "persisted": false
+  },
+  "events": [
+    {
+      "key": "sept_2023",
+      "label": "Pontianak / Kuching, Aug-Oct 2023",
+      "role": "original held-out event (also the demo scenario)",
+      "window": "2023-08-16..2023-10-15",
+      "horizons": [
+        {
+          "lead_hours": 6,
+          "model_mae": 11.99,
+          "persistence_mae": 13.76,
+          "climatology_mae": 18.14,
+          "improvement_vs_persistence": 0.1284
+        },
+        {
+          "lead_hours": 12,
+          "model_mae": 13.04,
+          "persistence_mae": 17.02,
+          "climatology_mae": 18.02,
+          "improvement_vs_persistence": 0.2339
+        },
+        {
+          "lead_hours": 24,
+          "model_mae": 13.28,
+          "persistence_mae": 15.27,
+          "climatology_mae": 17.8,
+          "improvement_vs_persistence": 0.1299
+        }
+      ],
+      "alerts": {
+        "hit_rate": 0.7924,
+        "false_alarm_rate": 0.255,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 118
+      },
+      "alerts_by_country": {
+        "ID": {
+          "hit_rate": 0.8887,
+          "false_alarm_rate": 0.1859,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 47
+        },
+        "MY": {
+          "hit_rate": 0.6523,
+          "false_alarm_rate": 0.3622,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 71
+        }
+      },
+      "trigger_sweep": [
+        {
+          "percentile": 75,
+          "hit_rate": 0.5953,
+          "false_alarm_rate": 0.1399,
+          "median_lead_time_hours": 24.0
+        },
+        {
+          "percentile": 80,
+          "hit_rate": 0.6384,
+          "false_alarm_rate": 0.1596,
+          "median_lead_time_hours": 24.0
+        },
+        {
+          "percentile": 85,
+          "hit_rate": 0.702,
+          "false_alarm_rate": 0.2005,
+          "median_lead_time_hours": 24.0
+        },
+        {
+          "percentile": 90,
+          "hit_rate": 0.7924,
+          "false_alarm_rate": 0.255,
+          "median_lead_time_hours": 24.0
+        },
+        {
+          "percentile": 95,
+          "hit_rate": 0.9158,
+          "false_alarm_rate": 0.3304,
+          "median_lead_time_hours": 24.0
+        }
+      ],
+      "peak_observed_pm25": 307.3,
+      "rows_evaluated": 8784
+    },
+    {
+      "key": "sept_2024",
+      "label": "Kuching-dominant transboundary episode, Aug-Oct 2024",
+      "role": "second held-out event, added to test generalisation",
+      "window": "2024-08-16..2024-10-15",
+      "horizons": [
+        {
+          "lead_hours": 6,
+          "model_mae": 4.71,
+          "persistence_mae": 5.79,
+          "climatology_mae": 8.28,
+          "improvement_vs_persistence": 0.1866
+        },
+        {
+          "lead_hours": 12,
+          "model_mae": 5.29,
+          "persistence_mae": 7.48,
+          "climatology_mae": 8.27,
+          "improvement_vs_persistence": 0.2927
+        },
+        {
+          "lead_hours": 24,
+          "model_mae": 5.47,
+          "persistence_mae": 6.4,
+          "climatology_mae": 8.22,
+          "improvement_vs_persistence": 0.1462
+        }
+      ],
+      "alerts": {
+        "hit_rate": 0.6152,
+        "false_alarm_rate": 0.4173,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 74
+      },
+      "alerts_by_country": {
+        "ID": {
+          "hit_rate": 0.5828,
+          "false_alarm_rate": 0.5415,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 16
+        },
+        "MY": {
+          "hit_rate": 0.6256,
+          "false_alarm_rate": 0.3661,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 58
+        }
+      },
+      "trigger_sweep": [
+        {
+          "percentile": 75,
+          "hit_rate": 0.3597,
+          "false_alarm_rate": 0.2434,
+          "median_lead_time_hours": 23.0
+        },
+        {
+          "percentile": 80,
+          "hit_rate": 0.4244,
+          "false_alarm_rate": 0.2828,
+          "median_lead_time_hours": 24.0
+        },
+        {
+          "percentile": 85,
+          "hit_rate": 0.4953,
+          "false_alarm_rate": 0.3448,
+          "median_lead_time_hours": 24.0
+        },
+        {
+          "percentile": 90,
+          "hit_rate": 0.6152,
+          "false_alarm_rate": 0.4173,
+          "median_lead_time_hours": 24.0
+        },
+        {
+          "percentile": 95,
+          "hit_rate": 0.7763,
+          "false_alarm_rate": 0.5083,
+          "median_lead_time_hours": 24.0
+        }
+      ],
+      "peak_observed_pm25": 66.4,
+      "rows_evaluated": 8784
+    }
+  ],
+  "served_model_reference": {
+    "event": "sept_2023",
+    "note": "The served model, whose training set still contains the 2024 season. Any gap against the validation model's sept_2023 row is the measured cost of withholding a second haze season, not a regression.",
+    "horizons": [
+      {
+        "lead_hours": 6,
+        "model_mae": 12.02,
+        "persistence_mae": 13.76,
+        "climatology_mae": 17.67,
+        "improvement_vs_persistence": 0.1266
+      },
+      {
+        "lead_hours": 12,
+        "model_mae": 12.89,
+        "persistence_mae": 17.02,
+        "climatology_mae": 17.56,
+        "improvement_vs_persistence": 0.2424
+      },
+      {
+        "lead_hours": 24,
+        "model_mae": 13.03,
+        "persistence_mae": 15.27,
+        "climatology_mae": 17.36,
+        "improvement_vs_persistence": 0.1466
+      }
+    ],
+    "alerts": {
+      "hit_rate": 0.8349,
+      "false_alarm_rate": 0.2556,
+      "median_lead_time_hours": 24.0,
+      "events_evaluated": 118
+    }
+  },
+  "rejected_candidates": [
+    {
+      "key": "sept_2022",
+      "window": "2022-08-16..2022-10-15",
+      "reason": "Kuching never crosses the 35.5 ug/m3 alert threshold in this window, so two of the three Sarawak institutions record zero alertable events and the transboundary claim - the product's headline - cannot be tested. Upwind fire activity is roughly a sixth of 2024's, consistent with the third year of a triple-dip La Nina suppressing Indonesian burning.",
+      "evidence": {
+        "window": "2022-08-16..2022-10-15",
+        "cities": {
+          "pontianak": {
+            "peak_pm25": 82.4,
+            "hours_above_alert_threshold": 30
+          },
+          "kuching": {
+            "peak_pm25": 31.7,
+            "hours_above_alert_threshold": 0
+          }
+        },
+        "institutions": [
+          {
+            "institution_id": "id-ptk-sman1",
+            "country": "ID",
+            "threshold_pm25": 35.5,
+            "alertable_event_hours": 146,
+            "observed_episodes": 6
+          },
+          {
+            "institution_id": "id-ptk-soedarso",
+            "country": "ID",
+            "threshold_pm25": 28.4,
+            "alertable_event_hours": 310,
+            "observed_episodes": 13
+          },
+          {
+            "institution_id": "id-ptk-bpbd",
+            "country": "ID",
+            "threshold_pm25": 35.5,
+            "alertable_event_hours": 146,
+            "observed_episodes": 6
+          },
+          {
+            "institution_id": "my-kch-greenroad",
+            "country": "MY",
+            "threshold_pm25": 35.5,
+            "alertable_event_hours": 0,
+            "observed_episodes": 0
+          },
+          {
+            "institution_id": "my-kch-hus",
+            "country": "MY",
+            "threshold_pm25": 28.4,
+            "alertable_event_hours": 24,
+            "observed_episodes": 1
+          },
+          {
+            "institution_id": "my-kch-jpbn",
+            "country": "MY",
+            "threshold_pm25": 35.5,
+            "alertable_event_hours": 0,
+            "observed_episodes": 0
+          }
+        ],
+        "total_alertable_event_hours": 626,
+        "total_observed_episodes": 26,
+        "indonesian_share_of_upwind_exposure_at_kuching": 0.9606,
+        "max_upwind_hotspots_150_400km": 726
+      }
+    }
+  ],
+  "reconnaissance": {
+    "sept_2022": {
+      "window": "2022-08-16..2022-10-15",
+      "cities": {
+        "pontianak": {
+          "peak_pm25": 82.4,
+          "hours_above_alert_threshold": 30
+        },
+        "kuching": {
+          "peak_pm25": 31.7,
+          "hours_above_alert_threshold": 0
+        }
+      },
+      "institutions": [
+        {
+          "institution_id": "id-ptk-sman1",
+          "country": "ID",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 146,
+          "observed_episodes": 6
+        },
+        {
+          "institution_id": "id-ptk-soedarso",
+          "country": "ID",
+          "threshold_pm25": 28.4,
+          "alertable_event_hours": 310,
+          "observed_episodes": 13
+        },
+        {
+          "institution_id": "id-ptk-bpbd",
+          "country": "ID",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 146,
+          "observed_episodes": 6
+        },
+        {
+          "institution_id": "my-kch-greenroad",
+          "country": "MY",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 0,
+          "observed_episodes": 0
+        },
+        {
+          "institution_id": "my-kch-hus",
+          "country": "MY",
+          "threshold_pm25": 28.4,
+          "alertable_event_hours": 24,
+          "observed_episodes": 1
+        },
+        {
+          "institution_id": "my-kch-jpbn",
+          "country": "MY",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 0,
+          "observed_episodes": 0
+        }
+      ],
+      "total_alertable_event_hours": 626,
+      "total_observed_episodes": 26,
+      "indonesian_share_of_upwind_exposure_at_kuching": 0.9606,
+      "max_upwind_hotspots_150_400km": 726
+    },
+    "sept_2023": {
+      "window": "2023-08-16..2023-10-15",
+      "cities": {
+        "pontianak": {
+          "peak_pm25": 307.3,
+          "hours_above_alert_threshold": 500
+        },
+        "kuching": {
+          "peak_pm25": 53.0,
+          "hours_above_alert_threshold": 69
+        }
+      },
+      "institutions": [
+        {
+          "institution_id": "id-ptk-sman1",
+          "country": "ID",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 798,
+          "observed_episodes": 31
+        },
+        {
+          "institution_id": "id-ptk-soedarso",
+          "country": "ID",
+          "threshold_pm25": 28.4,
+          "alertable_event_hours": 902,
+          "observed_episodes": 26
+        },
+        {
+          "institution_id": "id-ptk-bpbd",
+          "country": "ID",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 798,
+          "observed_episodes": 31
+        },
+        {
+          "institution_id": "my-kch-greenroad",
+          "country": "MY",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 448,
+          "observed_episodes": 19
+        },
+        {
+          "institution_id": "my-kch-hus",
+          "country": "MY",
+          "threshold_pm25": 28.4,
+          "alertable_event_hours": 821,
+          "observed_episodes": 43
+        },
+        {
+          "institution_id": "my-kch-jpbn",
+          "country": "MY",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 448,
+          "observed_episodes": 19
+        }
+      ],
+      "total_alertable_event_hours": 4215,
+      "total_observed_episodes": 169,
+      "indonesian_share_of_upwind_exposure_at_kuching": 0.9872,
+      "max_upwind_hotspots_150_400km": 983
+    },
+    "sept_2024": {
+      "window": "2024-08-16..2024-10-15",
+      "cities": {
+        "pontianak": {
+          "peak_pm25": 66.4,
+          "hours_above_alert_threshold": 29
+        },
+        "kuching": {
+          "peak_pm25": 54.1,
+          "hours_above_alert_threshold": 91
+        }
+      },
+      "institutions": [
+        {
+          "institution_id": "id-ptk-sman1",
+          "country": "ID",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 143,
+          "observed_episodes": 6
+        },
+        {
+          "institution_id": "id-ptk-soedarso",
+          "country": "ID",
+          "threshold_pm25": 28.4,
+          "alertable_event_hours": 179,
+          "observed_episodes": 9
+        },
+        {
+          "institution_id": "id-ptk-bpbd",
+          "country": "ID",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 143,
+          "observed_episodes": 6
+        },
+        {
+          "institution_id": "my-kch-greenroad",
+          "country": "MY",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 390,
+          "observed_episodes": 21
+        },
+        {
+          "institution_id": "my-kch-hus",
+          "country": "MY",
+          "threshold_pm25": 28.4,
+          "alertable_event_hours": 673,
+          "observed_episodes": 33
+        },
+        {
+          "institution_id": "my-kch-jpbn",
+          "country": "MY",
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 390,
+          "observed_episodes": 21
+        }
+      ],
+      "total_alertable_event_hours": 1918,
+      "total_observed_episodes": 96,
+      "indonesian_share_of_upwind_exposure_at_kuching": 0.986,
+      "max_upwind_hotspots_150_400km": 1910
+    }
+  },
+  "notes": [
+    "Both events are withheld from this model's training set, so each is scored genuinely out of sample. The served model is a different artifact and is not modified by this script.",
+    "Training rows in the 24h before each held-out window are also dropped: their forecast targets reach inside the window. This makes the validation holdout marginally stricter than the served model's.",
+    "The served model's training set contains the 2024 season, which is why a second model is trained here rather than scoring 2024 on the served one - that would be evaluating on seen data.",
+    "Alert metrics trigger on the p90 prediction band, matching the served configuration. The full sweep is reported per event.",
+    "PM2.5 targets are ECMWF CAMS reanalysis, not ground-station measurements."
+  ]
+}

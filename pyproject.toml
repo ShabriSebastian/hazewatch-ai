@@ -1,0 +1,41 @@
+[project]
+name = "haze-early-warning"
+version = "1.0.0"
+description = "Transboundary haze early-warning backend: PM2.5 forecasting and last-mile alerting for institutions in West Kalimantan and Sarawak"
+requires-python = ">=3.11"
+# Serving only. The deployed API reads a precomputed SQLite scenario and never
+# loads a model, so pandas, scikit-learn, pyarrow and joblib are not needed at
+# request time - verified by exercising every endpoint and inspecting
+# sys.modules. Keeping them out of the runtime install is worth roughly 200 MB
+# of image on a free-tier host.
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.9",
+    "numpy>=1.26",
+]
+
+[project.optional-dependencies]
+# Everything needed to rebuild the demo from raw data: feature building,
+# training, evaluation, and precompute. Not required to serve.
+pipeline = [
+    "pandas>=2.2",
+    "scikit-learn>=1.5",
+    "pyarrow>=17",
+    "joblib>=1.4",
+]
+# The GRU forecaster. The Random Forest path works without this.
+torch = ["torch>=2.4"]
+dev = ["pytest>=8.0", "httpx>=0.27"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+filterwarnings = ["ignore::DeprecationWarning"]
