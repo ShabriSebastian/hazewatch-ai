@@ -1,0 +1,46 @@
+# Throwaway diagnostic: can a GitHub runner reach NASA FIRMS at all?
+#
+# Three snapshot runs have now failed at the same step, first with
+# "[Errno 101] Network is unreachable" (IPv6, since fixed) and then with a plain
+# connect timeout on IPv4. Open-Meteo works from the same runner. Before moving
+# the scheduler to another host, establish whether this is DNS, TCP, TLS, or a
+# block on cloud egress. Delete this file once answered.
+name: diag-firms
+
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: DNS
+        run: |
+          echo "--- A records"
+          getent ahostsv4 firms.modaps.eosdis.nasa.gov || echo "no A"
+          echo "--- AAAA records"
+          getent ahostsv6 firms.modaps.eosdis.nasa.gov || echo "no AAAA"
+
+      - name: TCP 443 reachable?
+        run: |
+          timeout 20 bash -c \
+            'cat < /dev/null > /dev/tcp/firms.modaps.eosdis.nasa.gov/443' \
+            && echo "TCP 443 OPEN" || echo "TCP 443 FAILED (rc=$?)"
+
+      - name: HTTPS HEAD, IPv4 forced, short timeout
+        run: |
+          curl -4 -sS -I --max-time 45 \
+            "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_SouthEast_Asia_24h.csv" \
+            && echo "HEAD OK" || echo "HEAD FAILED (rc=$?)"
+
+      - name: Small file download, timed
+        run: |
+          time curl -4 -sS --max-time 90 -o /tmp/f.csv \
+            "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_SouthEast_Asia_24h.csv" \
+            && echo "bytes: $(wc -c < /tmp/f.csv)" || echo "DOWNLOAD FAILED (rc=$?)"
+
+      - name: Control - Open-Meteo from the same runner
+        run: |
+          curl -4 -sS -o /dev/null -w "open-meteo http=%{http_code} time=%{time_total}s\n" \
+            --max-time 45 "https://archive-api.open-meteo.com/v1/archive?latitude=0&longitude=109&start_date=2026-08-13&end_date=2026-08-13&hourly=wind_speed_10m&timezone=UTC"
