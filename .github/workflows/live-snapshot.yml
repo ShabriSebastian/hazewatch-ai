@@ -1,0 +1,127 @@
+# Regenerate the live conditions snapshot on a schedule.
+#
+# This workflow is entirely additive. It never touches the served API, the
+# replay scenario database, or any model artifact. Its only output is
+# `data/live/latest.json`, which the Pro dashboard reads as a static file.
+#
+# If this workflow is deleted, the previously committed snapshot keeps being
+# served and the dashboard keeps working - the fallback is the absence of an
+# action, not a recovery path that has to work.
+name: live-snapshot
+
+on:
+  schedule:
+    # Every 2 hours at :17. Deliberately not :00 - GitHub's shared runner fleet
+    # is most contended at the top of the hour, and scheduled runs are
+    # best-effort with documented delays of 5-30 minutes. A late snapshot is
+    # fine because the dashboard shows the real generation time.
+    - cron: "17 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      lag_hours:
+        description: "Issue the forecast this many hours behind now"
+        required: false
+        default: "12"
+
+# Only what is needed to commit the snapshot back.
+permissions:
+  contents: write
+
+concurrency:
+  # A delayed run must never overlap the next scheduled one and race the commit.
+  group: live-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    # The script takes ~5 min. 20 gives room for a cold model download and a
+    # slow upstream without letting a hung run sit for an hour.
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # The forecast model is 1.95 GB uncompressed and is gitignored. A
+      # compressed copy (0.69 GB, verified to produce bit-identical predictions
+      # across all 24 lead times and every quantile) is published once as a
+      # release asset and cached here, so a warm run does no large download.
+      - name: Restore model cache
+        id: model-cache
+        uses: actions/cache@v4
+        with:
+          path: models/v1/rf_forecast.joblib
+          key: rf-forecast-${{ vars.MODEL_RELEASE_TAG || 'v1' }}
+
+      - name: Download model
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p models/v1
+          gh release download "${{ vars.MODEL_RELEASE_TAG || 'v1' }}" \
+            --pattern "rf_forecast.joblib" --output models/v1/rf_forecast.joblib --clobber
+          ls -la models/v1/rf_forecast.joblib
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          pip install -e ".[pipeline]"
+
+      - name: Generate candidate snapshot
+        run: |
+          set -euo pipefail
+          PYTHONPATH=src python scripts/07_live_snapshot.py \
+            --lag-hours "${{ github.event.inputs.lag_hours || '12' }}" \
+            --out /tmp/candidate.json
+
+      # The circuit breaker. Publishes only if every gate passes; a rejection
+      # leaves the previously committed snapshot exactly where it is.
+      #   0 = publish   2 = no-op (unchanged, not a failure)   1 = reject
+      - name: Gate the snapshot
+        id: gate
+        run: |
+          set +e
+          PYTHONPATH=src python scripts/08_gate_snapshot.py \
+            --candidate /tmp/candidate.json \
+            --published data/live/latest.json
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          if [ "$code" -eq 1 ]; then
+            echo "::error::Snapshot rejected by the sanity gate; keeping the published one."
+            exit 1
+          fi
+          if [ "$code" -eq 2 ]; then
+            echo "::notice::Snapshot unchanged; skipping commit."
+          fi
+
+      - name: Publish snapshot
+        if: steps.gate.outputs.code == '0'
+        run: |
+          set -euo pipefail
+          cp /tmp/candidate.json data/live/latest.json
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/live/latest.json
+          # [skip ci] so publishing cannot retrigger any workflow.
+          git commit -m "live snapshot $(date -u +%Y-%m-%dT%H:%M:%SZ) [skip ci]"
+          # A delayed run may be racing a newer commit; rebase rather than fail.
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Live snapshot"
+            echo ""
+            echo "- gate exit: \`${{ steps.gate.outputs.code || 'n/a' }}\`"
+            echo "- 0 = published · 2 = unchanged · 1 = rejected (previous kept)"
+          } >> "$GITHUB_STEP_SUMMARY"

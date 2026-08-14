@@ -46,7 +46,7 @@ def _cache_path(kind: str, lat: float, lon: float, start: str, end: str, variabl
 
 def _fetch(
     url: str, params: dict, cache, retries: int = 6, pause: float = 3.0,
-    cached_only: bool = False,
+    cached_only: bool = False, refresh: bool = False,
 ) -> dict:
     """Fetch with disk caching and backoff.
 
@@ -57,8 +57,14 @@ def _fetch(
     `cached_only` makes a miss return empty instead of reaching for the network.
     Everything downstream of the download step uses it, so feature building,
     training and the demo can never silently depend on connectivity.
+
+    `refresh` is the opposite guarantee, and exists for live inference. The cache
+    key contains only the start and end *dates*, so two runs on the same day hit
+    the same key - a second run would silently reuse the first run's response and
+    present hours-old weather as current. A caller claiming to be live must pass
+    `refresh=True` so the bytes are actually fetched now.
     """
-    if cache.exists():
+    if cache.exists() and not refresh:
         with cache.open() as fh:
             return json.load(fh)
 
@@ -105,9 +111,15 @@ def _to_frame(payload: dict, variables) -> pd.DataFrame:
 
 
 def weather(
-    lat: float, lon: float, start: str, end: str, cached_only: bool = False
+    lat: float, lon: float, start: str, end: str, cached_only: bool = False,
+    refresh: bool = False,
 ) -> pd.DataFrame:
-    """Hourly ERA5 reanalysis weather at a point."""
+    """Hourly ERA5 reanalysis weather at a point.
+
+    For recent dates this endpoint returns forecast-model output rather than ERA5
+    reanalysis - verified byte-identical to api.open-meteo.com/v1/forecast over
+    48 overlapping hours. Live callers should surface that as a caveat.
+    """
     cache = _cache_path("era5", lat, lon, start, end, WEATHER_VARS)
     payload = _fetch(
         ARCHIVE_URL,
@@ -122,12 +134,14 @@ def weather(
         },
         cache,
         cached_only=cached_only,
+        refresh=refresh,
     )
     return _to_frame(payload, WEATHER_VARS)
 
 
 def air_quality(
-    lat: float, lon: float, start: str, end: str, cached_only: bool = False
+    lat: float, lon: float, start: str, end: str, cached_only: bool = False,
+    refresh: bool = False,
 ) -> pd.DataFrame:
     """Hourly CAMS PM2.5/PM10 at a point. This is the model target."""
     cache = _cache_path("cams", lat, lon, start, end, AIR_VARS)
@@ -143,6 +157,7 @@ def air_quality(
         },
         cache,
         cached_only=cached_only,
+        refresh=refresh,
     )
     return _to_frame(payload, AIR_VARS)
 

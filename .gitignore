@@ -29,3 +29,7 @@ out/
 
 # macOS
 .DS_Store
+
+# Live snapshots: only the published `latest.json` is tracked. The timestamped
+# per-run files are local artifacts and would churn the repo on every run.
+data/live/snapshot_*.json

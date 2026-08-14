@@ -54,20 +54,30 @@ def load_hotspots() -> pd.DataFrame:
     return df
 
 
-def load_wind_grid() -> tuple[np.ndarray, np.ndarray, np.ndarray, pd.DatetimeIndex]:
+def load_wind_grid(
+    start: str | None = None,
+    end: str | None = None,
+    cached_only: bool = True,
+    refresh: bool = False,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, pd.DatetimeIndex]:
     """Gridded wind direction over the fire domain.
 
     Returns (wind_dir[time, lat, lon], lats, lons, times).
+
+    Defaults reproduce the historical behaviour exactly. A live caller passes a
+    recent window with `cached_only=False`, which costs one Open-Meteo request
+    per grid cell - 120 at `config.WIND_GRID_STEP = 1.0`, measured at ~0.8 s
+    each, so roughly 100 s wall-clock for the grid alone.
     """
+    start = start or config.HISTORY_START
+    end = end or config.HISTORY_END
     points = weather.wind_grid_points()
     lats = np.array(sorted({p[0] for p in points}))
     lons = np.array(sorted({p[1] for p in points}))
 
     frames: dict[tuple[float, float], pd.DataFrame] = {}
     for lat, lon in points:
-        df = weather.weather(
-            lat, lon, config.HISTORY_START, config.HISTORY_END, cached_only=True
-        )
+        df = weather.weather(lat, lon, start, end, cached_only=cached_only, refresh=refresh)
         if not df.empty:
             frames[(lat, lon)] = df.set_index("time")
 
@@ -97,14 +107,25 @@ def load_wind_grid() -> tuple[np.ndarray, np.ndarray, np.ndarray, pd.DatetimeInd
     return grid, lats, lons, times
 
 
-def load_site_series(inst: Institution) -> pd.DataFrame:
-    """Weather and PM2.5 at one institution, joined on the hour."""
-    w = weather.weather(
-        inst.lat, inst.lon, config.HISTORY_START, config.HISTORY_END, cached_only=True
-    )
-    a = weather.air_quality(
-        inst.lat, inst.lon, config.HISTORY_START, config.HISTORY_END, cached_only=True
-    )
+def load_site_series(
+    inst: Institution,
+    start: str | None = None,
+    end: str | None = None,
+    cached_only: bool = True,
+    refresh: bool = False,
+) -> pd.DataFrame:
+    """Weather and PM2.5 at one institution, joined on the hour.
+
+    Defaults reproduce the historical behaviour exactly: the training window,
+    cache-only, never touching the network. `scripts/07_live_snapshot.py` passes
+    a recent window with `cached_only=False` to reach Open-Meteo for today.
+    Nothing under `src/haze/api/` may do the same - the served path is offline
+    by construction.
+    """
+    start = start or config.HISTORY_START
+    end = end or config.HISTORY_END
+    w = weather.weather(inst.lat, inst.lon, start, end, cached_only=cached_only, refresh=refresh)
+    a = weather.air_quality(inst.lat, inst.lon, start, end, cached_only=cached_only, refresh=refresh)
     if w.empty or a.empty:
         raise RuntimeError(f"Missing series for {inst.id} - run scripts/01_download.py")
     df = w.merge(a[["time", "pm2_5"]], on="time", how="inner")
@@ -162,9 +183,16 @@ def build_site(
     geometry: HotspotGeometry,
     wind_grid: np.ndarray,
     wind_times: pd.DatetimeIndex,
+    series: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Hourly feature rows for one institution."""
-    series = load_site_series(inst)
+    """Hourly feature rows for one institution.
+
+    `series` defaults to the cached training window, which is what every
+    historical caller wants. A live caller passes an already-fetched recent
+    frame so the same feature assembly runs against today's conditions without
+    this function needing to know anything about windows or networks.
+    """
+    series = load_site_series(inst) if series is None else series
     dist, bear = geometry.for_site(inst)
 
     hours = series["time"].to_numpy()

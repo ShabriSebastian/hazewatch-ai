@@ -31,10 +31,10 @@
     }
   ],
   "alerts": {
-    "hit_rate": 0.8349,
-    "false_alarm_rate": 0.2556,
+    "hit_rate": 0.7953,
+    "false_alarm_rate": 0.2536,
     "median_lead_time_hours": 24.0,
-    "events_evaluated": 118
+    "events_evaluated": 99
   },
   "top_features": [
     {
@@ -90,32 +90,32 @@
   "trigger_sweep": [
     {
       "percentile": 75,
-      "hit_rate": 0.6197,
-      "false_alarm_rate": 0.1492,
+      "hit_rate": 0.5819,
+      "false_alarm_rate": 0.1461,
       "median_lead_time_hours": 24.0
     },
     {
       "percentile": 80,
-      "hit_rate": 0.6721,
-      "false_alarm_rate": 0.1712,
+      "hit_rate": 0.634,
+      "false_alarm_rate": 0.1713,
       "median_lead_time_hours": 24.0
     },
     {
       "percentile": 85,
-      "hit_rate": 0.7412,
-      "false_alarm_rate": 0.2111,
+      "hit_rate": 0.6977,
+      "false_alarm_rate": 0.2085,
       "median_lead_time_hours": 24.0
     },
     {
       "percentile": 90,
-      "hit_rate": 0.8349,
-      "false_alarm_rate": 0.2556,
+      "hit_rate": 0.7953,
+      "false_alarm_rate": 0.2536,
       "median_lead_time_hours": 24.0
     },
     {
       "percentile": 95,
-      "hit_rate": 0.9198,
-      "false_alarm_rate": 0.3302,
+      "hit_rate": 0.901,
+      "false_alarm_rate": 0.3358,
       "median_lead_time_hours": 24.0
     }
   ],

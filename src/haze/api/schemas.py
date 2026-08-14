@@ -315,7 +315,12 @@ class Alert(BaseModel):
     threshold_crossed_at: str | None = Field(
         default=None, description="When the threshold is expected to be crossed."
     )
-    threshold_pm25: float
+    threshold_pm25: float = Field(
+        description="The PM2.5 level this alert fired on: always 35.5 ug/m3, the floor "
+        "of UNHEALTHY_SENSITIVE. It is the same for every institution type - a hospital "
+        "and a school alert on the same air. Institution type changes only the wording "
+        "of `recommended_actions`, never the number."
+    )
     transboundary: bool
     source_country: str | None = None
     recommended_actions: list[str]
