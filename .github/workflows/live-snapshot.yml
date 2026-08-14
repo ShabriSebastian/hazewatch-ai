@@ -35,9 +35,11 @@ concurrency:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    # The script takes ~5 min. 20 gives room for a cold model download and a
-    # slow upstream without letting a hung run sit for an hour.
-    timeout-minutes: 20
+    # ~5 min locally, but far slower from a runner: the first attempt spent
+    # over 19 minutes on the 132 sequential Open-Meteo calls and was killed at
+    # 20. Raised while the fetch is made cheaper; still bounded so a genuinely
+    # hung run cannot sit for an hour.
+    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v4
@@ -75,9 +77,14 @@ jobs:
           pip install -e ".[pipeline]"
 
       - name: Generate candidate snapshot
+        env:
+          # Without this, stdout is buffered and a step killed by the timeout
+          # produces an empty log - which is exactly what happened on the run
+          # that hit the 20 minute limit, leaving nothing to diagnose.
+          PYTHONUNBUFFERED: "1"
         run: |
           set -euo pipefail
-          PYTHONPATH=src python scripts/07_live_snapshot.py \
+          PYTHONPATH=src python -u scripts/07_live_snapshot.py \
             --lag-hours "${{ github.event.inputs.lag_hours || '12' }}" \
             --out /tmp/candidate.json
 
