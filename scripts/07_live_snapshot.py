@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -48,6 +49,27 @@ def _iso(ts) -> str:
     return pd.Timestamp(ts).tz_localize(None).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def force_ipv4() -> None:
+    """Resolve only A records for the rest of this process.
+
+    All three upstreams - FIRMS, and both Open-Meteo endpoints - publish AAAA
+    records, but GitHub Actions runners have no working IPv6 egress. Python's
+    `urlopen` tries the AAAA first and gets `[Errno 101] Network is unreachable`,
+    once per host, each waiting out the full connect timeout. The first CI run
+    failed exactly this way after burning six minutes on three timeouts.
+
+    Filtering `getaddrinfo` to IPv4 is a property of the network environment,
+    not of the ingest logic, so it is patched here in the script rather than in
+    `src/haze/` where it would affect the library for every caller.
+    """
+    original = socket.getaddrinfo
+
+    def ipv4_only(host, port, family=0, type=0, proto=0, flags=0):
+        return original(host, port, socket.AF_INET, type, proto, flags)
+
+    socket.getaddrinfo = ipv4_only  # type: ignore[assignment]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument(
@@ -61,6 +83,13 @@ def main() -> int:
     ap.add_argument("--window", default="7d", choices=("24h", "48h", "7d"))
     ap.add_argument("--out", default=None, help="Output JSON path.")
     ap.add_argument(
+        "--allow-ipv6", action="store_true",
+        help="Do not force IPv4 resolution. Off by default because GitHub "
+             "Actions runners have no working IPv6 egress and every upstream "
+             "publishes AAAA records, which makes urlopen wait out a connect "
+             "timeout per host before failing.",
+    )
+    ap.add_argument(
         "--allow-cached", action="store_true",
         help="Reuse any cached Open-Meteo response for this date window instead "
              "of refetching. Faster for development, but the cache key is only "
@@ -68,6 +97,9 @@ def main() -> int:
              "weather while still being labelled live. Off by default.",
     )
     args = ap.parse_args()
+
+    if not args.allow_ipv6:
+        force_ipv4()
 
     bundle_path = config.MODELS / "rf_forecast.joblib"
     if not bundle_path.exists():
