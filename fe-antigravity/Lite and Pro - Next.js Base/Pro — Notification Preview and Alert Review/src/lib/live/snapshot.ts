@@ -3,21 +3,25 @@
  *
  * This is deliberately NOT part of the API client. The backend serves the
  * validated Sept 2023 replay and knows nothing about live data - it cannot
- * fetch it even by accident. The snapshot is produced out-of-band by a
- * scheduled job and published as a static JSON file, which this module reads
+ * fetch it even by accident. The snapshot is produced out-of-band by
+ * `make refresh` and published as a static JSON file, which this module reads
  * directly from the browser.
  *
  * Consequences worth understanding before changing anything here:
  *
- *   - A failed scheduled run simply does not publish. The previous file stays
- *     at the same URL, so the fallback is the *absence* of an action rather
- *     than a code path that has to work correctly under failure.
+ *   - A failed refresh simply does not publish. The previous file stays at the
+ *     same URL, so the fallback is the *absence* of an action rather than a
+ *     code path that has to work correctly under failure.
  *   - Nothing here is on the critical path for the dashboard. If this fetch
  *     fails for any reason the panel hides itself and every other panel,
  *     including all of replay mode, is unaffected.
- *   - The data is a snapshot regenerated every ~2 hours, and the forecast
- *     inside it is issued for `now - 12h`. It is never continuously live, and
- *     the UI must not imply that it is.
+ *   - The refresh is MANUAL. There is no scheduler - a cron on GitHub Actions
+ *     was tried and abandoned, because runners cannot reach NASA FIRMS
+ *     reliably. So the age of a snapshot depends entirely on when someone last
+ *     ran the command, which is why `generated_at` is surfaced prominently and
+ *     `isStale` exists.
+ *   - The forecast inside is issued for `now - 12h`. It is never continuously
+ *     live, and the UI must not imply that it is.
  */
 
 /** Hours after which a snapshot is shown but visibly flagged as stale. */

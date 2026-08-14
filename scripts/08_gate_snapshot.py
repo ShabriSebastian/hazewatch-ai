@@ -1,9 +1,14 @@
 """Decide whether a freshly generated snapshot is fit to publish.
 
-The circuit breaker for the scheduled job. A snapshot is published only if it
+The circuit breaker for `make refresh`. A snapshot is published only if it
 passes every gate; otherwise the previously published file stays exactly where
 it is and keeps being served. The fallback is therefore the *absence* of an
 action rather than a recovery path that itself has to work.
+
+Written for a scheduled job originally. The schedule was abandoned - GitHub
+Actions runners cannot reach NASA FIRMS reliably - but the gates matter more
+now, not less: a human running this by hand before a demo has no CI log to
+review afterwards, so the script has to refuse loudly on its own.
 
     python scripts/08_gate_snapshot.py --candidate new.json --published latest.json
 

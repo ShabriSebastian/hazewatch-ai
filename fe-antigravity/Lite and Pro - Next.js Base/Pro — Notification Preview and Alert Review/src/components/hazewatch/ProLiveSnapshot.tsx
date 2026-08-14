@@ -17,12 +17,19 @@ import {
  * Renders nothing at all until a valid snapshot is in hand - no skeleton, no
  * error box, no "could not load" message. The surrounding dashboard is the
  * validated replay demo and must look exactly as it does today whether or not
- * the scheduled job is healthy.
+ * a snapshot has ever been published.
  *
- * The wording is deliberate. This is a SNAPSHOT regenerated roughly every two
- * hours, and the forecast inside it was issued for `now - 12h` because the
- * trailing hours of the satellite fire field are only partly populated. It is
- * not a continuously updating feed and must never be labelled as one.
+ * The wording is deliberate, and there are two separate claims not to overstate:
+ *
+ *   1. It is a SNAPSHOT, refreshed by hand via `make refresh`. There is no
+ *      scheduler. An earlier plan ran this on a GitHub Actions cron, which was
+ *      abandoned because runners cannot reach NASA FIRMS reliably - so any copy
+ *      implying an automatic cadence is now simply false.
+ *   2. The forecast inside it was issued for `now - 12h`, because the trailing
+ *      hours of the satellite fire field are only partly populated.
+ *
+ * Both are why the generation time is shown prominently rather than tucked away:
+ * it is the only thing that tells a viewer how current this actually is.
  */
 export function ProLiveSnapshot() {
   const [snapshot, setSnapshot] = useState<LiveSnapshot | null>(null);
@@ -66,15 +73,20 @@ export function ProLiveSnapshot() {
             </h3>
             <p className="mt-1 text-[10px] text-slate-500">
               The served model run against current satellite and reanalysis data.
-              Regenerated roughly every 2 hours — not a continuous feed.
+              Refreshed manually before each demo — not a live feed, and not on a
+              schedule. See the generation time.
             </p>
           </div>
         </div>
 
         <div className={`text-right text-[10px] ${stale ? "text-amber-800" : "text-slate-500"}`}>
+          {/* "Generated" in both states. An earlier "Last successful snapshot"
+              implied runs that could fail, which only made sense when this was
+              on a scheduler. Nothing fails now - it is either refreshed or it
+              is not, and the timestamp says which. */}
           <p className="flex items-center justify-end gap-1.5 font-extrabold">
             <Clock3 size={12} />
-            {stale ? "Last successful snapshot" : "Generated"} {formatUtc(snapshot.generated_at)}
+            Generated {formatUtc(snapshot.generated_at)}
           </p>
           <p className="mt-0.5">{describeAge(snapshot.generated_at)}</p>
           <p className="mt-0.5">
@@ -86,8 +98,8 @@ export function ProLiveSnapshot() {
       {stale && (
         <p className="mt-3 flex items-start gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[10px] font-semibold text-amber-800">
           <AlertTriangle size={13} className="mt-0.5 flex-none" />
-          No successful run in over {STALE_AFTER_HOURS} hours. The figures below are the last
-          known-good snapshot, shown with the time they were actually produced — they are not
+          This snapshot is more than {STALE_AFTER_HOURS} hours old and has not been refreshed
+          since. The figures below describe conditions at the time shown above — they are not
           current conditions.
         </p>
       )}
