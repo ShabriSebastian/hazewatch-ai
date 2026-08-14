@@ -40,6 +40,43 @@ jobs:
             "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_SouthEast_Asia_24h.csv" \
             && echo "bytes: $(wc -c < /tmp/f.csv)" || echo "DOWNLOAD FAILED (rc=$?)"
 
+      - name: urllib WITHOUT custom User-Agent (what the script does today)
+        run: |
+          python - <<'EOF'
+          import socket, time, urllib.request
+          orig = socket.getaddrinfo
+          socket.getaddrinfo = lambda h,p,f=0,t=0,pr=0,fl=0: orig(h,p,socket.AF_INET,t,pr,fl)
+          url="https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_SouthEast_Asia_24h.csv"
+          t0=time.time()
+          try:
+              n=len(urllib.request.urlopen(url, timeout=45).read())
+              print(f"DEFAULT-UA OK {n} bytes in {time.time()-t0:.1f}s")
+          except Exception as e:
+              print(f"DEFAULT-UA FAILED after {time.time()-t0:.1f}s: {e}")
+          EOF
+
+      - name: urllib WITH a descriptive User-Agent
+        run: |
+          python - <<'EOF'
+          import socket, time, urllib.request
+          orig = socket.getaddrinfo
+          socket.getaddrinfo = lambda h,p,f=0,t=0,pr=0,fl=0: orig(h,p,socket.AF_INET,t,pr,fl)
+          url="https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_SouthEast_Asia_24h.csv"
+          req=urllib.request.Request(url, headers={"User-Agent":"hazewatch-ai/1.0 (+https://github.com/ShabriSebastian/hazewatch-ai)"})
+          t0=time.time()
+          try:
+              n=len(urllib.request.urlopen(req, timeout=45).read())
+              print(f"CUSTOM-UA OK {n} bytes in {time.time()-t0:.1f}s")
+          except Exception as e:
+              print(f"CUSTOM-UA FAILED after {time.time()-t0:.1f}s: {e}")
+          EOF
+
+      - name: 7d file size via curl (is it just big?)
+        run: |
+          time curl -4 -sS --max-time 120 -o /tmp/7d.csv \
+            "https://firms.modaps.eosdis.nasa.gov/data/active_fire/suomi-npp-viirs-c2/csv/SUOMI_VIIRS_C2_SouthEast_Asia_7d.csv" \
+            && echo "7d bytes: $(wc -c < /tmp/7d.csv)" || echo "7d FAILED"
+
       - name: Control - Open-Meteo from the same runner
         run: |
           curl -4 -sS -o /dev/null -w "open-meteo http=%{http_code} time=%{time_total}s\n" \
