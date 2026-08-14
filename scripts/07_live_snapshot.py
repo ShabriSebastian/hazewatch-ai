@@ -137,7 +137,7 @@ def main() -> int:
     # -- 2. weather + CAMS ------------------------------------------------
     print(f"\nFetching Open-Meteo {start}..{end} (this is the slow part)...")
     wind_grid, lats, lons, wind_times = feature_build.load_wind_grid(
-        start, end, cached_only=False, refresh=not args.allow_cached
+        start, end, cached_only=False, refresh=not args.allow_cached, batch=True
     )
     print(f"  wind grid {wind_grid.shape} over {len(wind_times)} hours")
 

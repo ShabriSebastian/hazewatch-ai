@@ -59,6 +59,7 @@ def load_wind_grid(
     end: str | None = None,
     cached_only: bool = True,
     refresh: bool = False,
+    batch: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, pd.DatetimeIndex]:
     """Gridded wind direction over the fire domain.
 
@@ -76,10 +77,18 @@ def load_wind_grid(
     lons = np.array(sorted({p[1] for p in points}))
 
     frames: dict[tuple[float, float], pd.DataFrame] = {}
-    for lat, lon in points:
-        df = weather.weather(lat, lon, start, end, cached_only=cached_only, refresh=refresh)
-        if not df.empty:
-            frames[(lat, lon)] = df.set_index("time")
+    if batch:
+        # Live path: latency-bound, so ask for many cells per request. One point
+        # at a time takes ~100 s locally but over fifteen minutes from a CI
+        # runner, which is what blew the first scheduled job's timeout.
+        for point, df in weather.weather_batch(points, start, end).items():
+            if not df.empty:
+                frames[point] = df.set_index("time")
+    else:
+        for lat, lon in points:
+            df = weather.weather(lat, lon, start, end, cached_only=cached_only, refresh=refresh)
+            if not df.empty:
+                frames[(lat, lon)] = df.set_index("time")
 
     if not frames:
         raise RuntimeError("No gridded wind found - run scripts/01_download.py first")
