@@ -9,13 +9,18 @@
 # action, not a recovery path that has to work.
 name: live-snapshot
 
+# SCHEDULE DISABLED 2026-08-14. GitHub-hosted runners cannot reliably reach
+# NASA FIRMS: across four snapshot runs and two probes, FIRMS failed from Azure
+# IPs at the TCP layer (connect timeout, rc=124) more often than it succeeded,
+# while the same files download in ~3 s from a residential connection. It is not
+# DNS, not IPv6, not User-Agent, and not file size - all were tested and ruled
+# out. Almost certainly NASA throttling cloud egress.
+#
+# Left as workflow_dispatch so nothing is lost: restoring the cron is a
+# two-line change if the fetch is ever moved to a host with a non-cloud IP.
 on:
-  schedule:
-    # Every 2 hours at :17. Deliberately not :00 - GitHub's shared runner fleet
-    # is most contended at the top of the hour, and scheduled runs are
-    # best-effort with documented delays of 5-30 minutes. A late snapshot is
-    # fine because the dashboard shows the real generation time.
-    - cron: "17 */2 * * *"
+  # schedule:
+  #   - cron: "17 */2 * * *"
   workflow_dispatch:
     inputs:
       lag_hours:
