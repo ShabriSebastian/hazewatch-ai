@@ -13,8 +13,10 @@ This module is replaced by `haze.replay.store.ScenarioStore` once
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 from datetime import datetime, timedelta
+from functools import lru_cache
 
 from .. import config
 from ..alerts import thresholds
@@ -156,6 +158,43 @@ def uncertainty(points: list[dict]) -> dict | None:
     return extrapolation.summarise(points, ranges) if ranges else None
 
 
+@lru_cache(maxsize=1)
+def _measured_top_features() -> tuple[dict, ...]:
+    """The attribution model's real feature importances, or () when unmeasured.
+
+    Everything else in this module is an invented curve, and that is fine because
+    it is *shaped* like the real event and labelled `data_source: fixtures`. Feature
+    importances are different: they are a claim about what the model learned, and
+    there is no shape to imitate. This previously carried four hardcoded values
+    (`upwind_fire_exposure_48h` 0.41, `wind_dir_sin` 0.17, `pm25_lag_24h` 0.14,
+    `precip_24h_sum` 0.09) which were not merely approximate but impossible:
+    two of those names do not exist in the feature set, and `pm25_lag_24h` is
+    excluded from the attribution model by construction (`models/rf.py`, the model
+    is trained without lags precisely so it cannot lean on persistence). A client
+    comparing this against `/model/metrics` would have found the two disagreeing.
+
+    So read the measured values, and when the model has never been trained return
+    nothing at all. `top_feature_contributions` defaults to `[]` in the schema, so
+    an empty list is a valid answer; an invented one is not.
+
+    Cached: the file only changes when the training pipeline reruns, which restarts
+    the process. Mirrors `extrapolation.load_training_ranges()`.
+    """
+    path = config.METRICS_JSON
+    if not path.exists():
+        return ()
+    try:
+        with path.open() as fh:
+            rows = json.load(fh).get("top_features") or []
+    except (OSError, ValueError):
+        return ()
+    return tuple(
+        {"feature": r["feature"], "contribution": r["contribution"]}
+        for r in rows
+        if "feature" in r and "contribution" in r
+    )
+
+
 def attribution(inst: Institution, at: datetime) -> dict:
     """Upwind exposure proxy. Cross-border for Sarawak sites during the episode."""
     pm = pm25_at(inst.id, at)
@@ -169,12 +208,7 @@ def attribution(inst: Institution, at: datetime) -> dict:
         "dominant_source_region": "West Kalimantan, Indonesia",
         "estimated_transport_hours": 19 if inst.country == "MY" else 4,
         "contributing_hotspot_count": int(_hotspot_count(at) * (0.3 + 0.5 * intensity)),
-        "top_feature_contributions": [
-            {"feature": "upwind_fire_exposure_48h", "contribution": 0.41},
-            {"feature": "wind_dir_sin", "contribution": 0.17},
-            {"feature": "pm25_lag_24h", "contribution": 0.14},
-            {"feature": "precip_24h_sum", "contribution": 0.09},
-        ],
+        "top_feature_contributions": [dict(r) for r in _measured_top_features()[:4]],
     }
 
 
