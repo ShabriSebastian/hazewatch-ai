@@ -228,9 +228,27 @@ Stated plainly, because a reviewer will find them anyway and they are more damag
 discovered than disclosed.
 
 1. **PM2.5 labels are CAMS reanalysis, not measurements.** The model is trained to
-   reproduce a physical reanalysis, not ground truth. A production deployment would ingest
-   ground stations; CAMS is what is publicly and reliably available for this region and
-   period. Every value is labelled with its provenance.
+   reproduce a physical reanalysis, not ground truth. Every value is labelled with its
+   provenance.
+
+   This is a real limitation and not one we can close here, but the claim that CAMS is
+   what is *available* is measured rather than assumed. Checked against the OpenAQ v3 API
+   in August 2026 — the principal open air-quality archive — there is **no station within
+   300 km of either receptor for either validation window**. Of the 68 Indonesian and
+   Malaysian stations OpenAQ carries, exactly one lies anywhere on Borneo (Tambulaung,
+   Sabah, 116.45°E — roughly 700 km from Kuching), and its record begins 2025-03-16,
+   seventeen months after the September 2023 event and five after the 2024 comparison
+   window. The nearest station to Pontianak with any data at all is 606 km away in
+   Palembang, Sumatra, first reporting 2025-10-22; the nearest to Kuching is 801 km. A
+   25 km radius query around each receptor returns zero. Indonesian coverage is
+   concentrated on Java, Malaysian coverage on the Klang Valley; Sarawak's NREB network
+   and Indonesia's ISPU stations do not federate to OpenAQ.
+
+   So there is no public ground truth to validate against for these receptors in these
+   years — which is *why* CAMS is used, and why every PM2.5 value in this system says so
+   rather than implying measurement. A production deployment would ingest the national
+   networks directly, which is an access and agreement problem rather than a modelling
+   one.
 2. **Fire detection is not ours.** NASA FIRMS does it. This system adds forecasting and
    alerting on top.
 3. **Notifications are simulated.** No SMS or WhatsApp integration exists.
