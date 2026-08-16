@@ -55,6 +55,24 @@ function formatTime(iso?: string | null) {
   }).format(new Date(iso));
 }
 
+/**
+ * Timestamps that are not "now" must carry their date.
+ *
+ * The status timeline samples back exactly 24 hours, so a bare HH:MM on the
+ * oldest sample renders the *same string* as the current replay clock - every
+ * institution, every bookmark. That collision is what made a historical lead
+ * time read as a second, contradictory current one.
+ */
+function formatStamp(iso?: string | null) {
+  if (!iso) return "—";
+  const day = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Kuching",
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(iso));
+  return `${day} ${formatTime(iso)}`;
+}
+
 function warningWindow(alert: Alert | null | undefined, forecast: Forecast) {
   const trigger = thresholdFor(alert);
   const crossed = alert?.threshold_crossed_at
@@ -201,15 +219,22 @@ function RecentAlerts({ alertHistory, currentStatus }: { alertHistory: Alert[]; 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-extrabold text-slate-800">Recent Alerts</h3>
+        {/*
+          Not "Recent Alerts": these rows are the oldest sample of an unbroken run
+          in a 24-hour sampling window, not the moment an alert fired. The alert is
+          typically active well before the window opens, so calling the row an
+          issuance overstated it - and its lead time is a reading from that past
+          instant, not a competing current figure.
+        */}
+        <h3 className="text-sm font-extrabold text-slate-800">Alert state, sampled</h3>
         <Link href="/pro/alert-history" className="text-[10px] font-bold text-blue-600">View Alert History →</Link>
       </div>
       <div className="mt-3 space-y-2">
         {rows.length ? rows.map((alert) => (
-          <div key={alert.alert_id} className="grid grid-cols-[44px_72px_1fr] items-center gap-2 rounded-lg border border-slate-100 px-2 py-2 text-[10px]">
-            <span className="text-slate-500">{formatTime(alert.triggered_at)}</span>
+          <div key={alert.alert_id} className="grid grid-cols-[76px_60px_1fr] items-center gap-2 rounded-lg border border-slate-100 px-2 py-2 text-[10px]">
+            <span className="text-slate-500">{formatStamp(alert.triggered_at)}</span>
             <span className="rounded-full bg-red-50 px-2 py-1 text-center font-bold text-red-600">Alert</span>
-            <span className="text-slate-600">Forecast alert issued with {alert.lead_time_hours}h warning lead time.</span>
+            <span className="text-slate-600">Lead time read {alert.lead_time_hours}h at this sample. The alert was already active before this point.</span>
           </div>
         )) : (
           <div className="rounded-lg border border-slate-100 px-3 py-3 text-[10px] text-slate-500">No recorded alert entries yet. Current forecast status: <strong>{statusLabel(currentStatus)}</strong>.</div>
@@ -289,7 +314,7 @@ export function ProInstitutionDetail() {
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-blue-100 text-blue-700"><Gauge size={20} /></div><div><p className="text-[10px] text-slate-500">Current PM2.5</p><p className="text-2xl font-extrabold text-blue-700">{forecast.current.pm25.toFixed(1)}<span className="ml-1 text-sm">µg/m³</span></p><p className="text-[9px] text-slate-500">{forecast.current.source.replaceAll("_", " ")}</p></div></div></div>
             <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-violet-100 text-violet-700"><TrendingUp size={20} /></div><div><p className="text-[10px] text-slate-500">Forecast trigger peak</p><p className="text-2xl font-extrabold text-violet-700">{peak.toFixed(1)}<span className="ml-1 text-sm">µg/m³</span></p><p className="text-[9px] text-slate-500">p90 upper prediction band</p></div></div></div>
-            <div className="rounded-2xl border border-orange-100 bg-orange-50/80 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-orange-100 text-orange-700"><Clock3 size={20} /></div><div><p className="text-[10px] text-slate-500">Warning lead time</p><p className="text-2xl font-extrabold text-orange-600">{warningLead ?? "—"}<span className="ml-1 text-sm">hours</span></p><p className="text-[9px] text-slate-500">time before threshold crossing</p></div></div></div>
+            <div className="rounded-2xl border border-orange-100 bg-orange-50/80 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-orange-100 text-orange-700"><Clock3 size={20} /></div><div><p className="text-[10px] text-slate-500">Warning lead time</p><p className="text-2xl font-extrabold text-orange-600">{warningLead ?? "—"}<span className="ml-1 text-sm">hours</span></p><p className="text-[9px] text-slate-500">time before threshold crossing, as of the replay clock</p></div></div></div>
             <div className="rounded-2xl border border-red-100 bg-red-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-red-100 text-red-700"><AlertTriangle size={20} /></div><div><p className="text-[10px] text-slate-500">Forecast Status</p><p className="text-2xl font-extrabold text-red-600">{statusLabel(status)}</p><p className="text-[9px] text-slate-500">Safe ≤{GOOD_MAX_PM25} · Watch {GOOD_MAX_PM25 + 0.1}–{ALERT_THRESHOLD_PM25 - 0.1} · Alert ≥{ALERT_THRESHOLD_PM25}</p></div></div></div>
           </div>
 
@@ -344,7 +369,14 @@ export function ProInstitutionDetail() {
           )}
 
           <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-[9px] text-slate-400">
-            <span>PM2.5 source: {forecast.current.source.replaceAll("_", " ")} · replay clock {health.clock ? formatTime(health.clock) : "local"}</span>
+            {/*
+              `at` first, never health.clock alone. health.clock is the server's
+              single shared clock - it sits at the scenario start and is mutable by
+              any visitor, which is exactly why clock.ts has each visitor pin their
+              own `at` and pass it on every read. Reading it here put a timestamp
+              five days adrift of the data on the page.
+            */}
+            <span>PM2.5 source: {forecast.current.source.replaceAll("_", " ")} · replay clock {at ?? health.clock ? formatStamp(at ?? health.clock) : "local"}</span>
             <span>{forecast.attribution.transboundary ? "Transboundary attribution active" : "No cross-border attribution for this institution"}</span>
           </div>
         </div>
