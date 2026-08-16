@@ -373,7 +373,7 @@ function Loaded({ data }: { data: ScreenData }) {
   const destinationRegion = receptorInstitution?.admin_region ?? null;
 
   return (
-    <ProAppShell activePage="live-monitor" health={health} at={at}>
+    <ProAppShell activePage="live-monitor" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} health={health} at={at}>
       <main className="min-w-0 bg-[#fbfcfe] p-5 lg:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -435,7 +435,14 @@ function Loaded({ data }: { data: ScreenData }) {
             {activeAlert && (
               <section className="rounded-2xl border border-red-200 bg-red-50/60 p-4">
                 <h3 className="flex items-center gap-2 text-sm font-extrabold text-red-700"><ShieldAlert size={17} /> Priority Alert — {activeAlert.institution_name}</h3>
-                <p className="mt-2 text-[10px] leading-4 text-slate-600">Forecast upper band reaches {activeAlert.forecast_peak_pm25.toFixed(1)} µg/m³ with {activeAlert.lead_time_hours}h warning lead time. Review preparedness recommendations before the forecast threshold crossing.</p>
+                {/*
+                  Two different moments, and they must be named as such. `lead_time_hours`
+                  is the *onset* - the first forecast crossing of the threshold, which is the
+                  time the recipient has to act. The peak comes later, at `peak_lead_hours`.
+                  Pairing the peak value with the onset lead read as though the peak arrived
+                  at the onset hour.
+                */}
+                <p className="mt-2 text-[10px] leading-4 text-slate-600">Forecast upper band crosses the {activeAlert.threshold_pm25} µg/m³ threshold in {activeAlert.lead_time_hours}h, peaking at {activeAlert.forecast_peak_pm25.toFixed(1)} µg/m³{activeAlert.peak_lead_hours != null ? ` ${activeAlert.peak_lead_hours}h out` : ""}. Review preparedness recommendations before the forecast threshold crossing.</p>
                 <div className="mt-3 flex gap-2">
                   <Link href="/pro/institutions" className="rounded-xl bg-red-600 px-4 py-2 text-[10px] font-extrabold text-white">View Institution →</Link>
                   <Link href="/pro/notification-preview" className="rounded-xl border border-blue-300 bg-white px-4 py-2 text-[10px] font-extrabold text-blue-600">Preview Notification →</Link>

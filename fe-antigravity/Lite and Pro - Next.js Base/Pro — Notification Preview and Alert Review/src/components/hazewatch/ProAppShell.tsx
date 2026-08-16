@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Health, Institution } from "@/lib/api/types";
+import { PRO_HORIZON_HOURS } from "@/lib/data/source";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { BrandMark } from "./BrandMark";
 
@@ -33,7 +34,10 @@ export function ProAppShell({
   children,
   activePage = "live-monitor",
   scopeLabel = "Regional View",
-  forecastLabel = "Next 12 Hours",
+  // Derived, not a literal: this default was "Next 12 Hours" while the Live Monitor
+  // was the one screen that never passed the prop, so the header kept claiming 12
+  // independently of the horizon actually being requested.
+  forecastLabel = `Next ${PRO_HORIZON_HOURS} Hours`,
   institutions = [],
   current,
   health,
