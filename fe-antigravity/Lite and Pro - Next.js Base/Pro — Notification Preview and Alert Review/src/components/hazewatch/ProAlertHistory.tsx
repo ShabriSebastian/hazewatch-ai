@@ -152,7 +152,7 @@ function WhatChanged({ selected, previous }: { selected: ProHistoryEvent; previo
         <div className="flex justify-between gap-4"><span className="text-slate-500">Estimated transport</span><strong>{previous?.transportHours ?? "—"} → {selected.transportHours ?? "—"}</strong></div>
         <div className="flex justify-between gap-4"><span className="text-slate-500">Haze direction</span><strong>{selected.direction ?? "—"}</strong></div>
       </div>
-      <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[9px] leading-4 text-slate-600">The event summary only reflects fields available from the API or the swappable demo fixture.</div>
+      <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[9px] leading-4 text-slate-600">Rebuilt from sampled /alerts responses. That endpoint carries status, peak and source country, but no transport estimate — that lives on the forecast attribution, shown on Institution Detail.</div>
     </section>
   );
 }

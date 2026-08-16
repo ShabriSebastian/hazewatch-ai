@@ -259,6 +259,20 @@ export async function loadProAlertHistoryData(institutionId?: string | null) {
           + `with ${alert.lead_time_hours}h warning lead time.`,
         forecastPeak: alert.forecast_peak_pm25,
         sourceArea: alert.source_country ?? undefined,
+        // Composed, not fetched. The API exposes no bearing field anywhere, and
+        // /alerts carries no attribution block - but `transboundary` is on the
+        // alert and `admin_region` on the institution, both already loaded, so
+        // this costs no extra request. Phrased exactly as the Haze Movement card
+        // on Institution Detail so the two screens cannot disagree.
+        //
+        // `transportHours` is deliberately left unset: estimated_transport_hours
+        // lives on the forecast attribution, which would mean one /forecast call
+        // per sampled timestamp. Do NOT reach for `base.forecast.attribution`
+        // here - that is the *current* forecast, and stamping its transport time
+        // onto an event sampled a day earlier would be plainly wrong.
+        direction: alert.transboundary
+          ? `Cross-border transport toward ${base.institution.admin_region}`
+          : `Transport within ${base.institution.admin_region}`,
         notificationState: "prepared" as const,
       };
     });
