@@ -16,7 +16,7 @@ import { latestTransition, type StatusTimelinePoint } from "@/lib/api/hazewatch"
 import type { Institution } from "@/lib/api/types";
 import { loadLiteAlertHistoryData } from "@/lib/data/source";
 import { getWhatThisMeansLine } from "@/lib/ui/copy";
-import { localDayKey, localDayLabel, localTime, peakTime } from "@/lib/ui/format";
+import { localDayKey, localDayLabel, localStamp, localTime } from "@/lib/ui/format";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { getLiteRiskStatus, type LiteRiskStatus } from "@/lib/ui/status";
 import { AppShell } from "./AppShell";
@@ -230,7 +230,7 @@ function Loaded({ data }: { data: ScreenData }) {
   const { institution, institutions, forecast, alertResponse, statusTimeline, health, at } = data;
   const risk = useMemo(() => getLiteRiskStatus(forecast, alertResponse), [forecast, alertResponse]);
   const alert = alertResponse.alert;
-  const latestTime = alert ? localTime(alert.triggered_at, institution.country) : localTime(forecast.issued_at, institution.country);
+  const latestTime = alert ? localStamp(alert.triggered_at, institution.country) : localStamp(forecast.issued_at, institution.country);
 
   return (
     <AppShell activePage="alert-history" institutions={institutions} current={institution} health={health} at={at}>
@@ -285,7 +285,7 @@ function Loaded({ data }: { data: ScreenData }) {
                 <h3 className="flex items-center gap-2 text-sm font-extrabold text-ink"><AlertTriangle size={16} /> Latest alert details</h3>
                 <dl className="mt-3 divide-y divide-red-100 text-[10px]">
                   <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Institution</dt><dd className="text-right font-extrabold text-slate-700">{institution.name}</dd></div>
-                  <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Expected peak</dt><dd className="font-extrabold text-slate-700">{peakTime(alert.forecast_peak_at, institution.country)}</dd></div>
+                  <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Expected peak</dt><dd className="font-extrabold text-slate-700">{localStamp(alert.forecast_peak_at, institution.country)}</dd></div>
                   <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Warning lead time</dt><dd className="font-extrabold text-slate-700">{alert.lead_time_hours} hours</dd></div>
                   <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Message status</dt><dd className="font-extrabold text-slate-700">Prepared for verified admin contact</dd></div>
                 </dl>

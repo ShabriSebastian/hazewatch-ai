@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Alert, Channel, Forecast, Institution, Notification } from "@/lib/api/types";
 import { confirmLiteNotification, loadLiteOverviewData } from "@/lib/data/source";
 import { getWhatThisMeansLine } from "@/lib/ui/copy";
-import { localTime, peakTime, reliabilityNote } from "@/lib/ui/format";
+import { localStamp, peakTime, reliabilityNote } from "@/lib/ui/format";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { getLiteRiskStatus } from "@/lib/ui/status";
 import { AppShell } from "./AppShell";
@@ -285,7 +285,7 @@ function ActiveAlertReview({ data, alert }: { data: ScreenData; alert: Alert }) 
                   {message.split("\n\n").map((part, index) => (
                     <p key={`${part}-${index}`} className={index === 0 ? "font-extrabold text-slate-800" : "mt-3"}>{index === 0 ? `⚠ ${part}` : part}</p>
                   ))}
-                  <p className="mt-3 font-bold text-slate-600">Updated: {localTime(alert.triggered_at, institution.country)}</p>
+                  <p className="mt-3 font-bold text-slate-600">Updated: {localStamp(alert.triggered_at, institution.country)}</p>
                 </div>
               </div>
             </div>
@@ -309,7 +309,7 @@ function ActiveAlertReview({ data, alert }: { data: ScreenData; alert: Alert }) 
               <h3 className="flex items-center gap-2 text-sm font-extrabold text-ink"><AlertTriangle size={16} /> Alert details</h3>
               <dl className="mt-3 divide-y divide-red-100 text-[10px]">
                 <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Institution</dt><dd className="text-right font-extrabold text-slate-700">{institution.name}</dd></div>
-                <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Expected peak</dt><dd className="font-extrabold text-slate-700">{peakTime(alert.forecast_peak_at, institution.country)}</dd></div>
+                <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Expected peak</dt><dd className="font-extrabold text-slate-700">{localStamp(alert.forecast_peak_at, institution.country)}</dd></div>
                 <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Warning lead time</dt><dd className="font-extrabold text-slate-700">{alert.lead_time_hours} hours</dd></div>
                 <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Message status</dt><dd className="font-extrabold text-slate-700">{sent ? "Confirmed · simulated delivery" : "Prepared for verified admin contact"}</dd></div>
               </dl>
@@ -349,7 +349,7 @@ function ActiveAlertReview({ data, alert }: { data: ScreenData; alert: Alert }) 
 
           {sent && (
             <p className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-[10px] font-semibold text-emerald-700">
-              Sent to: {institution.name} admin contact — {localTime(sent.sent_at, institution.country)} · {sent.channel.toUpperCase()} · simulated: {String(sent.simulated ?? true)}.
+              Sent to: {institution.name} admin contact — {localStamp(sent.sent_at, institution.country)} · {sent.channel.toUpperCase()} · simulated: {String(sent.simulated ?? true)}.
             </p>
           )}
         </section>

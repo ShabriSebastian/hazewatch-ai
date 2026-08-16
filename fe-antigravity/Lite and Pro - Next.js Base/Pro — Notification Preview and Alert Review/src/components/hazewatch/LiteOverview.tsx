@@ -16,7 +16,7 @@ import { loadLiteOverviewData } from "@/lib/data/source";
 import { alertOnsets, type StatusTimelinePoint } from "@/lib/api/hazewatch";
 import type { Alert, Forecast, Institution } from "@/lib/api/types";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
-import { attributionLine, formatLocation, localTime, peakTime, reliabilityNote } from "@/lib/ui/format";
+import { attributionLine, formatLocation, localStamp, reliabilityNote } from "@/lib/ui/format";
 import { getLiteRiskStatus, type LiteRiskStatus } from "@/lib/ui/status";
 import { getStatusCopy } from "@/lib/ui/copy";
 import { AppShell } from "./AppShell";
@@ -75,7 +75,7 @@ function RecentAlerts({ timeline, institution }: { timeline: StatusTimelinePoint
         ) : (
           entries.slice(0, 3).map((point) => (
             <div key={point.at} className="grid grid-cols-[58px_72px_1fr] items-center gap-2 py-3 text-[11px]">
-              <span className="font-semibold text-slate-500">{localTime(point.alert!.triggered_at, institution.country)}</span>
+              <span className="font-semibold text-slate-500">{localStamp(point.alert!.triggered_at, institution.country)}</span>
               <span className="rounded-full bg-red-100 px-2 py-1 text-center text-[10px] font-extrabold text-red-600">Alert</span>
               <span className="text-slate-600">Forecast alert issued with {point.alert!.lead_time_hours}h warning lead time.</span>
             </div>
@@ -180,7 +180,7 @@ function LiteOverviewLoaded({ data }: { data: ScreenData }) {
               <p className="mt-2 text-sm text-slate-600">{copy.body}</p>
               {status === "alert" && (
                 <>
-                  <p className="mt-1 text-sm text-slate-600">Highest impact is expected around <strong>{peakTime(peakAt, institution.country)}</strong>.</p>
+                  <p className="mt-1 text-sm text-slate-600">Highest impact is expected around <strong>{localStamp(peakAt, institution.country)}</strong>.</p>
                   <p className="mt-2 text-xs text-slate-500">Forecast peak: {peak.toFixed(1)} µg/m³ · supporting detail, not the primary decision cue.</p>
                 </>
               )}

@@ -18,7 +18,7 @@ import { useEffect, useMemo, useState } from "react";
 import { alertOnsets, type StatusTimelinePoint } from "@/lib/api/hazewatch";
 import type { Forecast, Institution } from "@/lib/api/types";
 import { loadLiteOverviewData } from "@/lib/data/source";
-import { attributionLine, formatLocation, localTime, peakTime, reliabilityNote } from "@/lib/ui/format";
+import { attributionLine, formatLocation, localStamp, reliabilityNote } from "@/lib/ui/format";
 import { getInstitutionDetailCopy } from "@/lib/ui/institutionDetailCopy";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { getLiteRiskStatus } from "@/lib/ui/status";
@@ -62,7 +62,7 @@ function RecentAlerts({ timeline, institution }: { timeline: StatusTimelinePoint
         <div className="divide-y divide-slate-100">
           {entries.slice(0, 3).map((point) => (
             <div key={point.at} className="grid grid-cols-[90px_84px_1fr_auto] items-center gap-3 py-3 text-[11px]">
-              <span className="font-semibold text-slate-600">{localTime(point.alert!.triggered_at, institution.country)}</span>
+              <span className="font-semibold text-slate-600">{localStamp(point.alert!.triggered_at, institution.country)}</span>
               <span className="rounded-full bg-red-100 px-3 py-1 text-center text-[10px] font-extrabold text-red-600">Alert</span>
               <span className="text-slate-600">Air quality alert issued with {point.alert!.lead_time_hours}h warning lead time.</span>
               <span className="text-slate-400">Prepared · Not sent</span>
@@ -159,7 +159,7 @@ function Loaded({ data }: { data: ScreenData }) {
             <div>
               <span className="inline-flex rounded-full bg-red-500 px-3 py-1 text-[10px] font-extrabold text-white">FORECAST ALERT</span>
               <h3 className="mt-2 text-[23px] font-extrabold leading-tight text-red-600">Air quality is expected to become unhealthy.</h3>
-              <p className="mt-2 text-xs text-slate-600">Highest impact expected around <strong>{peakTime(peakAt, institution.country)}</strong>.</p>
+              <p className="mt-2 text-xs text-slate-600">Highest impact expected around <strong>{localStamp(peakAt, institution.country)}</strong>.</p>
               {attribution && (
                 <p className="mt-2 flex items-start gap-1.5 text-[11px] font-semibold text-slate-600">
                   <Wind size={13} className="mt-0.5 flex-none text-slate-400" /> {attribution}
@@ -228,7 +228,7 @@ function Loaded({ data }: { data: ScreenData }) {
                 <p className="mt-3 text-[11px] font-extrabold text-slate-700">{crossingAt ? "Unhealthy levels possible" : "No crossing forecast"}</p>
                 <p className="mt-1 text-[10px] leading-4 text-slate-500">
                   {crossingAt
-                    ? `Threshold expected to be crossed around ${localTime(crossingAt, institution.country)}.`
+                    ? `Threshold expected to be crossed around ${localStamp(crossingAt, institution.country)}.`
                     : "No threshold crossing is expected within the next 24 hours."}
                 </p>
               </div>
