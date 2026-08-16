@@ -40,6 +40,16 @@ function project(lon: number, lat: number) {
   return { x: Math.max(2, Math.min(98, x)), y: Math.max(3, Math.min(97, y)) };
 }
 
+/**
+ * /hotspots/summary answers over the whole scenario domain (105,-5 to 116,4),
+ * which is far wider than the extent this map draws. Cells outside it have to be
+ * dropped rather than fed to `project()`, whose clamp would otherwise pile them
+ * up on the edges as phantom hotspots.
+ */
+function withinMapBounds(lon: number, lat: number) {
+  return lon >= MAP.lonMin && lon <= MAP.lonMax && lat >= MAP.latMin && lat <= MAP.latMax;
+}
+
 function peakUpper(forecast: Forecast) {
   return forecast.peak.pm25_upper ?? forecast.peak.pm25;
 }
@@ -91,6 +101,38 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
   hotspotCells: HotspotGridCell[];
 }) {
   const forecastById = new Map(forecasts.map((f) => [f.institution.id, f]));
+
+  // Ranked by detection count, not the API's (lat, lon) ordering: taking the first
+  // twelve as returned meant taking the twelve southernmost cells, every one of them
+  // off this map and clamped into the corners.
+  const visibleCells = hotspotCells
+    .filter((cell) => withinMapBounds(cell.lon, cell.lat))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 12);
+
+  // Pontianak's three institutions sit within 0.3% of each other and Kuching's within
+  // 0.25%, so a fixed nudge left each cluster stacked into one readable card. Group by
+  // proximity and fan each group out vertically around its shared position instead.
+  //
+  // Grouped greedily against a distance threshold rather than by rounding to a grid:
+  // Pontianak's three round to three *different* cells (20:77, 20:78, 19:78) while
+  // still overlapping, so a grid leaves them stacked. The thresholds are the card's
+  // own footprint - min-w-[128px] by ~26px against a ~776x380 box.
+  const CLUSTER_DX = 10;
+  const CLUSTER_DY = 8;
+  const clusters: { x: number; y: number; members: string[] }[] = [];
+  institutions.forEach((institution) => {
+    const pos = project(institution.lon, institution.lat);
+    const hit = clusters.find(
+      (c) => Math.abs(c.x - pos.x) < CLUSTER_DX && Math.abs(c.y - pos.y) < CLUSTER_DY,
+    );
+    if (hit) hit.members.push(institution.id);
+    else clusters.push({ x: pos.x, y: pos.y, members: [institution.id] });
+  });
+  const clusterOf = new Map(
+    clusters.flatMap((c) => c.members.map((id, seq) => [id, { seq, size: c.members.length }])),
+  );
+
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
@@ -112,11 +154,19 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
               <stop offset="65%" stopColor="#ff7a59" stopOpacity="0.70" />
               <stop offset="100%" stopColor="#f34b2f" stopOpacity="0.88" />
             </linearGradient>
-            <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-              <path d="M0,0 L0,6 L9,3 z" fill="#f15b40" />
+            {/*
+              markerUnits defaults to "strokeWidth", which scales the whole marker
+              coordinate system by the stroke width. At strokeWidth 46 this 9x6
+              triangle rendered at ~414x276 units inside a 1000x500 viewBox - 41% of
+              the map's width - which is the orange wedge that was covering the
+              institution labels. userSpaceOnUse sizes the head independently of the
+              band, and the explicit viewBox scales the path to the declared box.
+            */}
+            <marker id="arrowHead" viewBox="0 0 10 7" markerUnits="userSpaceOnUse" markerWidth="34" markerHeight="24" refX="9" refY="3.5" orient="auto">
+              <path d="M0,0 L0,7 L10,3.5 z" fill="#f15b40" />
             </marker>
           </defs>
-          <path d="M265 250 C430 190, 555 330, 785 260" fill="none" stroke="url(#hazeArrow)" strokeWidth="46" strokeLinecap="round" markerEnd="url(#arrowHead)" />
+          <path d="M265 250 C430 190, 555 330, 785 260" fill="none" stroke="url(#hazeArrow)" strokeWidth="14" strokeLinecap="round" markerEnd="url(#arrowHead)" />
         </svg>
 
         <div className="absolute left-3 top-3 z-30 w-[150px] rounded-xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
@@ -132,7 +182,7 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
           </div>
         </div>
 
-        {hotspotCells.slice(0, 12).map((cell, index) => {
+        {visibleCells.map((cell, index) => {
           const pos = project(cell.lon, cell.lat);
           const size = Math.max(8, Math.min(18, 7 + cell.count * 1.7));
           return (
@@ -145,13 +195,14 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
           );
         })}
 
-        {institutions.map((institution, index) => {
+        {institutions.map((institution) => {
           const forecast = forecastById.get(institution.id);
           if (!forecast) return null;
           const pos = project(institution.lon, institution.lat);
           const status = getStatusFromAlerts(forecast, alerts);
-          const nudgeX = index % 2 === 0 ? -6 : 5;
-          const nudgeY = index % 3 === 0 ? -7 : 4;
+          const { seq, size } = clusterOf.get(institution.id) ?? { seq: 0, size: 1 };
+          const nudgeX = 0;
+          const nudgeY = seq * 26 - (size - 1) * 13;
           return (
             <div
               key={institution.id}
@@ -306,6 +357,21 @@ function Loaded({ data }: { data: ScreenData }) {
   const attribution = transboundaryForecast ? attributionLine(transboundaryForecast.attribution) : null;
   const sourceRegion = transboundaryForecast?.attribution.dominant_source_region ?? null;
 
+  /**
+   * Where the smoke is going: the receptor the attribution block belongs to, which is
+   * the same forecast the banner above is written from. Reading `highestInstitution`
+   * here instead was wrong - "highest forecast peak anywhere" is not "destination", and
+   * at the crossborder bookmark that is Pontianak, inside the *source* region, which
+   * rendered "West Kalimantan -> West Kalimantan".
+   *
+   * `forecast.institution` is an InstitutionCompact and carries no admin_region, so the
+   * full record is resolved from the institutions list.
+   */
+  const receptorInstitution = institutions.find(
+    (i) => i.id === transboundaryForecast?.institution.id,
+  );
+  const destinationRegion = receptorInstitution?.admin_region ?? null;
+
   return (
     <ProAppShell activePage="live-monitor" health={health} at={at}>
       <main className="min-w-0 bg-[#fbfcfe] p-5 lg:p-6">
@@ -346,7 +412,7 @@ function Loaded({ data }: { data: ScreenData }) {
             <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-full bg-violet-100 text-violet-600"><CircleDot size={23} /></span><div><p className="text-[10px] text-slate-500">Highest Forecast PM2.5</p><p className="text-2xl font-black text-violet-700">{highest ? peakUpper(highest).toFixed(1) : "—"} <span className="text-sm">µg/m³</span></p><p className="text-[9px] text-slate-500">upper prediction band within {PRO_HORIZON_HOURS}h</p></div></div>
           </section>
           <section className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
-            <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Wind size={23} /></span><div><p className="text-[10px] text-slate-500">Haze Movement</p><p className="text-base font-black leading-5 text-emerald-700">{sourceRegion ? `${sourceRegion.split(",")[0]} → ${highestInstitution?.admin_region ?? "Sarawak"}` : "No cross-border movement"}</p><p className="text-[9px] text-slate-500">cross-border source attribution</p></div></div>
+            <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700"><Wind size={23} /></span><div><p className="text-[10px] text-slate-500">Haze Movement</p><p className="text-base font-black leading-5 text-emerald-700">{sourceRegion && destinationRegion ? `${sourceRegion.split(",")[0]} → ${destinationRegion}` : "No cross-border movement"}</p><p className="text-[9px] text-slate-500">cross-border source attribution</p></div></div>
           </section>
         </div>
 
