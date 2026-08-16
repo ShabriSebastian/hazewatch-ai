@@ -178,9 +178,15 @@ function SourceMap({ institution, forecast, hotspotSummary }: { institution: Ins
         <svg className="absolute inset-0 z-[5] h-full w-full" viewBox="0 0 500 260" aria-hidden="true">
           <defs>
             <linearGradient id="detailHaze" x1="0" x2="1"><stop offset="0%" stopColor="#f4b47e" stopOpacity=".42" /><stop offset="100%" stopColor="#f35a41" stopOpacity=".85" /></linearGradient>
-            <marker id="detailHead" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#f35a41" /></marker>
+            {/*
+              markerUnits defaults to "strokeWidth", scaling the head by the stroke
+              width - at strokeWidth 30 this triangle covered ~270x180 of a 500x260
+              viewBox, over half the panel. Sized in user space instead, as on the
+              regional map.
+            */}
+            <marker id="detailHead" viewBox="0 0 10 7" markerUnits="userSpaceOnUse" markerWidth="22" markerHeight="16" refX="9" refY="3.5" orient="auto"><path d="M0,0 L0,7 L10,3.5 z" fill="#f35a41" /></marker>
           </defs>
-          <path d="M125 145 C230 100, 305 185, 405 135" fill="none" stroke="url(#detailHaze)" strokeWidth="30" strokeLinecap="round" markerEnd="url(#detailHead)" />
+          <path d="M125 145 C230 100, 305 185, 405 135" fill="none" stroke="url(#detailHaze)" strokeWidth="10" strokeLinecap="round" markerEnd="url(#detailHead)" />
           {[{x:80,y:72},{x:105,y:100},{x:90,y:150},{x:135,y:182},{x:120,y:125}].map((dot, index) => <circle key={index} cx={dot.x} cy={dot.y} r="5" fill="#f04b32" />)}
         </svg>
         <span className="absolute bottom-4 left-4 z-20 rounded-lg bg-white px-2 py-1 text-[10px] font-bold text-red-600 shadow">🔥 {forecast.attribution.contributing_hotspot_count || hotspotSummary.count} contributing hotspots</span>
