@@ -274,7 +274,18 @@ function ActivePreview({ data, alert }: { data: ScreenData; alert: Alert }) {
             </div>
             <div className="border-l border-red-100 pl-4"><p className="text-[9px] text-slate-500">Forecast trigger peak</p><p className="mt-1 text-lg font-extrabold text-red-600">{alert.forecast_peak_pm25.toFixed(1)} <span className="text-xs">µg/m³</span></p></div>
             <div className="border-l border-red-100 pl-4"><p className="text-[9px] text-slate-500">Expected peak</p><p className="mt-1 text-lg font-extrabold text-orange-600">{expectedWindow}</p></div>
-            <div className="border-l border-red-100 pl-4"><p className="text-[9px] text-slate-500">Warning lead time</p><p className="mt-1 text-lg font-extrabold text-slate-800">{alert.lead_time_hours}h</p></div>
+            {/*
+              The crossing is named so these hours cannot be read as counting to
+              the Expected peak in the cell beside them. lead_time_hours measures
+              to the threshold crossing, an earlier and different moment - at the
+              opening bookmark, 17h against a 21h peak.
+
+              Bare time, not localStamp: the neighbouring cell renders the peak as
+              a bare range and the two are compared against each other inside one
+              forecast horizon, so dating one and not the other would only look
+              inconsistent.
+            */}
+            <div className="border-l border-red-100 pl-4"><p className="text-[9px] text-slate-500">Warning lead time</p><p className="mt-1 text-lg font-extrabold text-slate-800">{alert.lead_time_hours}h</p><p className="text-[9px] text-slate-500">to threshold crossing{alert.threshold_crossed_at ? ` · ${localTime(alert.threshold_crossed_at, institution.country)}` : ""}</p></div>
             <Link href="/pro/institutions" className="justify-self-end text-[9px] font-extrabold text-red-600">View Institution Alert →</Link>
           </section>
 
