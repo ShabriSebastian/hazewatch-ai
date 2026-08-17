@@ -286,6 +286,9 @@ function Loaded({ data }: { data: ScreenData }) {
                 <dl className="mt-3 divide-y divide-red-100 text-[10px]">
                   <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Institution</dt><dd className="text-right font-extrabold text-slate-700">{institution.name}</dd></div>
                   <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Expected peak</dt><dd className="font-extrabold text-slate-700">{localStamp(alert.forecast_peak_at, institution.country)}</dd></div>
+                  {alert.threshold_crossed_at && (
+                    <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Threshold crossing</dt><dd className="font-extrabold text-slate-700">{localStamp(alert.threshold_crossed_at, institution.country)}</dd></div>
+                  )}
                   <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Warning lead time</dt><dd className="font-extrabold text-slate-700">{alert.lead_time_hours} hours</dd></div>
                   <div className="flex justify-between gap-5 py-2.5"><dt className="text-slate-500">Message status</dt><dd className="font-extrabold text-slate-700">Prepared for verified admin contact</dd></div>
                 </dl>
