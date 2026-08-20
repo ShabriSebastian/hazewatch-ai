@@ -1011,3 +1011,174 @@ term, fire features saturating out of range) rather than to the tree-ensemble ce
 
 **Still open:** whether to regenerate `models/v1/` so the count gate stops being dormant.
 That decision was deferred at the 2A checkpoint and is unchanged by this phase.
+
+---
+---
+
+# Phase 2D Results — scoped: saturation diagnostic + two isolated ablations
+
+**Branch `phase2-generalization-fixes`. Stopped at the stop condition, as declared.**
+
+**Headline: both ablations are null. Not one episode changed outcome in either arm, on
+either window.** The stop condition is not met and no further feature attempts were chained.
+
+New artifacts: `diagnostics/saturation_diagnostic.json`, `diagnostics/ablations.json`,
+`src/haze/features/regime.py`, `scripts/12_saturation_diagnostic.py`,
+`scripts/13_ablations.py`. `data/processed/features.parquet`, `models/v1/`,
+`data/replay/`, `frontend/`, `Dockerfile` and `api_contract/` are all byte-unchanged —
+verified by checksum inside the run, not just by inspection.
+
+## 2D.0 — Saturation is not present. Do not build a saturation fix.
+
+A feature counts as *pinned* at ≥85% of its training maximum, reusing
+`config.EXTRAPOLATION_SATURATION_FRACTION` rather than inventing a threshold — the same
+fraction the served API already uses to tell a user their forecast has left trained range.
+
+Pinned rate across three strata of the 2023 window:
+
+| Feature | Beyond-range pairs (6,192) | All alertable (40,371) | All pairs (210,816) | φ with beyond-range |
+|---|---|---|---|---|
+| `ufei_24h` / `48h` / `72h` / `from_ID` | **0.0%** | 0.0% | 0.0% | — |
+| `hotspots_50_150km` / `150_400km` | **0.0%** | 0.0% | 0.0% | — |
+| `frp_50_150km` / `150_400km` | **0.0%** | 0.0% | 0.0% | — |
+| `hotspots_0_50km` | **0.3%** | 3.0% | 0.8% | −0.010 |
+| `frp_0_50km` | **0.7%** | 4.1% | 0.9% | −0.005 |
+
+**Saturation is absent, and the sign runs the wrong way for the hypothesis.** On the hours
+whose observations exceed the training range, the fire features are pinned *less* often
+than on alertable hours generally — 0.3% against 3.0% for local hotspot count. The
+correlations are ~0.
+
+The UFEI zeroes have a cause worth recording: the served model's training set includes the
+2024 season, whose upwind fire loading is the highest in the archive (`ufei_48h` max
+24,286, `frp_150_400km` max 33,159). 2023's peak loadings sit at roughly half that, so
+2023 never approaches the trained ceiling on any fire feature.
+
+**What this means.** During the worst PM2.5 hours of 2023 — observations up to 307 µg/m³ —
+the fire features were comfortably mid-range. The amplification that produced those
+concentrations is not represented in the feature set at all. Combined with 2C.2 (the model
+is not clipped; it simply forecasts ~43 where 146 occurred), the mechanism is neither
+capacity nor saturation. It is absent signal.
+
+**2024 has no beyond-range set to compare against** — its maximum target is 66.4 µg/m³
+against the 112.9 training max, so exactly zero pairs qualify. That window is not evidence
+either way here, and is reported as such rather than filled in.
+
+## Control run — the harness is trustworthy
+
+Before any delta was read, the baseline feature set was retrained through the identical
+ablation code path. It reproduced the published validation figures with **max drift
+0.00000** across all four headline numbers. Every comparison below is therefore a real
+feature effect, not harness noise.
+
+## 2D.1 / 2D.2 — results
+
+Protocol identical to the published validation model: both fire seasons withheld, 24 h
+embargo, `random_state=42`, p90 band at the EPA 35.5 µg/m³ floor, scored on distinct
+receptors.
+
+### 2023 window (33 distinct episodes)
+
+| Arm | Hit rate | FAR | Specificity | Episode detection (95% CI) |
+|---|---|---|---|---|
+| Control | 76.3% | 26.5% | 79.6% | 93.9% [80.4%, 98.3%] |
+| + dry days | 76.3% | **25.4%** | **80.7%** | 93.9% [80.4%, 98.3%] |
+| + ENSO | **77.1%** | 26.2% | 79.7% | 93.9% [80.4%, 98.3%] |
+
+### 2024 window (21 distinct episodes) — the one that matters
+
+| Arm | Hit rate | FAR | Specificity | Episode detection (95% CI) |
+|---|---|---|---|---|
+| Control | 53.8% | 44.8% | 90.3% | **81.0%** [60.0%, 92.3%] |
+| + dry days | **54.4%** | 44.5% | 90.3% | **81.0%** [60.0%, 92.3%] |
+| + ENSO | 52.9% | 44.6% | **90.5%** | **81.0%** [60.0%, 92.3%] |
+
+### The paired comparison makes this unambiguous
+
+| Arm | Window | Episodes compared | Ablation caught, control missed | Control caught, ablation missed | Net | Exact McNemar p |
+|---|---|---|---|---|---|---|
+| dryness | 2023 | 33 | 0 | 0 | **0** | 1.000 |
+| dryness | 2024 | 21 | 0 | 0 | **0** | 1.000 |
+| enso | 2023 | 33 | 0 | 0 | **0** | 1.000 |
+| enso | 2024 | 21 | 0 | 0 | **0** | 1.000 |
+
+**Every discordant pair count is zero.** The identical set of episodes was detected in
+every arm on both windows. The hour-level rates wobble by fractions of a point — dry days
+buys +0.6 pt of 2024 hit rate and −1.1 pt of 2023 FAR; ENSO buys +0.8 pt of 2023 hit rate
+and *loses* 0.9 pt on 2024 — but nothing crosses an episode boundary.
+
+Both features rank near the bottom of the forest: `consecutive_dry_days` is 28th of 38 by
+importance at +24 h (0.0083), `enso_regime` 25th of 38 (0.0096).
+
+### A correction to my own power caveat
+
+Planning this phase I warned that the stop condition had very low power: with 21 episodes,
+the only outcomes clearing the 92.3% Wilson upper bound are 20/21 and 21/21, so a real but
+modest improvement would be undetectable. **That concern turned out not to bind.** The
+measured effect is not small-and-undetectable; it is exactly zero. A (0, 0) discordant pair
+count says the features changed nothing at the episode level, which is unambiguous
+regardless of the test's power. The weak criterion and the strong criterion agree here.
+
+### ENSO: the caveat is stronger than "three seasons"
+
+The brief asked me to flag that three fire seasons give 2–3 regime examples. Under this
+protocol it is worse. The regime labels are 2022 = La Niña, 2023 = El Niño, 2024 = neutral
+— **one fire season each** — and the validation protocol withholds 2023 and 2024. Training
+therefore contains exactly **one** labelled fire season, and is then asked to predict a
+neutral fire season, a regime × season combination it has never seen. The off-season months
+of 2023 and 2024 stay in training, so the forest could learn "El Niño months run higher"
+from non-fire data and misapply it — which is consistent with ENSO being the one arm that
+made 2024 slightly *worse*.
+
+**This result should be read as an upper bound on harm, not as evidence about the feature.**
+A regime indicator may well be the right idea; this dataset cannot test it. Testing it needs
+more fire seasons, and the archive cannot supply them: CAMS PM2.5 via Open-Meteo begins
+~Aug 2022 (`config.py:66-67`) and the FIRMS 2025 country archive returns 404
+(`config.py:57-58`).
+
+ONI values are **recalled, not fetched** — the provenance warning is inline in
+`src/haze/features/regime.py`. The categorical encoding is robust to decimal error, and the
+phase assignment per fire season is not in doubt; the decimals should still be verified
+against NOAA CPC before any production use.
+
+### Dryness: the feature may be measuring the wrong place
+
+`consecutive_dry_days` is built from receptor precipitation — Pontianak and Kuching. The
+fires driving these episodes are 150–400 km upwind, and BMKG applies *hari tanpa hujan*
+over the **fire region**, not the receiving city. Two observations support the concern: the
+2024 season was *drier* at the receptor than 2023 (mean 0.83 vs 0.55 consecutive dry days)
+while recording far lower PM2.5, and the archive's dynamic range is small (maximum 12
+consecutive dry days, 90th percentile 1) because equatorial Borneo rains often in the
+reanalysis grid.
+
+**Gridded precipitation over the fire domain is already cached on disk** — `WEATHER_VARS`
+includes `precipitation` and `load_wind_grid` fetches all of them for the 120 domain cells.
+An upwind dryness index needs no new data acquisition and no FIRMS call. That is the
+follow-up the evidence points to, and it is *not* the feature that was tested here.
+
+## Stop condition: NOT MET. Stopping.
+
+Neither arm moved 2024 episode detection at all, let alone past 92.3%. Per the declared
+condition, no further feature attempts were chained in this phase.
+
+## Recommendation
+
+| Change | Keep? | Rationale |
+|---|---|---|
+| `consecutive_dry_days` (receptor) | **Do not merge** | Zero episodes gained; rank 28/38. Likely measuring the wrong location |
+| `enso_regime` | **Do not merge** | Zero episodes gained; untestable at one labelled fire season, and made 2024 marginally worse |
+| `regime.py` module | **Keep, unwired** | Both feature functions are production-standard and correct; leave them out of `build_site` until something earns entry |
+| Saturation-motivated work | **Do not pursue** | 2D.0 measured it absent, with the correlation running the wrong way |
+
+**What the three phases have jointly excluded** for the extreme-episode underprediction:
+model capacity (2C.2), fire-feature saturation (2D.0), receptor dryness (2D.1), and ENSO
+regime as testable on this archive (2D.2). The remaining candidates, in the order the
+evidence supports them:
+
+1. **Upwind dryness over the fire domain** — cached, no new acquisition, and the direct
+   repair of 2D.1's identified flaw.
+2. **Boundary-layer and stagnation dynamics at the receptor** — `boundary_layer_height` is
+   present but enters only as an instantaneous value, with no persistence or
+   ventilation-index construction.
+3. **More fire seasons** — the highest-value option and the one that is blocked. Worth
+   re-checking whether the FIRMS 2025 archive has since published.

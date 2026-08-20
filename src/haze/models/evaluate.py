@@ -223,6 +223,45 @@ def _exceedance_events(times: np.ndarray, values: np.ndarray, threshold: float, 
     return events
 
 
+def episode_detection_flags(
+    test: pd.DataFrame,
+    trigger: dict[int, np.ndarray],
+    receptors: Sequence[str] | None = None,
+    horizon: int = 24,
+) -> list[tuple[str, np.datetime64, int]]:
+    """Per distinct observed episode: `(institution_id, onset, warned)`.
+
+    `alert_metrics` returns the detection *rate*; this returns the outcomes
+    behind it, keyed by episode, so two models can be compared on the same
+    episodes rather than through two independent intervals. With 21 episodes in
+    the 2024 window, the paired comparison is the only one with any power - an
+    unpaired test at that size can barely distinguish anything from anything.
+    """
+    keep = set(receptors) if receptors is not None else set(distinct_receptors(test))
+    frame = test.copy().reset_index(drop=True)
+    for lead, pred in trigger.items():
+        frame[f"_trig_{lead}"] = pred
+
+    out: list[tuple[str, np.datetime64, int]] = []
+    for inst_id, group in frame.groupby("institution_id"):
+        inst = BY_ID.get(inst_id)
+        if inst is None or inst_id not in keep:
+            continue
+        threshold = thresholds.alert_threshold(inst.type).pm25
+        group = group.sort_values("time").reset_index(drop=True)
+        times = group["time"].to_numpy()
+        observed = group["pm25"].to_numpy(dtype=float)
+
+        predicted = np.zeros(len(group), dtype=bool)
+        for lead in sorted(trigger):
+            predicted |= group[f"_trig_{lead}"].to_numpy(dtype=float) >= threshold
+
+        for onset, _ in _exceedance_events(times, observed, threshold):
+            window = (times >= onset - np.timedelta64(horizon, "h")) & (times < onset)
+            out.append((inst_id, onset, int(bool(np.any(window & predicted)))))
+    return out
+
+
 def alert_metrics(
     test: pd.DataFrame,
     forecasts: dict[int, np.ndarray],

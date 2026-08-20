@@ -67,58 +67,6 @@ BOOTSTRAP_SEED = 42
 
 
 # --------------------------------------------------------------------------
-def episode_detection_flags(
-    frame: pd.DataFrame,
-    trigger: dict[int, np.ndarray],
-    receptors: list[str],
-    horizon: int = 24,
-) -> list[int]:
-    """Per distinct observed episode: was it warned about before onset?
-
-    Mirrors the lead-time loop inside `evaluate.alert_metrics` exactly, but
-    returns per-episode outcomes rather than a median. Restricted to
-    `receptors`, because resampling the duplicated trios would understate any
-    interval by a factor of root three - the error this script exists to correct.
-
-    **This is not the published hit rate.** `alert_metrics` reports an
-    *hour-level* rate: of all issuance hours where a breach was coming, how many
-    carried a warning. What this counts is *episode-level*: of all distinct
-    observed episodes, how many were warned about at all before onset. The two
-    answer different questions and take different values - 93.9% against 79.5%
-    on the 2023 window - so they are reported side by side and never merged.
-    The episode-level figure is the one a head teacher would recognise as "did
-    you warn me about this episode"; the hour-level figure is the one already
-    published, and is kept for continuity.
-
-    Only the episode-level rate gets a bootstrap interval, because only it is a
-    mean over units that are plausibly independent. Issuance hours inside one
-    episode are strongly autocorrelated, so a naive interval on the hour-level
-    hit rate would be far too narrow, and with two receptors there is no honest
-    way to widen it. It is therefore reported as a point estimate only.
-    """
-    work = frame.copy().reset_index(drop=True)
-    for lead, pred in trigger.items():
-        work[f"_trig_{lead}"] = pred
-
-    flags: list[int] = []
-    for inst_id, group in work.groupby("institution_id"):
-        if inst_id not in receptors:
-            continue
-        group = group.sort_values("time").reset_index(drop=True)
-        times = group["time"].to_numpy()
-        observed = group["pm25"].to_numpy(dtype=float)
-        threshold = 35.5
-
-        predicted = np.zeros(len(group), dtype=bool)
-        for lead in sorted(trigger):
-            predicted |= group[f"_trig_{lead}"].to_numpy(dtype=float) >= threshold
-
-        for onset, _ in evaluate._exceedance_events(times, observed, threshold):
-            window = (times >= onset - np.timedelta64(horizon, "h")) & (times < onset)
-            flags.append(int(bool(np.any(window & predicted))))
-    return flags
-
-
 def bootstrap_ci(flags: list[int]) -> dict:
     """95% percentile bootstrap interval for a rate over distinct episodes."""
     if not flags:
@@ -165,7 +113,9 @@ def score_both_ways(
         "ci95_high": dedup["episode_detection_ci95"][1],
         "method": "wilson",
     }
-    bootstrap = bootstrap_ci(episode_detection_flags(frame, bands, receptors))
+    bootstrap = bootstrap_ci(
+        [w for _, _, w in evaluate.episode_detection_flags(frame, bands, receptors)]
+    )
 
     # Prevalence and the prevalence-free false-positive rate. FAR is 1-precision
     # and moves with the base rate on its own, which is exactly how the original
