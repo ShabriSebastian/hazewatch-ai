@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
-"""2D.1 / 2D.2 - two candidate features, added one at a time, never stacked.
+"""Candidate features, added one at a time, never stacked.
 
 2C.2 ruled out model capacity as the reason the forecast underpredicts extreme
 episodes, and 2D.0 ruled out fire-feature saturation. What is left is missing
 signal: the forecast model has no way to tell one fire season from another,
 because `doy_sin`/`doy_cos` take identical values on the same calendar day of
-every year. These are the two cheapest candidate fixes.
+every year.
 
-    python scripts/13_ablations.py        (make ablations)
+Arms: `dryness` and `enso` (2D), then `upwind_dryness` (2E), which measures the
+dry-day index over the fire source region after the receptor-level version came
+back null - the archive had already hinted the location was wrong, since 2024 was
+drier at the receptor than 2023 while recording a quarter of the peak PM2.5.
+
+    python scripts/13_ablations.py                          # every arm
+    python scripts/13_ablations.py --arms=upwind_dryness    # control + one arm
 
 Design constraints, each with a reason:
 
@@ -70,6 +76,9 @@ ARMS = {
     "control": (lambda df: df, []),
     "dryness": (regime.add_dryness, ["consecutive_dry_days"]),
     "enso": (regime.add_enso, ["enso_regime"]),
+    # 2E: the same index measured where the fuel is rather than where the people
+    # are, repairing the flaw 2D.1's null exposed.
+    "upwind_dryness": (regime.add_upwind_dryness, ["upwind_dry_days"]),
 }
 
 
@@ -181,11 +190,26 @@ def main() -> int:
     before = _checksums(SERVED_ARTIFACTS)
     features_hash = _checksums([config.FEATURES_PARQUET])
 
+    # `--arms a,b` runs a subset. Control is always included: it is the paired
+    # baseline every McNemar comparison is taken against, and it is re-run rather
+    # than read back from a previous ablations.json, which records per-window
+    # metrics but not the per-episode outcomes the pairing needs.
+    selected = ["control"]
+    for arg in sys.argv[1:]:
+        if arg.startswith("--arms="):
+            selected += [a for a in arg.split("=", 1)[1].split(",") if a != "control"]
+    if len(selected) == 1:
+        selected = list(ARMS)
+    unknown = [a for a in selected if a not in ARMS]
+    if unknown:
+        print(f"Unknown arm(s): {unknown}. Available: {list(ARMS)}")
+        return 1
+
     df = pd.read_parquet(config.FEATURES_PARQUET)
     with config.FEATURE_SPEC.open() as fh:
         base_features = json.load(fh)["features"]
 
-    results = {name: run_arm(name, df, base_features) for name in ARMS}
+    results = {name: run_arm(name, df, base_features) for name in selected}
 
     # -- control must reproduce the published baseline ---------------------
     ctrl_2023 = results["control"]["windows"]["2023"]["metrics"]
@@ -208,8 +232,9 @@ def main() -> int:
         )
 
     # -- paired comparisons ------------------------------------------------
+    arms_tested = [n for n in selected if n != "control"]
     comparisons: dict[str, dict] = {}
-    for name in ("dryness", "enso"):
+    for name in arms_tested:
         comparisons[name] = {
             w: pair_against_control(results["control"], results[name], w)
             for w in ("2023", "2024")
@@ -229,7 +254,7 @@ def main() -> int:
             results[name]["windows"]["2024"]["metrics"]["episode_detection_rate"]
             > STOP_CONDITION_UPPER
         )
-        for name in ("dryness", "enso")
+        for name in arms_tested
     }
     verdict = {
         "stop_condition": (
@@ -267,8 +292,13 @@ def main() -> int:
             name: {
                 k: v for k, v in arm.items() if k != "windows"
             } | {
+                # Per-episode outcomes are kept, not just the rates. Without them
+                # a later run cannot pair against this one, and cannot ask which
+                # episodes were missed - a question 2E wanted and could not answer
+                # from the 2D artifact.
                 "windows": {
-                    w: data["metrics"] for w, data in arm["windows"].items()
+                    w: data["metrics"] | {"episode_flags": data["episode_flags"]}
+                    for w, data in arm["windows"].items()
                 }
             }
             for name, arm in results.items()
@@ -296,8 +326,14 @@ def main() -> int:
         ],
     }
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "ablations.json").write_text(json.dumps(payload, indent=2) + "\n")
-    print(f"\nWrote {OUT / 'ablations.json'}")
+    # A subset run writes its own file rather than overwriting the full 2D table.
+    out_name = (
+        "ablations.json"
+        if len(selected) == len(ARMS)
+        else "ablations_" + "_".join(arms_tested) + ".json"
+    )
+    (OUT / out_name).write_text(json.dumps(payload, indent=2) + "\n")
+    print(f"\nWrote {OUT / out_name}")
 
     after = _checksums(SERVED_ARTIFACTS)
     moved = [p for p in before if before[p] != after.get(p)]

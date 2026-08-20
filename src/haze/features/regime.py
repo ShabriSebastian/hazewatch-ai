@@ -15,7 +15,10 @@ and invalidates every published number.
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
+
+from .. import config
 
 # --------------------------------------------------------------------------
 # Dryness
@@ -55,6 +58,107 @@ def consecutive_dry_days(frame: pd.DataFrame) -> pd.Series:
     # Shift to the previous complete day, then broadcast back to hourly.
     previous = run.shift(1).fillna(0.0)
     return day.map(previous).astype(float).rename("consecutive_dry_days")
+
+
+def _streak_by_day(daily: pd.Series) -> pd.Series:
+    """Consecutive-dry-day run length ending on each day, shifted one day back.
+
+    Shared by the receptor and upwind indices so the causality argument above is
+    made once and cannot drift between the two.
+    """
+    dry = daily < DRY_DAY_MM
+    run = dry.groupby((~dry).cumsum()).cumsum()
+    run[~dry] = 0
+    return run.shift(1).fillna(0.0)
+
+
+def upwind_dry_days(
+    df: pd.DataFrame, lo_km: float = 150.0, hi_km: float = 400.0
+) -> pd.Series:
+    """Days without rain **in the fire source region**, per locality.
+
+    `consecutive_dry_days` above measures the receiving city. That is the wrong
+    place, and the archive says so: the 2024 season was drier at the receptor
+    than 2023 (0.83 against 0.55 mean dry days) while recording a quarter of the
+    peak PM2.5. The fires that drive these episodes burn 150-400 km upwind, and
+    BMKG's operational `hari tanpa hujan` is a regional product, not a
+    city-centre reading. This measures the same index where the fuel actually is.
+
+    Precipitation comes from the cached 1-degree domain grid - the same cells
+    `features.build.load_wind_grid` reads for wind at the fires, requested
+    `cached_only` so this can never reach the network.
+
+    Cells are included when they fall in the annulus **and** have at least one
+    FIRMS detection in the archive. Roughly two-fifths of each annulus is ocean
+    or unburnt, and averaging in rainfall from places nothing is burning would
+    dilute the signal. The mask is binary rather than a fire-density weight,
+    because a continuous weight is a free parameter a reviewer could fairly read
+    as tuning; and it is derived from the whole archive rather than from any
+    scoring window, so it carries no leakage.
+
+    Returns a Series aligned to `df.index`.
+    """
+    from ..ingest import firms, weather
+    from ..institutions import BY_ID
+    from . import exposure
+
+    points = weather.wind_grid_points()
+
+    # Static fire mask over the grid. Note the unique sorted axes: `points` holds
+    # one entry per cell, so its raw lat/lon lists repeat and cannot be used as
+    # lookup axes - matching a detection against them would resolve to whichever
+    # cell happened to come first at that latitude.
+    grid_lats = np.array(sorted({p[0] for p in points}))
+    grid_lons = np.array(sorted({p[1] for p in points}))
+    hot = firms.load_all()
+    burned = set(
+        zip(
+            np.abs(grid_lats[None, :] - hot["latitude"].to_numpy()[:, None])
+            .argmin(axis=1)
+            .tolist(),
+            np.abs(grid_lons[None, :] - hot["longitude"].to_numpy()[:, None])
+            .argmin(axis=1)
+            .tolist(),
+        )
+    )
+
+    # Per-cell dry-day streak, keyed by day. Cached cells only.
+    streaks: dict[tuple[float, float], pd.Series] = {}
+    for lat, lon in points:
+        cell = weather.weather(
+            lat, lon, config.HISTORY_START, config.HISTORY_END, cached_only=True
+        )
+        if cell.empty or cell["precipitation"].isna().all():
+            continue
+        daily = cell.groupby(cell["time"].dt.floor("D"))["precipitation"].sum()
+        streaks[(lat, lon)] = _streak_by_day(daily)
+
+    missing = len(points) - len(streaks)
+    if missing:
+        print(f"  {missing}/{len(points)} grid cells uncached; excluded from the index")
+
+    def in_source_region(lat: float, lon: float, inst) -> bool:
+        d = float(exposure.haversine_km(np.array([lat]), np.array([lon]), inst.lat, inst.lon)[0])
+        if not (lo_km <= d < hi_km):
+            return False
+        cell = (
+            int(np.abs(grid_lats - lat).argmin()),
+            int(np.abs(grid_lons - lon).argmin()),
+        )
+        return cell in burned
+
+    out = pd.Series(np.nan, index=df.index, dtype=float)
+    for inst_id in df["institution_id"].unique():
+        inst = BY_ID[inst_id]
+        chosen = [c for c in streaks if in_source_region(c[0], c[1], inst)]
+        if not chosen:
+            raise RuntimeError(f"No fire-bearing grid cell in range for {inst_id}")
+
+        regional = pd.concat([streaks[c] for c in chosen], axis=1).mean(axis=1)
+        rows = df["institution_id"] == inst_id
+        out.loc[rows] = df.loc[rows, "time"].dt.floor("D").map(regional).to_numpy()
+
+    return out.rename("upwind_dry_days")
 
 
 # --------------------------------------------------------------------------
@@ -125,6 +229,13 @@ def add_dryness(df: pd.DataFrame) -> pd.DataFrame:
         for _, group in out.groupby("institution_id", sort=False)
     ]
     out["consecutive_dry_days"] = pd.concat(parts).reindex(out.index)
+    return out
+
+
+def add_upwind_dryness(df: pd.DataFrame) -> pd.DataFrame:
+    """Attach `upwind_dry_days`, measured over the 150-400 km fire source region."""
+    out = df.copy()
+    out["upwind_dry_days"] = upwind_dry_days(out)
     return out
 
 

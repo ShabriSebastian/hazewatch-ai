@@ -1182,3 +1182,234 @@ evidence supports them:
    ventilation-index construction.
 3. **More fire seasons** — the highest-value option and the one that is blocked. Worth
    re-checking whether the FIRMS 2025 archive has since published.
+
+---
+---
+
+# Phase 2E Results
+
+**Branch `phase2-generalization-fixes`. Final retrain cycle of Phase 2.**
+
+2D.1 tested consecutive dry days at the **receptor** and got an exact null. The post-mortem
+named a specific flaw rather than a dead end: the fires burn 150–400 km upwind, BMKG applies
+*hari tanpa hujan* regionally, and the archive already contradicted the receptor reading —
+2024 was drier in Pontianak than 2023 while recording a quarter of the peak PM2.5. 2E
+repairs exactly that and nothing else.
+
+## What was built
+
+`regime.upwind_dry_days` computes the same BMKG index over the **fire source region**:
+per-cell daily precipitation from the cached 1° domain grid → dry day at <1 mm →
+consecutive-day streak → mean over the annulus cells 150–400 km from the receptor **that
+contain historical FIRMS detections**.
+
+- **117 of 120 grid cells** had usable cached precipitation; the 3 missing sit at
+  4°N/114–116°E, outside both source regions. **No network or FIRMS call was made.**
+- The fire mask keeps 19 cells for Pontianak and 21 for Kuching out of 34 in each annulus —
+  roughly two-fifths of each annulus is ocean or unburnt, and averaging in rain from places
+  nothing is burning would dilute the signal. The mask is binary rather than a fire-density
+  weight (a continuous weight is a free parameter that reads as tuning) and is derived from
+  the whole archive, so it carries no leakage.
+- Causality is identical to 2D.1: the streak is taken as of the last **complete** day.
+
+**The relocation demonstrably worked.** Correlation with PM2.5 roughly doubled, and the
+feature now orders the seasons correctly, which the receptor version got backwards:
+
+| | Receptor version (2D.1) | **Upwind version (2E)** |
+|---|---|---|
+| corr with PM2.5, overall | +0.175 | **+0.299** |
+| corr within 2023 | +0.133 | **+0.351** |
+| corr within 2024 | +0.245 | +0.262 |
+| 2023 vs 2024 dryness | 2024 drier (wrong way) | **2023 drier (correct)** |
+
+## Results
+
+Control reproduced the published baseline to **0.00000 drift**, so what follows is feature
+effect, not harness noise.
+
+| Arm | Window | Hit rate | FAR | Specificity | Youden J | Episode detection (95% CI) |
+|---|---|---|---|---|---|---|
+| Control | 2023 | 76.3% | 26.5% | 79.6% | 0.559 | 93.9% [80.4%, 98.3%] |
+| **+ upwind dryness** | 2023 | **79.8%** | 26.8% | 78.4% | **0.582** | 93.9% [80.4%, 98.3%] |
+| Control | 2024 | 53.8% | 44.8% | 90.3% | 0.441 | **81.0%** [60.0%, 92.3%] |
+| **+ upwind dryness** | 2024 | **59.3%** | 45.4% | 89.0% | **0.483** | **81.0%** [60.0%, 92.3%] |
+
+Feature importance: **rank 6 of 38** at +24 h (0.0443) — against rank 28 for receptor
+dryness and rank 25 for ENSO. The forest leans on it roughly five times harder.
+
+| Arm | Window | Episodes | Ablation caught, control missed | Control caught, ablation missed | Net | McNemar p |
+|---|---|---|---|---|---|---|
+| upwind dryness | 2023 | 33 | 0 | 0 | **0** | 1.000 |
+| upwind dryness | 2024 | 21 | 0 | 0 | **0** | 1.000 |
+
+## This is a different null from 2D's, and the difference matters
+
+The 2D features were ignored by the model and changed nothing. **This one is used and
+changes real things** — +5.5 pt of 2024 hour-level hit rate, +3.5 pt on 2023, and Youden's J
+up on both windows (+4.2 pt, +2.3 pt). J rising means genuine discrimination gain, not just
+a model that alerts more often.
+
+**But it catches no additional episode.** Zero discordant pairs on both windows: the same 17
+of 21 episodes in 2024, the same 31 of 33 in 2023. The feature makes the model warn on more
+of the qualifying *hours* inside episodes it was already catching. Median lead time is 24 h
+in every arm — pinned at the forecast horizon, so there is no lead-time gain to be had
+either.
+
+Combined with 2D, **every arm tested caught the identical set of episodes.** Four 2024
+episodes are missed by the baseline, by receptor dryness, by ENSO, and by upwind dryness
+alike. That invariance across four independent feature attempts is the signature of a
+ceiling, not of four unlucky feature choices.
+
+## Decision: do not merge. Model v1 is at its data ceiling.
+
+Per the decision rule set at this checkpoint — merge on a non-zero-discordant-pair
+improvement in 2024 episode detection — the discordant count is zero and the rule is not
+met. Making the call explicitly rather than deferring it:
+
+**`upwind_dry_days` is not merged.** Three reasons:
+
+1. It does not move the operational metric. What an institution experiences is whether its
+   episode was warned about; that is unchanged at 17/21.
+2. The hour-level gain is bought partly at the cost of FAR (+0.6 pt) and specificity
+   (−1.2 pt) on 2024. J is up, so there is real signal in the trade, but not the kind that
+   reaches a user.
+3. Merging is not free. Wiring it into `build_site` rewrites `models/v1/feature_spec.json`,
+   forces a full retrain of the served model, and changes **every published number** — the
+   79.5% / 25.4% in the competition deck included. Per the guardrail-4 standard used since
+   Phase 2A, that is a change requiring an explicit old-vs-new accounting, and it should not
+   be spent on a gain that does not reach an episode.
+
+`regime.py` stays in the tree, **unwired from `build_site`**, with all three features intact.
+
+**This is the one candidate worth revisiting.** It is the only feature in five phases that
+the model actually used. If a fourth fire season becomes available, re-run this ablation
+first — the plausible reading is that the feature has real signal that a 3-season training
+set cannot convert into episode detection.
+
+---
+---
+
+# Phase 2 Closing Summary
+
+*Written for someone who was not part of this work — a collaborator, a reviewer, or whoever
+maintains this next. It should stand on its own without the 1,100 lines above.*
+
+## The question
+
+HazeWatch AI forecasts PM2.5 for six institutions across West Kalimantan and Sarawak. Two
+validation runs looked alarmingly different:
+
+- **Primary (Aug–Oct 2023):** 79.5% hit rate, 25.4% false alarm rate, 99 episodes
+- **2024 generalization check:** 53.8% hit rate, 45.0% false alarm rate, 63 episodes
+
+That reads as a model that falls apart on a new year. The investigation asked why.
+
+## The answer: mostly a measurement artifact, with one real limit underneath
+
+**1. The false-alarm comparison was invalid.** False alarm rate as implemented is
+1 − precision, which depends on how often the event actually occurs. Alertable hours were
+42.6% of 2023 and 18.2% of 2024 — a 2.3× difference in base rate. Correcting for it, the
+model's false-positive rate was **20.0% in 2023 and 9.7% in 2024**: specificity nearly
+doubled. Holding the 2023 model's sensitivity *and* specificity fixed and changing only the
+base rate predicts a 53.1% FAR — worse than the 45.0% observed. **The FAR "regression" was
+the opposite of a regression** and has been retracted.
+
+**2. Two different models were being compared.** The primary number comes from a model
+trained on two complete fire seasons; the 2024 number from one trained with both validation
+seasons withheld — leaving a single, unusually quiet La Niña season. The like-for-like
+comparison is 76.3% → 53.8%, not 79.5% → 53.8%.
+
+**3. The 2024 window is intrinsically harder.** 65% of its exceedances sit within 10 µg/m³
+of the alert threshold, against 30% in 2023. A model-free persistence baseline drops from
+44.1% to 20.1% across the same two windows — the window degrades a trivial forecaster by
+more than it degrades the model.
+
+**4. The episode counts were inflated threefold.** The three Pontianak institutions share one
+CAMS grid cell and the three Kuching institutions share another, so "99 episodes" is 33 and
+"63" is 21. This is upstream data resolution — CAMS is ~0.4° native and the institutions sit
+~3 km apart — not a bug in this repository. Six institutions resolve to **two receptors**;
+forecasts are per-locality, not per-institution.
+
+## Corrected headline numbers
+
+| Run | Hit rate (hourly) | Episode detection (95% CI) | Specificity | FAR | Distinct episodes |
+|---|---|---|---|---|---|
+| Primary — served model, 2023 | 79.5% | **93.9%** [80.4%, 98.3%] | 80.0% | 25.4% | 33 |
+| Validation model, 2023 | 76.3% | **93.9%** [80.4%, 98.3%] | 79.6% | 26.5% | 33 |
+| Validation model, 2024 | 53.8% | **81.0%** [60.0%, 92.3%] | 90.3% | 44.8% | 21 |
+
+The published hit rate is an *hour-level* statistic. The share of distinct episodes the
+system warns about before onset — which is what a head teacher means by "did you warn me" —
+is **93.9% on 2023 and 81.0% on 2024**. On that measure the gap is 12.9 points with heavily
+overlapping intervals, not the 25.7 points the original comparison implied.
+
+## What was fixed
+
+- Metrics now report episode detection with a Wilson interval, and specificity beside FAR,
+  because only specificity is comparable across seasons.
+- Alert scoring can deduplicate to distinct receptors; the resolution limit is published
+  with the metrics rather than left to be inferred.
+- The build gate asserts `distinct_episodes >= 15` (derived: the smallest sample whose 95%
+  interval at the worst observed detection rate excludes "half the episodes or fewer")
+  instead of a threshold on the inflated count.
+- Documentation says per-locality where the data is per-locality — and still says
+  per-institution for fire geometry, which genuinely is.
+
+## What was tested and ruled out
+
+| Hypothesis | Verdict | Evidence |
+|---|---|---|
+| Model can't extrapolate past its training range | **Ruled out** | On the 6,192 beyond-range 2023 pairs the max forecast is 67.8 against a ~97 structural ceiling. It isn't clipped; it doesn't try |
+| Fire features saturated during extremes | **Ruled out** | Pinned on 0.0–0.7% of those pairs, *less* often than on alertable hours generally |
+| Threshold needs recalibrating for 2024 | **Ruled out** | Of 110 operating points, none dominates the current one; matching 2023's FAR costs two-thirds of the hit rate |
+| Missing dryness signal (receptor) | **Null** | Zero episodes gained; rank 28/38 |
+| Missing ENSO regime signal | **Null, and untestable here** | Zero episodes gained; one labelled fire season in training |
+| Missing dryness signal (upwind) | **Null on episodes, real otherwise** | Rank 6/38, +5.5 pt hour-level hit rate, still zero episodes gained |
+
+## The conclusion: a data ceiling, not a modeling gap
+
+Four independent feature attempts caught the **identical set of episodes** — 17 of 21 in
+2024, 31 of 33 in 2023. The same four 2024 episodes are missed by every variant, including
+the one the model demonstrably used. That invariance is what a ceiling looks like.
+
+Further feature engineering is not expected to improve **episode detection** without
+additional fire seasons. Hour-level discrimination still has some headroom — upwind dryness
+found ~4 points of Youden's J — but it did not convert into an episode, and no reviewed
+candidate looks likely to.
+
+**The binding constraint is data availability, and it is not something more modeling effort
+can reach:**
+
+- CAMS PM2.5 via Open-Meteo begins ~August 2022 (earlier years return nulls).
+- The NASA FIRMS 2025 country archive returns 404 and is not yet published.
+- That leaves **three fire seasons** — 2022 (La Niña), 2023 (El Niño), 2024 (neutral) — one
+  per ENSO regime, and any leave-one-season-out protocol trains on at most two.
+- The PM2.5 target itself resolves ~0.4°, so no amount of modelling recovers per-institution
+  detail.
+
+**This is a data ceiling, not a modeling gap.** The model is roughly as good as three
+seasons of ~40 km reanalysis will support.
+
+## What would actually help, in order
+
+1. **A fourth fire season.** Re-check whether the FIRMS 2025 archive has published. This is
+   the only change likely to move episode detection, and it would also make upwind dryness
+   and ENSO testable for the first time.
+2. **Ground-station PM2.5** (Indonesian ISPU, Malaysian APIMS) instead of, or alongside,
+   CAMS. This is the only route to genuine per-institution resolution, and it would change
+   the prediction target — every number here would need recomputing.
+3. **Re-run the upwind-dryness ablation** the moment either of the above lands.
+4. **Boundary-layer and stagnation dynamics.** `boundary_layer_height` is present but enters
+   only as an instantaneous value, with no persistence or ventilation-index construction —
+   the least-explored corner of the current feature space.
+
+## State of the branch
+
+`phase2-generalization-fixes` contains the metric corrections, the diagnostic scripts, and
+`src/haze/features/regime.py` with all three candidate features **implemented but unwired
+from `build_site`**. Nothing under `models/v1/`, `data/replay/`, `frontend/`, `Dockerfile`,
+`api_contract/` or `data/processed/` was modified in any phase — the competition submission
+remains byte-reproducible, and the corrected figures live alongside it in `diagnostics/`
+rather than overwriting it.
+
+Reproduce with `make report`, `make saturation`, `make ablations`.
