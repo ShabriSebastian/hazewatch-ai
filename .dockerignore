@@ -21,3 +21,7 @@ notebooks/
 api_contract/
 *.md
 Makefile
+
+# The dashboard is a separate deploy and the API never serves it. Left in the
+# context it ships node_modules and .next into the image build for nothing.
+frontend/

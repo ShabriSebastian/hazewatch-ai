@@ -49,6 +49,19 @@ HAZE_ROOT=$(pwd) uvicorn haze.api.main:app --host 0.0.0.0 --port $PORT --workers
 serving path never imports them. To rebuild the demo from raw data you need the pipeline
 extra: `pip install -e ".[dev,pipeline]"`, which is what `make venv` does.
 
+### The frontend
+
+The dashboard in `frontend/` is a separate deploy with its own lifecycle. It is not built
+by pushing to `main` — publish it explicitly from that directory:
+
+```bash
+cd frontend
+vercel --prod
+```
+
+Build-time configuration is committed in `frontend/.env.production`, not held in the host's
+dashboard; the comment at the top of that file explains why.
+
 ## Configuration
 
 | Variable | Default | Purpose |
