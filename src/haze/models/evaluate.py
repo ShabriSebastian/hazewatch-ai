@@ -39,6 +39,38 @@ def embargo_mask(t: pd.Series, start: str, hours: int) -> pd.Series:
     return (t >= boundary - pd.Timedelta(hours=hours)) & (t < boundary)
 
 
+def distinct_receptors(df: pd.DataFrame) -> list[str]:
+    """One institution id per genuinely distinct observed PM2.5 series.
+
+    The six institutions are not six independent receptors. CAMS global
+    composition is ~0.4 degrees native, and the three Pontianak sites sit ~3 km
+    apart, as do the three Kuching sites - so Open-Meteo returns a byte-identical
+    PM2.5 series for every member of each trio. Verified at the source: the six
+    requests snapped to five distinct grid cells and returned two distinct
+    `pm2_5` arrays. This is upstream resolution, not a join bug here; each
+    institution really is fetched separately (`features/build.py` ->
+    `ingest.weather.air_quality`, one cache key per coordinate pair).
+
+    Scoring all six therefore triples every count without adding information:
+    99 reported alert episodes are 33 distinct ones. Pooled *rates* barely move,
+    because the copies are near-identical, but the sample size behind them is
+    three times smaller than it looks, and that is what decides how much the
+    numbers are worth.
+
+    Clustering on the observed series rather than on `city` is deliberate: it
+    detects the duplication instead of assuming it, so this becomes a no-op on
+    its own if the PM2.5 source is ever upgraded to something site-resolving.
+    """
+    representatives: list[str] = []
+    seen: list[pd.Series] = []
+    for inst_id in sorted(df["institution_id"].unique()):
+        series = df.loc[df["institution_id"] == inst_id].set_index("time")["pm25"]
+        if not any(series.equals(other) for other in seen):
+            seen.append(series)
+            representatives.append(inst_id)
+    return representatives
+
+
 def split(
     df: pd.DataFrame,
     extra_holdouts: Sequence[tuple[str, str]] | None = None,
@@ -133,6 +165,7 @@ def alert_metrics(
     forecasts: dict[int, np.ndarray],
     horizon: int = 24,
     trigger: dict[int, np.ndarray] | None = None,
+    receptors: Sequence[str] | None = None,
 ) -> dict:
     """Hit rate, false alarm rate and warning lead time, per institution then pooled.
 
@@ -148,7 +181,14 @@ def alert_metrics(
     are not symmetric, so alerting on the upper band and accepting more false
     alarms is the correct trade, not a way of flattering the numbers. Both
     rates are reported so the trade stays visible.
+
+    `receptors` restricts scoring to the given institution ids - pass
+    `distinct_receptors(df)` to score one site per distinct PM2.5 series rather
+    than counting each duplicated trio three times. Defaults to None, which
+    scores every institution exactly as before, so the published artifacts stay
+    reproducible from this function unchanged.
     """
+    keep = None if receptors is None else set(receptors)
     frame = test.copy().reset_index(drop=True)
     for lead, pred in forecasts.items():
         frame[f"_pred_{lead}"] = pred
@@ -163,7 +203,7 @@ def alert_metrics(
 
     for inst_id, group in frame.groupby("institution_id"):
         inst = BY_ID.get(inst_id)
-        if inst is None:
+        if inst is None or (keep is not None and inst_id not in keep):
             continue
         threshold = thresholds.alert_threshold(inst.type).pm25
 
