@@ -154,8 +154,18 @@ def score_both_ways(
     as_published = evaluate.alert_metrics(frame, predictions, trigger=bands)
     dedup = evaluate.alert_metrics(frame, predictions, trigger=bands, receptors=receptors)
 
-    flags = episode_detection_flags(frame, bands, receptors)
-    ci = bootstrap_ci(flags)
+    # Episode detection and its interval now come from `evaluate.alert_metrics`
+    # itself (Phase 2B), so there is one implementation rather than two. The
+    # local bootstrap is kept below only to record what it produced, since the
+    # Phase 2A report quotes it.
+    ci = {
+        "n_episodes": dedup["distinct_episodes"],
+        "point": dedup["episode_detection_rate"],
+        "ci95_low": dedup["episode_detection_ci95"][0],
+        "ci95_high": dedup["episode_detection_ci95"][1],
+        "method": "wilson",
+    }
+    bootstrap = bootstrap_ci(episode_detection_flags(frame, bands, receptors))
 
     # Prevalence and the prevalence-free false-positive rate. FAR is 1-precision
     # and moves with the base rate on its own, which is exactly how the original
@@ -182,7 +192,8 @@ def score_both_ways(
     print(
         f"    episode detection (distinct, not the hour-level hit rate): "
         f"{ci['point']:.1%} of {ci['n_episodes']}  "
-        f"95% CI [{ci['ci95_low']:.1%}, {ci['ci95_high']:.1%}]"
+        f"95% CI [{ci['ci95_low']:.1%}, {ci['ci95_high']:.1%}] (Wilson; "
+        f"bootstrap gave [{bootstrap['ci95_low']:.1%}, {bootstrap['ci95_high']:.1%}])"
     )
     print(f"    prevalence {prevalence:.2%}   specificity {1 - fpr:.1%}  (FPR {fpr:.1%})")
 
@@ -191,6 +202,7 @@ def score_both_ways(
         "deduplicated": dedup,
         "receptors_scored": receptors,
         "episode_detection_rate": ci,
+        "episode_detection_rate_bootstrap": bootstrap,
         "alertable_hour_prevalence": round(prevalence, 4),
         "false_positive_rate": round(float(fpr), 4),
         "specificity": round(float(1 - fpr), 4),

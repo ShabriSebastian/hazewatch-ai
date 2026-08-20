@@ -188,11 +188,17 @@ def score_event(models, features, train, frame, label: str) -> dict:
             f"persistence {row['persistence_mae']:>6.2f}  "
             f"skill {row['improvement_vs_persistence']:+.1%}"
         )
+    ci = alerts["episode_detection_ci95"] or [float("nan"), float("nan")]
     print(
-        f"    alerts: hit {alerts['hit_rate']:.1%}  "
+        f"    alerts: hit {alerts['hit_rate']:.1%} (hourly)  "
         f"false alarm {alerts['false_alarm_rate']:.1%}  "
-        f"median lead {alerts['median_lead_time_hours']:.0f}h  "
-        f"episodes {alerts['events_evaluated']}"
+        f"specificity {alerts['specificity']:.1%}  "
+        f"median lead {alerts['median_lead_time_hours']:.0f}h"
+    )
+    print(
+        f"    episode detection {alerts['episode_detection_rate']:.1%} of "
+        f"{alerts['distinct_episodes']} distinct  95% CI "
+        f"[{ci[0]:.1%}, {ci[1]:.1%}]  (prevalence {alerts['alertable_hour_prevalence']:.1%})"
     )
 
     # Per country. The Sarawak column is the transboundary claim: if it holds on
@@ -350,6 +356,7 @@ def main() -> int:
             "identical_to_served_pipeline": True,
             "persisted": False,
         },
+        "spatial_resolution": evaluate.spatial_resolution(df),
         "events": results,
         "served_model_reference": served_reference,
         "rejected_candidates": [
@@ -372,6 +379,13 @@ def main() -> int:
             f"{config.ALERT_TRIGGER_PERCENTILE} prediction band, matching the served "
             "configuration. The full sweep is reported per event.",
             "PM2.5 targets are ECMWF CAMS reanalysis, not ground-station measurements.",
+            "Forecasts are per-locality, not per-institution: CAMS is ~0.4 degrees "
+            "native and each city's institutions share one grid cell. events_evaluated "
+            "counts every institution and so triples the real figure; "
+            "distinct_episodes is the count to quote.",
+            "hit_rate is hour-level and episode_detection_rate is episode-level; both "
+            "are reported. specificity, not false_alarm_rate, is what survives a "
+            "change in base rate between seasons.",
         ],
     }
 

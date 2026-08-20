@@ -840,3 +840,174 @@ available it is: same specificity story inverted (80.0% → 90.3%), episode dete
 
 **Still open before 2B–2D:** whether to regenerate `models/v1/` with deduplicated counts and
 adjust the test gate.
+
+---
+---
+
+# Phase 2B / 2C Results
+
+**Branch `phase2-generalization-fixes`. Stopped at the checkpoint before 2D.**
+
+New artifacts, all under `diagnostics/`: `metrics_report.json` / `.md` (the corrected
+model card), `calibration_2024.json`, `extremes_2023.json`, and a prediction cache.
+`models/v1/`, `data/replay/`, `frontend/`, `Dockerfile` and `api_contract/` remain
+byte-identical to `main`.
+
+## 2B.1 The gate threshold: `distinct_episodes >= 15`
+
+Derived rather than rounded. Using the **Wilson** score interval at the worst episode
+detection rate the system has actually recorded — 81.0%, on the 2024 window:
+
+| n | Wilson 95% lower bound at p=0.810 | half-width |
+|---|---|---|
+| 10 | 0.500 | 22.4% |
+| **15** | **0.552** | **19.1%** |
+| 21 | 0.601 | 16.2% |
+| 33 | 0.647 | 13.1% |
+
+**15 is the smallest n whose interval excludes "detects half the episodes or fewer" with
+margin** — the lower bound clears 55%, so a passing run can claim it catches a clear
+majority of episodes rather than merely more than half. Below 15 the interval straddles a
+coin flip, which is precisely the condition the gate's original message described.
+
+Rejected, and recorded so the choice is auditable:
+- **21** (lower bound clears 60%) sits *exactly* on the observed secondary count — a gate
+  calibrated on the season it was derived from, with no margin for a quieter one.
+- **14** (half-width ≤ 20 pp) optimises interval width rather than a decision-relevant floor.
+
+Cross-check: both real runs (33, 21) pass with room, and `sept_2022` — 18 reported but
+**6** distinct episodes — fails, agreeing with the independent rejection already recorded
+at `scripts/06_validate_events.py:81-93`.
+
+**The interval method changed too.** Phase 2A used a percentile bootstrap, which returned a
+degenerate `[84.9%, 100.0%]` at 31/33: resampling 31 successes out of 33 puts an
+all-successes draw inside the 97.5th percentile. Wilson gives `[80.4%, 98.3%]` on the same
+data and stays inside [0, 1] at the tails. All intervals below are Wilson; the Phase 2A
+bootstrap figures are retained in `dedup_rescore.json` under a separate key.
+
+### Test count after the change: **43 passed, 1 skipped** (was 43 passed)
+
+The skip is deliberate and is the honest failure mode. `models/v1/metrics.json` is frozen
+and predates the `distinct_episodes` field, so the new gate cannot evaluate it. Rather than
+assert the relaxed threshold against the *inflated* `events_evaluated` count — which would
+pass while measuring the wrong thing — the gate skips with an explicit "regenerate with
+scripts/03_train.py to arm this gate" message. **The count gate is therefore dormant until
+the next real retrain.** The hit-rate, false-alarm and lead-time assertions still run.
+
+## 2B.2–2B.3 Co-primary metrics and the resolution disclosure
+
+`evaluate.alert_metrics` now always returns `specificity`, `alertable_hour_prevalence`,
+`distinct_episodes`, `episode_detection_rate` and `episode_detection_ci95` alongside the
+original fields. `evaluate.spatial_resolution` produces the disclosure block, wired into
+`03_train.py` and `06_validate_events.py` payloads and console output (neither run here, so
+`models/v1/` stays frozen) and surfaced in the generated report body.
+
+The API schema gained matching **optional** fields plus a `SpatialResolution` model.
+Verified contract-safe: `tests/test_contract.py` rejects only newly *required* fields and
+type changes, and the contract suite stays green without re-exporting `openapi.json`.
+
+Corrected metrics, all on distinct receptors:
+
+| Run | Hit rate (hourly) | Episode detection (95% CI) | Specificity | FAR | Prevalence | Distinct episodes |
+|---|---|---|---|---|---|---|
+| Primary — served, 2023 | 79.5% | **93.9%** [80.4%, 98.3%] | 80.0% | 25.4% | 42.5% | 33 |
+| Validation model, 2023 | 76.3% | **93.9%** [80.4%, 98.3%] | 79.6% | 26.5% | 42.5% | 33 |
+| Validation model, 2024 | 53.8% | **81.0%** [60.0%, 92.3%] | **90.3%** | 44.8% | 18.2% | 21 |
+
+Documentation relabelled to per-locality language in `SYSTEM_FLOW.md`,
+`evaluate.alert_metrics`, `replay/store.py`, `gru.py` and `07_live_snapshot.py`. **UFEI and
+hotspot geometry were deliberately left described as per-institution, because they
+genuinely are** — they depend on each site's own coordinates and differ across a trio on
+~96% of hours. Only the PM2.5 target and everything derived from it are per-locality. A
+blanket relabel would have replaced one inaccuracy with another.
+
+## 2C.1 Threshold recalibration on 2024 — no operating point recovers the primary result
+
+Swept the trigger percentile (75–95) against the decision threshold T (15–65 µg/m³ in
+2.5 steps, with the EPA floor forced into the grid), scoring all 110 combinations on the
+existing predictions. Sweeping T is implemented by rescaling the trigger rather than
+loosening the comparison, so the observed side of every comparison is untouched.
+
+| Operating point | Hit rate | FAR | Specificity | Episode detection |
+|---|---|---|---|---|
+| **Current** (p90, T=35.5) | 53.8% | 44.8% | 90.3% | 81.0% |
+| Best at primary's FAR ≤25.4% (p75, T=37.5) | **22.1%** | 24.8% | 98.0% | 28.6% |
+| Best Youden's J (p75, T=25.0) | 70.2% | 51.2% | 83.6% | **90.5%** |
+
+At the EPA floor, by percentile:
+
+| | p75 | p80 | p85 | **p90** | p95 |
+|---|---|---|---|---|---|
+| Hit rate | 27.2% | 32.6% | 40.7% | **53.8%** | 71.7% |
+| FAR | 30.6% | 33.1% | 37.5% | **44.8%** | 53.9% |
+| Specificity | 97.3% | 96.4% | 94.6% | **90.3%** | 81.4% |
+| Episode detection | 52.4% | 57.1% | 71.4% | **81.0%** | 90.5% |
+
+**Zero of the 110 grid points dominate the current one** — none achieves a higher hit rate
+at no worse false alarm rate. Recalibration only slides along the curve. Forcing 2024's FAR
+down to the primary run's 25.4% costs two thirds of the hit rate (53.8% → 22.1%) and
+collapses episode detection to 28.6%.
+
+The best-J point does buy more detection (90.5% of episodes) but pays for it in specificity
+(90.3% → 83.6%) and requires T=25.0 — **below the EPA `UNHEALTHY_SENSITIVE` floor**. That is
+not a calibration change; it changes what the alert claims. An alert at 25 µg/m³ no longer
+means "forecast to reach the level EPA names for sensitive groups", and the AQI category
+shown beside it would contradict the trigger.
+
+**Recommendation: keep p90 / 35.5.** The measurement is reported above; the recommendation
+is separate from it, as it should be.
+
+## 2C.2 Above the training range — and a correction to the received explanation
+
+**A primary-validation issue only.** The 2024 window peaks at 66.4 µg/m³ and never
+approaches the ceiling. Over the 2023 window, with the served model:
+
+| | |
+|---|---|
+| Alertable forecast pairs | 40,371 |
+| Pairs observing above the 112.9 µg/m³ training max | **6,192 (15.3%)** |
+| Observed on those pairs (min / median / max) | 113.6 / 146.4 / 307.3 |
+| Forecast on those pairs (min / median / **max**) | 18.8 / 42.9 / **67.8** |
+| Median shortfall | **107.7 µg/m³** |
+| Alert still fired on those hours | **100.0%** |
+| Alert fired across *all* alertable hours | 79.5% |
+| Severity category understated | 96.3% of pairs |
+
+Two findings, and the second corrects something this repository has been asserting.
+
+**(a) Detection is untouched; severity is what is lost.** The alert threshold is 35.5 and
+these hours observe 113–307, so even a badly capped forecast still clears it. The alert
+fired on **100%** of beyond-range hours against 79.5% across all alertable hours — the most
+extreme episodes are the *easiest* to detect. What the user loses is the magnitude and the
+AQI category attached to it, wrong on 96.3% of pairs.
+
+**(b) The tree-ensemble ceiling is not what is binding.** `scripts/03_train.py:130-133` and
+the `notes` in `metrics.json` explain the under-prediction as the forest being unable to
+predict beyond its training maximum, and Phase 1 of this report repeated that. It is true
+that a ceiling exists — but it is not the constraint operating here. The forests can
+structurally emit up to ~97 µg/m³ (`training_ranges.json`, per-lead maxima 93.6–101.0), and
+the p90 band ceiling is 90.1. **The actual maximum point forecast across all 6,192
+beyond-range pairs is 67.8** — nowhere near either. The model is not being clipped; it is
+failing to anticipate these episodes at all, predicting a median of 42.9 where 146.4
+occurred.
+
+That matters for what would fix it. Raising the ceiling — more training range, a different
+target transform, quantile forests — addresses a constraint that is not active. The binding
+problem is that the features do not carry enough signal to push the prediction upward on
+those hours, which points back to root cause 4 (no interannual regime signal, no dryness
+term, fire features saturating out of range) rather than to the tree-ensemble ceiling.
+
+## Recommendation summary
+
+| Change | Keep? | Rationale |
+|---|---|---|
+| `distinct_episodes >= 15` gate | **Keep** | Derived floor; arms on next retrain |
+| Wilson over bootstrap | **Keep** | Bootstrap gave a degenerate 100% upper bound |
+| Episode detection as co-primary | **Keep** | Narrows the apparent 2024 gap from 25.7 pt to 12.9 pt with overlapping CIs |
+| Specificity alongside FAR | **Keep** | The only cross-season-comparable rate |
+| Spatial resolution disclosure | **Keep** | Prevents the per-institution reading that caused this |
+| 2024-tuned decision threshold | **Reject** | No grid point dominates; the best one breaks EPA semantics |
+| Raising the model ceiling | **Deprioritise** | Measured: the ceiling is not the active constraint |
+
+**Still open:** whether to regenerate `models/v1/` so the count gate stops being dormant.
+That decision was deferred at the 2A checkpoint and is unchanged by this phase.

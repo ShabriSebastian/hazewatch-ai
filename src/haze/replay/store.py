@@ -213,7 +213,13 @@ class ScenarioStore:
 
     # -- alerts ------------------------------------------------------------
     def alerts(self, at: datetime) -> list[dict]:
-        """Alerts as they stood at `at`: the latest evaluation per institution."""
+        """Alerts as they stood at `at`: the latest evaluation per institution.
+
+        One row per institution, but the concentrations behind them are
+        per-locality: CAMS is ~0.4 degrees native, so each city's institutions
+        share a grid cell and their forecasts move together by construction.
+        Three Pontianak rows agreeing is not three confirmations.
+        """
         rows = self._connect().execute(
             "SELECT a.payload FROM alerts a "
             "JOIN (SELECT institution_id, MAX(issued_epoch) AS latest FROM alerts "

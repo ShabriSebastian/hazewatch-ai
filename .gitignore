@@ -33,3 +33,9 @@ out/
 # Live snapshots: only the published `latest.json` is tracked. The timestamped
 # per-run files are local artifacts and would churn the repo on every run.
 data/live/snapshot_*.json
+
+# Cached model predictions for diagnostic re-analysis. Regenerable by
+# scripts/10_metrics_and_calibration.py (~15 min); 18 MB of derived arrays that
+# would otherwise be committed every time a threshold sweep is rerun.
+diagnostics/predictions_cache.npz
+diagnostics/predictions_cache.meta.json

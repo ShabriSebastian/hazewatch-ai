@@ -444,10 +444,38 @@ class HorizonMetrics(BaseModel):
 
 
 class AlertMetrics(BaseModel):
-    hit_rate: float
-    false_alarm_rate: float
+    hit_rate: float = Field(
+        description="Hour-level: of issuance hours with a breach coming, how many warned."
+    )
+    false_alarm_rate: float = Field(
+        description=(
+            "1 - precision. Depends on how often the event occurs, so it is not "
+            "comparable across seasons with different base rates; use specificity."
+        )
+    )
     median_lead_time_hours: float
-    events_evaluated: int
+    events_evaluated: int = Field(
+        description=(
+            "Episodes counted per institution. Institutions sharing a grid cell "
+            "count separately, so this exceeds distinct_episodes."
+        )
+    )
+    # Optional so the frozen contract stays valid and pre-deduplication metrics
+    # files still parse; populated by any run after the receptor fix.
+    specificity: float | None = Field(
+        default=None, description="Prevalence-free. The figure to compare across years."
+    )
+    alertable_hour_prevalence: float | None = None
+    distinct_episodes: int | None = Field(
+        default=None, description="Episodes counted per distinct PM2.5 series."
+    )
+    episode_detection_rate: float | None = Field(
+        default=None,
+        description="Episode-level: of distinct episodes, how many were warned before onset.",
+    )
+    episode_detection_ci95: list[float] | None = Field(
+        default=None, description="95% Wilson interval on episode_detection_rate."
+    )
 
 
 class TriggerOperatingPoint(BaseModel):
@@ -455,6 +483,26 @@ class TriggerOperatingPoint(BaseModel):
     hit_rate: float
     false_alarm_rate: float
     median_lead_time_hours: float
+
+
+class SpatialResolution(BaseModel):
+    """What the PM2.5 source can actually resolve.
+
+    CAMS global composition is ~0.4 degrees native. The three Pontianak
+    institutions sit ~3 km apart, as do the three Kuching ones, so all three of
+    each share a grid cell and receive the identical series. Forecasts are
+    therefore **per-locality**, not per-institution, and this block says so
+    rather than leaving a reader to infer it from six identical rows.
+    """
+
+    source: str = Field(description="e.g. 'CAMS reanalysis via Open-Meteo'")
+    native_resolution_deg: float
+    note: str
+    groups: dict[str, list[str]] = Field(
+        description="Representative institution id -> every institution sharing its cell."
+    )
+    distinct_receptors: int
+    institutions: int
 
 
 class ModelMetrics(BaseModel):
@@ -478,6 +526,10 @@ class ModelMetrics(BaseModel):
     )
     horizons: list[HorizonMetrics]
     alerts: AlertMetrics
+    spatial_resolution: SpatialResolution | None = Field(
+        default=None,
+        description="Which institutions the PM2.5 source can and cannot tell apart.",
+    )
     top_features: list[FeatureContribution]
     alert_trigger_percentile: int | None = Field(
         default=None,

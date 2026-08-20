@@ -38,6 +38,18 @@ Legend: `[ ]` process · `< >` decision · `( )` data store · `>>` user action 
            • PM2.5 lags, calendar, met covariates
                      ▼
           (data/processed/features.parquet)  127,296 rows
+```
+
+**Spatial resolution.** UFEI and the hotspot geometry really are per-institution —
+they depend on each site's own coordinates. The **PM2.5 target does not.** CAMS is
+~0.4° native, and the three Pontianak institutions sit ~3 km apart, as do the three
+Kuching ones, so each trio shares one grid cell and receives a byte-identical PM2.5
+series. Forecasts and alerts are therefore **per-locality**: six institutions resolve
+to two receptors. Three Pontianak alerts agreeing is one forecast shown three times,
+not three confirmations. Recovering finer detail would need a different PM2.5 source
+(ground stations), not a code change.
+
+```
                      ▼
         [ 03_train.py ]  ── split: train ──────── test held out entirely
            │                (2023-08-16 .. 2023-10-15 excluded from training)

@@ -1,0 +1,23 @@
+{
+  "training_target_max_pm25": 112.9,
+  "forecast_pairs_evaluated": 210816,
+  "alertable_pairs": 40371,
+  "pairs_beyond_training_range": 6192,
+  "share_of_alertable_beyond_range": 0.1534,
+  "observed_on_those_pairs": {
+    "min": 113.6,
+    "median": 146.4,
+    "max": 307.3
+  },
+  "forecast_on_those_pairs": {
+    "min": 18.8,
+    "median": 42.9,
+    "max": 67.8
+  },
+  "median_shortfall_pm25": 107.7,
+  "alert_still_fired_on_beyond_range_hours": 1.0,
+  "alert_fired_on_all_alertable_hours": 0.7953,
+  "severity_category_understated": 5963,
+  "severity_category_understated_share": 0.963,
+  "interpretation": "The ceiling costs severity accuracy, not detection: the alert threshold is 35.5 ug/m3 and these hours observe far above it, so a forecast capped near the training maximum still crosses the threshold and still fires. What the user loses is the size of the number and the category attached to it. This is a primary-validation (2023) issue only - the 2024 window peaks at 66.4 ug/m3 and never approaches the ceiling."
+}

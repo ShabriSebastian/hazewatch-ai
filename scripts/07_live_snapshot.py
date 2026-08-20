@@ -150,6 +150,8 @@ def main() -> int:
     upper_p = config.ALERT_TRIGGER_PERCENTILE
 
     # -- 3. features + forecast per institution ---------------------------
+    # Emitted per institution, but resolved per locality: institutions sharing a
+    # CAMS grid cell get the same PM2.5 series and so the same forecast curve.
     print("\nBuilding features and forecasting...")
     results = []
     for inst in INSTITUTIONS:
