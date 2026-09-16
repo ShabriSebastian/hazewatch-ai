@@ -11,14 +11,14 @@ Legend: `[ ]` process · `< >` decision · `( )` data store · `>>` user action 
 ## 0. The whole system at a glance
 
 ```
-   PUBLIC DATA            OFFLINE PIPELINE           FROZEN API            BROWSER
+   PUBLIC DATA            OFFLINE PIPELINE        PUBLISHED FILES         BROWSER
   ┌───────────┐          ┌────────────────┐        ┌───────────┐        ┌──────────┐
-  │ NASA FIRMS│          │ features ─ train│        │ 18 paths  │        │  Lite    │
-  │ ECMWF CAMS│ ───────► │ validate ─ scen.│ ─────► │ /api/v1   │ ─────► │  Pro     │
-  │ ERA5 wind │          │ contract export │        │ replay clk│        │ 8 routes │
+  │ NASA FIRMS│          │ features ─ train│        │latest.json│        │  Lite    │
+  │ ECMWF CAMS│ ───────► │ validate        │ ─────► │history.jsn│ ─────► │  Pro     │
+  │ ERA5 wind │          │ 07 live snapshot│        │ published │        │ 8 routes │
   └───────────┘          └────────────────┘        └───────────┘        └──────────┘
-       raw                  build once              read-only             human
-    observations          (make data..validate)      + `?at=`           decides
+       raw                 build once +            two static files        human
+    observations          refresh by hand             no server           decides
 ```
 
 ---
@@ -67,17 +67,17 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
            ! also rescores the SERVED model on distinct receptors, so the
              corrected 33-episode count exists without a retrain
                      ▼
-          (metrics_by_event.json) ──► merged into GET /model/metrics as
-           `validation_events` + `alerts_corrected` (additive, contract intact)
+          (metrics_by_event.json) + (diagnostics/metrics_report.md)
+           `validation_events` and the deduplicated `alerts_corrected` figures
                      ▼
-        [ 04_precompute_scenario.py ] ──► (scenario_2023_sept.sqlite)
-           every hour of the episode precomputed: observations, forecasts,
-           alert states, notifications  → demo runs with no network, no GPU
+        [ 07_live_snapshot.py ] ──► (data/live/latest.json)
+           served model + current FIRMS / Open-Meteo / CAMS → one 24h forecast
+           per institution, gridded fire field, provenance of every input
                      ▼
-        [ 05_offline_smoke_test.py ]  135 checks, Wi-Fi OFF  ── "safe to record"
-           ! now pins the exact bookmark figures the docs quote, not just
-             properties like "lead >= 6h" - an 18h that had become 17h passed
-        [ 00_export_contract.py ]     openapi.json — 18 paths, 43 schemas, FROZEN
+        [ 08_gate_snapshot.py ]  publishes only if it passes; exits 2 unchanged
+                     ▼
+        [ 09_append_history.py ] ──► (data/live/history.json)
+           ! one record per PUBLISHED snapshot — never a synthetic one
 ```
 
 ---
@@ -119,24 +119,24 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
 
 ---
 
-## 3. Serving layer — the frozen contract
+## 3. Serving layer — two published files
 
 ```
-  GET  /api/v1/health ................ mode, data_source, clock
-  GET  /api/v1/model/metrics ......... honest held-out skill (503 before training)
-  GET  /api/v1/institutions .......... 6 sites, 3 per country
-  GET  /api/v1/institutions/{id}
-  GET  /api/v1/hotspots .............. raw FIRMS detections
-  GET  /api/v1/hotspots/summary ...... gridded for map rendering
-  GET  /api/v1/institutions/{id}/forecast     ?horizon_hours= ?at=
-  GET  /api/v1/institutions/{id}/observation  ?at=
-  GET  /api/v1/institutions/{id}/alert        ?at=      alert=null when clear
-  GET  /api/v1/alerts ................ ?status= ?country= ?transboundary= ?at=
-  GET  /api/v1/notifications ......... simulated last-mile feed, newest first
-  POST /api/v1/notifications/simulate  ◄── EXISTS, deliberately UNUSED by the UI
-  GET  /api/v1/replay/state .......... clock + the 4 bookmarks
-  GET  /api/v1/scenarios
-  POST /api/v1/replay/{seek,play,pause,reset}  ◄── UNUSED in deployment (see §4)
+  data/live/latest.json      generated_at · issued_at · issued_offset_hours
+    .institutions[]          full record, incl. lat/lon for the map
+      .forecast[24]          pm25 + p10/p50/p90 band, per lead hour
+      .uncertainty           beyond-training-range flag + renderable note
+      .attribution           source region, transboundary, transport hours
+      .current               latest observation
+      .alert                 null when clear
+    .hotspots.cells[]        gridded fire field for the map
+    .provenance              what was fetched, when, and its caveats
+
+  data/live/history.json     one compact record per published snapshot
+
+  ! Validation is strict. A snapshot missing any block the main body needs is
+    rejected rather than half-rendered, and every screen shows an explicit
+    unavailable state with the reason. Nothing renders blank.
 
   THE SIX INSTITUTIONS  (2 school · 2 hospital · 2 authority, 3 per country)
     id-ptk-sman1     school     Pontianak  ID      1,080 students     ~
@@ -156,37 +156,22 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
 
 ---
 
-## 4. The replay clock — why every read carries `?at=`
+## 4. Publication cadence — why the dashboard says how old it is
 
 ```
-   PROBLEM                                   SOLUTION
+   PROBLEM                                   CONSEQUENCE
    ┌────────────────────────────┐            ┌────────────────────────────────┐
-   │ Server holds ONE in-process│            │ Browser holds its OWN clock.   │
-   │ clock, shared by everyone. │            │ Sends ?at=<ISO> on every read. │
-   │ /replay/play mutates it    │  ────────► │ /replay/* POSTs never called.  │
-   │ with no auth. Judge A      │            │ Each visitor fully independent.│
-   │ moves it under Judge B.    │            │ lib/replay/clock.ts            │
+   │ GitHub runners cannot reach│            │ No scheduler. `make refresh` is│
+   │ NASA FIRMS reliably — FIRMS│  ────────► │ run by hand from a residential │
+   │ failed from Azure IPs more │            │ connection. The dashboard shows│
+   │ often than it succeeded,   │            │ what was last published, and   │
+   │ while the same files pull  │            │ says when that was — on every  │
+   │ in ~3s from a home line.   │            │ screen, not in a footnote.     │
    └────────────────────────────┘            └────────────────────────────────┘
 
-   BOOKMARKS (fetched from /replay/state — never hardcoded)
-   ┌──────────────┬────────────────────┬──────────────────────────────────────┐
-   │ calm         │ 2023-08-28T09:00Z  │ 0/6 alerting. Baseline is clean.     │
-   │ first_warning│ 2023-08-30T19:00Z  │ 3/6 — all Sarawak, 18h ahead, while  │
-   │              │                    │ Indonesia is clear. The cross-border │
-   │              │                    │ claim in its purest form.            │
-   │ crossborder  │ 2023-09-02T16:00Z  │ 6/6 across BOTH countries at once.   │
-   │              │                    │ Kuching warned 17h ahead while its   │
-   │              │                    │ air still reads 12.8 (MODERATE);     │
-   │              │                    │ observation later confirms 49.2.     │
-   │ severe       │ 2023-09-04T21:00Z  │ 6/6. Pontianak forecast 86 vs        │
-   │              │                    │ observed 307 → beyond-range flag ON. │
-   └──────────────┴────────────────────┴──────────────────────────────────────┘
-                        ▲
-                 opens here by default
-
-   ! /hotspots/summary accepts no ?at=, so the client sends explicit start/end
-     derived from its own clock — otherwise the map alone would drift to the
-     shared server clock while every other panel stayed pinned.
+   ! Anything older than 6h is flagged, not merely displayed.
+   ! The forecast is issued for `now − 12h`, because the trailing hours of the
+     NRT fire field are only partly populated. The UI says so.
 ```
 
 ---
@@ -197,20 +182,12 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
    >> visitor opens the app
               │
               ▼
-   [ initialiseClock() ] ── GET /replay/state ── pin `at` = crossborder bookmark
+   [ fetchSnapshot() ] ── one GET of latest.json, once per session,
+              │            shared by every screen (was 11–14 requests per page)
               │
-              ├── GET /health          (no ?at= — endpoint has none)
-              ├── GET /institutions    (static records, no ?at=)
+              └── [ fetchHistory() ] ── history.json; absent is not fatal
               │
               ▼
-   < NEXT_PUBLIC_HAZE_DATA_MODE >
-        │                    │
-      "api"                "mock"
-        │                    └──► contract-shaped fixtures, zero network
-        ▼                         (recording-safe fallback)
-   live backend
-        │
-        ▼
    ┌─────────────────────────────────────────────────────────────┐
    │ HEADER   [institution ▼]  [Scope]  [Forecast]  [clock chip] │
    │          no login — institution context comes from a         │
@@ -223,8 +200,8 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
    │          │          preview                                 │
    └──────────┴──────────────────────────────────────────────────┘
 
-   ! Cold start: free-tier hosts sleep after ~15 min and take 30–60s to wake.
-     Every loading state says so rather than showing a spinner that looks hung.
+   ! There is no server to wake. A failed fetch is an explicit error state
+     naming the reason, never a blank screen.
 ```
 
 ---
@@ -249,17 +226,18 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
                                     │ SAFE │      │ WATCH │
                                     └──────┘      └───────┘
 
-   ! The client holds NO copy of 35.5 for decisions. Alert = the backend said so.
+   ! The client holds NO copy of 35.5 for decisions. Alert = the snapshot says so.
      Safe/Watch = aqi_category, which already encodes the EPA breakpoints.
 
    ! TRAP AVOIDED: reading `peak.aqi_category` instead looks equivalent and is not.
      That field categorises the CENTRAL estimate while alerting fires on the UPPER
-     band. At `crossborder` both Kuching and Pontianak read MODERATE on it while
-     actively alerting (upper band 38.5 and 57.7).
+     band. On the September 2023 episode both Kuching and Pontianak read MODERATE
+     on it while actively alerting (upper band 38.5 and 57.7).
 
    ! Safe means "air is normal right now, nothing forecast to trigger". Requiring
      all 24 forecast points to be GOOD makes Safe unreachable — regional baseline
-     is ~18 µg/m³, already MODERATE. A sweep of the whole scenario returned 0 Safe.
+     is ~18 µg/m³, already MODERATE. A sweep of the whole 2023 episode returned
+     0 Safe.
 ```
 
 ---
@@ -340,8 +318,8 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
                                       ▼
           ╔═══════════════════════════════════════════════════════╗
           ║ NO NETWORK REQUEST IS MADE.                           ║
-          ║ Local React state only. Works with the backend off.   ║
-          ║ `apiPost` does not exist in the client.               ║
+          ║ Local React state only. Nothing is ever written.      ║
+          ║ There is no write path in this application at all.    ║
           ╚═══════════════════════════════════════════════════════╝
                                       │
                                       ▼
@@ -426,24 +404,25 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
  │                       │ community or public broadcast.                  │
  ├───────────────────────┼─────────────────────────────────────────────────┤
  │ Not ground truth      │ PM2.5 is CAMS reanalysis, not ground-station    │
- │                       │ measurement. Labelled in the UI, stated in the  │
- │                       │ contract, repeated in metrics `notes`.          │
+ │                       │ measurement. Labelled in the UI, carried in the │
+ │                       │ snapshot's provenance, repeated in metrics      │
+ │                       │ `notes`.                                        │
  ├───────────────────────┼─────────────────────────────────────────────────┤
- │ No fabricated history │ The contract has NO alert-history endpoint —    │
- │                       │ `/alerts` returns only the latest state per     │
- │                       │ institution. Timelines are reconstructed by     │
- │                       │ sampling `/alerts?at=` at 7 past offsets.       │
- │                       │ Non-alert samples read "Clear", not Safe/Watch, │
- │                       │ because that distinction was not fetched.       │
+ │ No fabricated history │ History is accumulated, never synthesised: one  │
+ │                       │ record per PUBLISHED snapshot. It is sparse and │
+ │                       │ irregular because publishing is manual, and the │
+ │                       │ UI shows the gaps rather than implying a        │
+ │                       │ continuous record. A gap means nobody looked —  │
+ │                       │ not that the air was clear.                     │
  ├───────────────────────┼─────────────────────────────────────────────────┤
  │ Performance is quoted │ 93.9% episode detection of 33 distinct          │
  │ from one place        │ episodes · 79.5% hit · 25.4% false alarm ·      │
  │                       │ 24h median lead, 64.5% of it on that            │
- │                       │ ceiling. Served by /model/metrics, never        │
- │                       │ hardcoded — but note NO UI surface reads        │
- │                       │ that endpoint today; it is served, not          │
- │                       │ displayed. `alerts_corrected` is the            │
- │                       │ deduplicated block; the frozen `alerts`         │
+ │                       │ ceiling. Written once by the pipeline into      │
+ │                       │ models/v1/metrics.json and restated in          │
+ │                       │ diagnostics/metrics_report.md, never            │
+ │                       │ hardcoded in prose. `alerts_corrected` is       │
+ │                       │ the deduplicated block; the frozen `alerts`     │
  │                       │ still reports 99 and is left as published.      │
  ├───────────────────────┼─────────────────────────────────────────────────┤
  │ "Median lead" is a    │ alert_metrics searches a window of exactly      │
@@ -464,6 +443,10 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
 ---
 
 ## 10. The claim, in one line
+
+Measured on the held-out September 2023 episode. The system no longer replays it —
+the dashboard reads current conditions — but this is what it did, and the figures
+below are asserted by the validation scripts.
 
 ```
   FIRMS hotspot in West Kalimantan

@@ -37,7 +37,7 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
   ┌───────────────────────────────────────────────────────────┐
   │ No sign-up. No password. No account.                      │
   │ Institution context comes from a SELECTOR in the header.  │
-  │ The visitor's replay clock is pinned to `crossborder`.    │
+  │ Everyone sees the same published snapshot.                │
   └───────────────────────────────────────────────────────────┘
         │
         ▼
@@ -62,7 +62,9 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
  │   [🏫 Institution ▼]   ← changes WHO you are looking at. Re-fetches      │
  │                          every panel. Persists across all 8 routes.     │
  │   ● Prototype Active   ← honesty label, not a live status               │
- │   ◷ Scenario replay · 2023-09-02 16:00Z   ← YOUR clock, not the server's│
+ │   ◷ Live snapshot · 16 Sept, 03:27 UTC (15 min ago)                     │
+ │        ← when it was last PUBLISHED. Turns amber past 6h. Refresh is    │
+ │          manual: there is no scheduler.                                 │
  │   ✦ Pro Mode → / ✦ Lite Mode →            ← labels the DESTINATION      │
  ├─────────────────────────────────────────────────────────────────────────┤
  │  SIDEBAR — four links, never crosses modes                              │
@@ -73,7 +75,7 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
  >> changing the institution
         │
         ▼
-   all panels re-fetch with the new id, clock stays pinned
+   all panels re-read the same snapshot for the new id — one fetch, no refetch
         │
         ▼
    ! a school and a hospital in the same city now show the SAME status and the
@@ -143,7 +145,7 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
   [ INSTITUTION OVERVIEW ]
         │
         ▼
-  < what did the backend say? >
+  < what did the snapshot say? >
         │
    ┌────┴─────────────┬──────────────────────┐
    ▼                  ▼                      ▼
@@ -303,7 +305,7 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
                               back to        ╔══════════════════════════════╗
                               "prepared",    ║ NO NETWORK REQUEST.          ║
                               nothing        ║ Local React state only.      ║
-                              changed        ║ Works with the backend off.  ║
+                              changed        ║ Nothing is ever written.     ║
                                              ╚══════════════════════════════╝
                                                     │
                                                     ▼
@@ -364,33 +366,27 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
 ## 9. Non-happy paths
 
 ```
- >> first load on a sleeping free-tier host
-        ▼
-   "Loading institution overview…
-    The first request can take up to a minute if the demo server
-    is waking from idle."          ← not a spinner that looks hung
-
- >> backend unreachable
+ >> snapshot cannot be reached, or fails validation
         ▼
    ┌──────────────────────────────────────────────────┐
-   │ Could not load Institution Overview.             │
-   │ <the actual error>                               │
-   │ For an offline demo, set                         │
-   │ NEXT_PUBLIC_HAZE_DATA_MODE=mock                  │
+   │ No data to show.                                 │
+   │ <why: unreachable / missing required fields>     │
+   │ Nothing is shown rather than part of it.         │
    └──────────────────────────────────────────────────┘
-        │
-        ▼
-   >> switch to mock  ──► identical screens, contract-shaped fixtures,
-                          zero network. Recording-safe.
 
- >> two people open the link at once
+ >> the published snapshot is more than 6 hours old
         ▼
-   Nothing happens to each other. Each browser pins its own `?at=`.
-   The shared server clock is never mutated.
+   amber banner: "These are not current conditions."
+   Every figure stays on screen, labelled — nothing is hidden.
 
- >> forecast leaves the model's trained range (the `severe` bookmark)
+ >> an institution has no alert in any published snapshot
         ▼
-   amber caveat appears, text rendered verbatim from the API:
+   "No alerts recorded for this institution" + how many snapshots it was
+   absent from. Not a hang, and not a claim that the air was clear.
+
+ >> forecast leaves the model's trained range
+        ▼
+   amber caveat appears, text rendered verbatim from the snapshot:
    "From +1h this forecast is beyond the model's trained range…"
    ! and NO green "high confidence" badge in the other direction —
      absence of a warning is not a positive signal
@@ -406,16 +402,19 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
 
 ```
  ┌───────────────────────────────────────────────────────────────────────────┐
- │ 1. NO BOOKMARK SWITCHER IN THE UI.                                        │
- │    The clock opens pinned to `crossborder` and stays there. Seeing `calm`, │
- │    `first_warning` or `severe` means changing DEFAULT_BOOKMARK_KEY in      │
- │    lib/replay/clock.ts. The four bookmarks are fetched from the API and    │
- │    ready to drive buttons — the buttons just do not exist yet.             │
+ │ 1. THE DATA IS ONLY AS FRESH AS THE LAST MANUAL REFRESH.                  │
+ │    No scheduler exists. A visitor may arrive at a snapshot hours or days   │
+ │    old. The UI is explicit about it, but it is still the biggest gap       │
+ │    between this and an operational system.                                │
+ ├───────────────────────────────────────────────────────────────────────────┤
+ │ 1b. ALERT HISTORY IS THIN.                                                │
+ │    It accumulates one record per publish, so it starts nearly empty and    │
+ │    fills at whatever rate someone runs `make refresh`.                     │
  ├───────────────────────────────────────────────────────────────────────────┤
  │ 2. THE SELECTOR ONLY OFFERS SCHOOLS AND HOSPITALS.                         │
  │    The two `authority` institutions (BPBD Pontianak, JPBN Sarawak) are     │
  │    filtered out — they are not an institution-staff audience — but they    │
- │    DO appear in Pro's regional map and table, and the backend raises real  │
+ │    DO appear in Pro's regional map and table, and the pipeline raises real │
  │    alerts for them. Deliberate. Type-aware copy now handles `authority`    │
  │    explicitly, so enabling them in the selector is safe.                   │
  ├───────────────────────────────────────────────────────────────────────────┤
@@ -429,6 +428,9 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
 ---
 
 ## 11. The shortest path to the point
+
+On the held-out September 2023 episode — what the system did, not what is on
+screen today:
 
 ```
  >> open /

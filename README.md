@@ -1,6 +1,6 @@
 # Transboundary Haze Early-Warning System
 
-Backend for a short-horizon PM2.5 forecasting and last-mile alerting service covering
+A short-horizon PM2.5 forecasting and last-mile alerting service covering
 institutions on both sides of the Indonesia–Malaysia border in Borneo.
 
 Built for the Oxford Saïd Global Climate Tech Challenge 2026.
@@ -32,7 +32,7 @@ to cancel outdoor assembly.
 - **It does not detect fires.** It consumes NASA FIRMS detections as input. No CNN over
   raw satellite imagery is involved, by design.
 - **It does not send messages.** The notification feed is simulated. Every notification
-  the API returns carries `"simulated": true`.
+  carries `simulated: true`.
 - **Its PM2.5 values are not ground-station measurements.** They come from the ECMWF CAMS
   reanalysis and are labelled `"source": "cams_reanalysis"` throughout.
 
@@ -43,15 +43,13 @@ to cancel outdoor assembly.
 ```bash
 make venv          # create .venv, install dependencies
 make data          # download and cache all inputs (network required, once, ~10 min)
-make demo          # features -> train -> precompute scenario (offline)
-make serve         # API on http://localhost:8000  (docs at /docs)
+make demo          # features -> train (offline, from cached inputs)
+make refresh       # fetch current conditions, publish a snapshot (~60s, network)
+make check         # test suite
 ```
 
-Before recording a demo:
-
-```bash
-make offline       # run with Wi-Fi physically OFF
-```
+The dashboard is a separate deploy that reads the published snapshot; see
+[`frontend/README.md`](frontend/README.md).
 
 ## The data
 
@@ -69,7 +67,7 @@ CAMS PM2.5 coverage begins around August 2022, which is why the training window 
 there and why the demo event is 2023 rather than the more famous 2019 haze season: for
 2019 there is no gridded PM2.5 to train against.
 
-## The demo event: 28 Aug – 8 Sep 2023
+## The validation episode: 28 Aug – 8 Sep 2023
 
 A real, documented transboundary episode:
 
@@ -111,7 +109,10 @@ maximum read off six correlated numbers is not much evidence on its own.
 Computed by `scripts/14_daily_attribution.py` into `diagnostics/daily_attribution.json`,
 which also carries the full-archive and 2024 profiles.
 
-**The demo window is held out of training entirely.** Forecasts over it are out-of-sample.
+**This window is held out of training entirely**, so forecasts over it are out-of-sample.
+It is no longer replayed by the running system — the dashboard reads current
+conditions — but it remains the evidence that the forecasts work, and the 2024
+generalization audit is measured against it.
 
 ---
 
@@ -178,7 +179,7 @@ Four of those rows need their definitions stated, because each is easy to misrea
   ~0.4° native, and each city's trio shares one grid cell and receives an identical
   PM2.5 series. Scoring all six tripled every count without adding information. The
   frozen `metrics.json` still reports 99 under `events_evaluated` and is deliberately
-  left as published; `alerts_corrected` in the API response is the corrected count and
+  left as published; `alerts_corrected` in `metrics.json` is the corrected count and
   is the one to quote.
 - **Specificity, not false alarm rate, is what compares across seasons.** False alarm
   rate is 1 − precision, so it moves with how often the event happens even when the
@@ -343,60 +344,37 @@ ablations and both came back null. The full investigation is in
 `diagnostics/2024_generalization_gap_report.md`; the honest fix is more training data
 covering severe seasons.
 
-See `GET /api/v1/model/metrics` for all of the above, served live to the dashboard —
-including `validation_events` (both held-out seasons) and `alerts_corrected` (the served
-model's own figures on distinct receptors). The frozen `alerts` block is retained
-unchanged beside them rather than silently rewritten.
+All of the above is in [`models/v1/metrics.json`](models/v1/metrics.json), with the
+second held-out season in `metrics_by_event.json` and the corrected, deduplicated
+figures in [`diagnostics/metrics_report.md`](diagnostics/metrics_report.md). The frozen
+`alerts` block is retained unchanged beside them rather than silently rewritten.
 
 ---
 
-## API
+## How the dashboard gets its data
 
-Base path `/api/v1`. The contract is frozen in [`api_contract/openapi.json`](api_contract/openapi.json);
-see [`api_contract/CONTRACT.md`](api_contract/CONTRACT.md) for the frontend-facing guide.
+There is no API. The pipeline runs the served model against current conditions and
+publishes two files, which the dashboard reads directly:
 
-| Group | Endpoints |
+| File | What it holds |
 |---|---|
-| Institutions | `GET /institutions`, `GET /institutions/{id}` |
-| Hotspots | `GET /hotspots`, `GET /hotspots/summary` |
-| Forecast | `GET /institutions/{id}/forecast`, `GET /institutions/{id}/observation` |
-| Alerts | `GET /alerts`, `GET /institutions/{id}/alert` |
-| Notifications | `GET /notifications`, `POST /notifications/simulate` |
-| Replay | `GET/POST /replay/*`, `GET /scenarios` |
-| Meta | `GET /health`, `GET /model/metrics` |
-
-Changes after freezing are additive only. `tests/test_contract.py` fails the build on any
-breaking change.
-
-## Replay mode
-
-The demo must be reproducible on every take of a recording, so the API does not use
-wall-clock time. It holds a **virtual clock** inside the scenario window, and every
-endpoint answers "as of" that instant.
-
-Everything is precomputed into `data/replay/scenario_2023_sept.sqlite`: hotspots,
-observations, a full 24-hour forecast issued at every hour, alert state, and the
-notification feed. At demo time there is **no network call and no model inference**.
-
-Bookmarks — the presenter's chapter markers. Each was selected by querying the precomputed
-scenario for what the system actually produces, and every figure below is asserted by
-`scripts/05_offline_smoke_test.py`:
-
-| Key | Clock | What it shows |
-|---|---|---|
-| `calm` | 2023-08-28T09:00Z | No active alerts anywhere. |
-| `first_warning` | 2023-08-30T19:00Z | All three Sarawak institutions alerted **18 hours ahead** while no Indonesian site is alerted at all — the smoke is already crossing the border. Air outside reads 27 µg/m³. Observation later confirms **53 µg/m³**. |
-| `crossborder` | 2023-09-02T16:00Z | All six institutions alerted across both countries. Kuching warned **17 hours ahead while its air reads 12.8 µg/m³ — good, nothing visibly wrong**. Observation later confirms **49.2 µg/m³**. |
-| `severe` | 2023-09-04T21:00Z | Pontianak forecast to 86 µg/m³ (unhealthy), Sarawak simultaneously alerted. |
-
-Every figure above is asserted by `scripts/05_offline_smoke_test.py`, including that
-observation later confirmed each warning — a lead time nobody checked against what
-actually happened would be a false alarm dressed up as a success.
+| `data/live/latest.json` | One 24-hour forecast per institution, the alert state, the fire field gridded for the map, and the provenance of every input |
+| `data/live/history.json` | One compact record per published snapshot — the accumulated alert history |
 
 ```bash
-curl -X POST localhost:8000/api/v1/replay/seek -d '{"bookmark":"crossborder"}' \
-     -H 'Content-Type: application/json'
+make refresh    # generate, gate, publish, commit
 ```
+
+**The refresh is manual, and that is a constraint rather than an oversight.**
+GitHub-hosted runners cannot reach NASA FIRMS reliably — measured, not assumed; the
+reasoning is in [`.github/workflows/live-snapshot.yml`](.github/workflows/live-snapshot.yml)
+and [`DEVELOPMENT.md`](DEVELOPMENT.md). So the dashboard shows whatever was last
+published by hand, and every screen says how old that is rather than implying a live
+feed.
+
+A FastAPI service used to sit here, serving a precomputed replay of the September 2023
+episode so a recorded demo would be reproducible. It was retired along with the replay;
+[`DEVELOPMENT.md`](DEVELOPMENT.md) records what went and why.
 
 ---
 
@@ -447,9 +425,9 @@ discovered than disclosed.
    an observed 307. This does not affect alerting, which depends on crossing the
    35.5 µg/m³ threshold and gets that right 79.5% of the time, but it does mean the
    forecast magnitude should not be read as a severity estimate during extreme episodes.
-   Rather than leave that in a README where a user will never see it, the API says so per
-   forecast point: `beyond_training_range` and the `uncertainty` block mark exactly where
-   the number becomes a floor (see `api_contract/CHANGELOG.md`). The honest fix is still
+   Rather than leave that in a README where a user will never see it, the published
+   snapshot says so per forecast point: `beyond_training_range` and the `uncertainty` block mark exactly where
+   the number becomes a floor, and both travel in the published snapshot. The honest fix is still
    more training data covering severe seasons, not a different loss function.
 8. **Attribution R² is low, and refitting at daily resolution does not rescue it.** The
    fire-and-weather-only model reaches R² = 0.03 in log space on held-out hourly data.
@@ -488,21 +466,20 @@ discovered than disclosed.
 
 ```
 src/haze/
-  config.py          domains, windows, thresholds, scenario definition
-  institutions.py    the six demo institutions
+  config.py          domains, windows, thresholds
+  institutions.py    the six institutions
   ingest/            FIRMS + Open-Meteo, all cached to disk
   features/          UFEI kernel and the hourly feature matrix
   models/            RF, GRU, baselines, evaluation
   alerts/            thresholds, rules, multilingual message templates
-  pipeline/          scenario precompute
-  replay/            virtual clock, SQLite scenario store
-  api/               FastAPI app, schemas, routers
-scripts/             00 contract, 01 download, 02 features, 03 train,
-                     04 precompute, 05 offline smoke test,
+  pipeline/          shared builders for a forecast payload
+scripts/             01 download, 02 features, 03 train,
                      06 validate held-out events, 07 live snapshot,
-                     08 gate snapshot, 09 rescore/dedup,
+                     08 gate snapshot, 09 append history,
                      10 corrected metrics + calibration,
-                     12 saturation diagnostic, 13 feature ablations
+                     12 saturation diagnostic, 13 feature ablations,
+                     14 daily attribution
+data/live/           latest.json + history.json — what the dashboard reads
 frontend/            Next.js dashboard — Lite and Pro screens, deployed
-                     separately from the API (see DEPLOYMENT.md)
+                     separately (see frontend/README.md)
 ```
