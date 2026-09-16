@@ -1,0 +1,1039 @@
+{
+  "grid": [
+    {
+      "percentile": 75,
+      "threshold_pm25": 15.0,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.7959,
+      "specificity": 0.1324,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 17.5,
+      "hit_rate": 0.9906,
+      "false_alarm_rate": 0.7426,
+      "specificity": 0.3641,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 20.0,
+      "hit_rate": 0.94,
+      "false_alarm_rate": 0.6859,
+      "specificity": 0.5432,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 22.5,
+      "hit_rate": 0.7936,
+      "false_alarm_rate": 0.6065,
+      "specificity": 0.7278,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 25.0,
+      "hit_rate": 0.7017,
+      "false_alarm_rate": 0.5124,
+      "specificity": 0.8359,
+      "episode_detection_rate": 0.9048,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 27.5,
+      "hit_rate": 0.5947,
+      "false_alarm_rate": 0.4487,
+      "specificity": 0.8923,
+      "episode_detection_rate": 0.8571,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 30.0,
+      "hit_rate": 0.469,
+      "false_alarm_rate": 0.3827,
+      "specificity": 0.9353,
+      "episode_detection_rate": 0.8095,
+      "median_lead_time_hours": 23.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 32.5,
+      "hit_rate": 0.3527,
+      "false_alarm_rate": 0.338,
+      "specificity": 0.9599,
+      "episode_detection_rate": 0.619,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 35.0,
+      "hit_rate": 0.2777,
+      "false_alarm_rate": 0.3148,
+      "specificity": 0.9716,
+      "episode_detection_rate": 0.5238,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 35.5,
+      "hit_rate": 0.272,
+      "false_alarm_rate": 0.3062,
+      "specificity": 0.9733,
+      "episode_detection_rate": 0.5238,
+      "median_lead_time_hours": 20.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 37.5,
+      "hit_rate": 0.2214,
+      "false_alarm_rate": 0.2484,
+      "specificity": 0.9837,
+      "episode_detection_rate": 0.2857,
+      "median_lead_time_hours": 23.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 40.0,
+      "hit_rate": 0.1557,
+      "false_alarm_rate": 0.1863,
+      "specificity": 0.9921,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 23.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 42.5,
+      "hit_rate": 0.1276,
+      "false_alarm_rate": 0.1807,
+      "specificity": 0.9937,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 45.0,
+      "hit_rate": 0.0994,
+      "false_alarm_rate": 0.1311,
+      "specificity": 0.9967,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 47.5,
+      "hit_rate": 0.0675,
+      "false_alarm_rate": 0.1429,
+      "specificity": 0.9975,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 50.0,
+      "hit_rate": 0.0432,
+      "false_alarm_rate": 0.08,
+      "specificity": 0.9992,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 9.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 52.5,
+      "hit_rate": 0.0319,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 8.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 55.0,
+      "hit_rate": 0.015,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 57.5,
+      "hit_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 60.0,
+      "hit_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 62.5,
+      "hit_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 75,
+      "threshold_pm25": 65.0,
+      "hit_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 15.0,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.8041,
+      "specificity": 0.0864,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 17.5,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.7617,
+      "specificity": 0.2885,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 20.0,
+      "hit_rate": 0.9625,
+      "false_alarm_rate": 0.708,
+      "specificity": 0.4806,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 22.5,
+      "hit_rate": 0.8574,
+      "false_alarm_rate": 0.6479,
+      "specificity": 0.6489,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 25.0,
+      "hit_rate": 0.7373,
+      "false_alarm_rate": 0.5609,
+      "specificity": 0.7904,
+      "episode_detection_rate": 0.9048,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 27.5,
+      "hit_rate": 0.6623,
+      "false_alarm_rate": 0.4794,
+      "specificity": 0.8643,
+      "episode_detection_rate": 0.9048,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 30.0,
+      "hit_rate": 0.5291,
+      "false_alarm_rate": 0.4303,
+      "specificity": 0.9111,
+      "episode_detection_rate": 0.8571,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 32.5,
+      "hit_rate": 0.424,
+      "false_alarm_rate": 0.3908,
+      "specificity": 0.9395,
+      "episode_detection_rate": 0.7619,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 35.0,
+      "hit_rate": 0.3377,
+      "false_alarm_rate": 0.3333,
+      "specificity": 0.9624,
+      "episode_detection_rate": 0.5714,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 35.5,
+      "hit_rate": 0.3265,
+      "false_alarm_rate": 0.3308,
+      "specificity": 0.9641,
+      "episode_detection_rate": 0.5714,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 37.5,
+      "hit_rate": 0.2627,
+      "false_alarm_rate": 0.3204,
+      "specificity": 0.9724,
+      "episode_detection_rate": 0.4286,
+      "median_lead_time_hours": 23.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 40.0,
+      "hit_rate": 0.2026,
+      "false_alarm_rate": 0.28,
+      "specificity": 0.9825,
+      "episode_detection_rate": 0.2857,
+      "median_lead_time_hours": 20.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 42.5,
+      "hit_rate": 0.1614,
+      "false_alarm_rate": 0.2321,
+      "specificity": 0.9891,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 23.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 45.0,
+      "hit_rate": 0.1313,
+      "false_alarm_rate": 0.1765,
+      "specificity": 0.9937,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 47.5,
+      "hit_rate": 0.0976,
+      "false_alarm_rate": 0.1613,
+      "specificity": 0.9958,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 50.0,
+      "hit_rate": 0.0675,
+      "false_alarm_rate": 0.1628,
+      "specificity": 0.9971,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 52.5,
+      "hit_rate": 0.0507,
+      "false_alarm_rate": 0.129,
+      "specificity": 0.9983,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 9.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 55.0,
+      "hit_rate": 0.0375,
+      "false_alarm_rate": 0.0909,
+      "specificity": 0.9992,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 9.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 57.5,
+      "hit_rate": 0.0281,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 7.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 60.0,
+      "hit_rate": 0.0075,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 62.5,
+      "hit_rate": 0.0038,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 80,
+      "threshold_pm25": 65.0,
+      "hit_rate": 0.0,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 15.0,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.8111,
+      "specificity": 0.0447,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 17.5,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.7821,
+      "specificity": 0.2013,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 20.0,
+      "hit_rate": 0.9831,
+      "false_alarm_rate": 0.7295,
+      "specificity": 0.41,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 22.5,
+      "hit_rate": 0.9287,
+      "false_alarm_rate": 0.6847,
+      "specificity": 0.5511,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 25.0,
+      "hit_rate": 0.8011,
+      "false_alarm_rate": 0.6129,
+      "specificity": 0.7177,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 27.5,
+      "hit_rate": 0.7167,
+      "false_alarm_rate": 0.5398,
+      "specificity": 0.8129,
+      "episode_detection_rate": 0.9048,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 30.0,
+      "hit_rate": 0.6454,
+      "false_alarm_rate": 0.478,
+      "specificity": 0.8685,
+      "episode_detection_rate": 0.8571,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 32.5,
+      "hit_rate": 0.5291,
+      "false_alarm_rate": 0.4209,
+      "specificity": 0.9144,
+      "episode_detection_rate": 0.8095,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 35.0,
+      "hit_rate": 0.4296,
+      "false_alarm_rate": 0.3794,
+      "specificity": 0.9415,
+      "episode_detection_rate": 0.7619,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 35.5,
+      "hit_rate": 0.4071,
+      "false_alarm_rate": 0.3746,
+      "specificity": 0.9457,
+      "episode_detection_rate": 0.7143,
+      "median_lead_time_hours": 23.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 37.5,
+      "hit_rate": 0.3396,
+      "false_alarm_rate": 0.337,
+      "specificity": 0.9616,
+      "episode_detection_rate": 0.6667,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 40.0,
+      "hit_rate": 0.272,
+      "false_alarm_rate": 0.3256,
+      "specificity": 0.9708,
+      "episode_detection_rate": 0.4762,
+      "median_lead_time_hours": 23.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 42.5,
+      "hit_rate": 0.2139,
+      "false_alarm_rate": 0.3049,
+      "specificity": 0.9791,
+      "episode_detection_rate": 0.3333,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 45.0,
+      "hit_rate": 0.1726,
+      "false_alarm_rate": 0.2868,
+      "specificity": 0.9846,
+      "episode_detection_rate": 0.1905,
+      "median_lead_time_hours": 19.5
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 47.5,
+      "hit_rate": 0.1407,
+      "false_alarm_rate": 0.2268,
+      "specificity": 0.9908,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 50.0,
+      "hit_rate": 0.1126,
+      "false_alarm_rate": 0.1667,
+      "specificity": 0.995,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 52.5,
+      "hit_rate": 0.075,
+      "false_alarm_rate": 0.1837,
+      "specificity": 0.9962,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 55.0,
+      "hit_rate": 0.06,
+      "false_alarm_rate": 0.1579,
+      "specificity": 0.9975,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 57.5,
+      "hit_rate": 0.0507,
+      "false_alarm_rate": 0.1,
+      "specificity": 0.9987,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 9.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 60.0,
+      "hit_rate": 0.0356,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 9.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 62.5,
+      "hit_rate": 0.0131,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 85,
+      "threshold_pm25": 65.0,
+      "hit_rate": 0.0075,
+      "false_alarm_rate": 0.0,
+      "specificity": 1.0,
+      "episode_detection_rate": 0.0,
+      "median_lead_time_hours": 0.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 15.0,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.8166,
+      "specificity": 0.0088,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 17.5,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.7991,
+      "specificity": 0.1148,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 20.0,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.7579,
+      "specificity": 0.3031,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 22.5,
+      "hit_rate": 0.9662,
+      "false_alarm_rate": 0.7112,
+      "specificity": 0.4706,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 25.0,
+      "hit_rate": 0.8874,
+      "false_alarm_rate": 0.6688,
+      "specificity": 0.6013,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 27.5,
+      "hit_rate": 0.803,
+      "false_alarm_rate": 0.5989,
+      "specificity": 0.7332,
+      "episode_detection_rate": 0.9524,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 30.0,
+      "hit_rate": 0.7186,
+      "false_alarm_rate": 0.5494,
+      "specificity": 0.805,
+      "episode_detection_rate": 0.9048,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 32.5,
+      "hit_rate": 0.6435,
+      "false_alarm_rate": 0.5043,
+      "specificity": 0.8543,
+      "episode_detection_rate": 0.8571,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 35.0,
+      "hit_rate": 0.5516,
+      "false_alarm_rate": 0.4684,
+      "specificity": 0.8919,
+      "episode_detection_rate": 0.8095,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 35.5,
+      "hit_rate": 0.5385,
+      "false_alarm_rate": 0.4481,
+      "specificity": 0.9027,
+      "episode_detection_rate": 0.8095,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 37.5,
+      "hit_rate": 0.4728,
+      "false_alarm_rate": 0.418,
+      "specificity": 0.9244,
+      "episode_detection_rate": 0.7143,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 40.0,
+      "hit_rate": 0.3921,
+      "false_alarm_rate": 0.378,
+      "specificity": 0.947,
+      "episode_detection_rate": 0.7143,
+      "median_lead_time_hours": 23.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 42.5,
+      "hit_rate": 0.3096,
+      "false_alarm_rate": 0.3478,
+      "specificity": 0.9633,
+      "episode_detection_rate": 0.619,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 45.0,
+      "hit_rate": 0.257,
+      "false_alarm_rate": 0.2974,
+      "specificity": 0.9758,
+      "episode_detection_rate": 0.5238,
+      "median_lead_time_hours": 22.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 47.5,
+      "hit_rate": 0.2158,
+      "false_alarm_rate": 0.303,
+      "specificity": 0.9791,
+      "episode_detection_rate": 0.4286,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 50.0,
+      "hit_rate": 0.1839,
+      "false_alarm_rate": 0.3147,
+      "specificity": 0.9812,
+      "episode_detection_rate": 0.381,
+      "median_lead_time_hours": 14.5
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 52.5,
+      "hit_rate": 0.1501,
+      "false_alarm_rate": 0.322,
+      "specificity": 0.9841,
+      "episode_detection_rate": 0.1905,
+      "median_lead_time_hours": 19.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 55.0,
+      "hit_rate": 0.1276,
+      "false_alarm_rate": 0.236,
+      "specificity": 0.9912,
+      "episode_detection_rate": 0.1429,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 57.5,
+      "hit_rate": 0.0807,
+      "false_alarm_rate": 0.1887,
+      "specificity": 0.9958,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 60.0,
+      "hit_rate": 0.0675,
+      "false_alarm_rate": 0.1818,
+      "specificity": 0.9967,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 21.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 62.5,
+      "hit_rate": 0.0544,
+      "false_alarm_rate": 0.1212,
+      "specificity": 0.9983,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 9.0
+    },
+    {
+      "percentile": 90,
+      "threshold_pm25": 65.0,
+      "hit_rate": 0.0469,
+      "false_alarm_rate": 0.0741,
+      "specificity": 0.9992,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 9.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 15.0,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.818,
+      "specificity": 0.0,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 17.5,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.8123,
+      "specificity": 0.0372,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 20.0,
+      "hit_rate": 1.0,
+      "false_alarm_rate": 0.7919,
+      "specificity": 0.1532,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 22.5,
+      "hit_rate": 0.9962,
+      "false_alarm_rate": 0.7492,
+      "specificity": 0.3378,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 25.0,
+      "hit_rate": 0.9644,
+      "false_alarm_rate": 0.7141,
+      "specificity": 0.4639,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 27.5,
+      "hit_rate": 0.8931,
+      "false_alarm_rate": 0.6775,
+      "specificity": 0.5825,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 30.0,
+      "hit_rate": 0.8236,
+      "false_alarm_rate": 0.6354,
+      "specificity": 0.6806,
+      "episode_detection_rate": 1.0,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 32.5,
+      "hit_rate": 0.7749,
+      "false_alarm_rate": 0.5862,
+      "specificity": 0.7557,
+      "episode_detection_rate": 0.9048,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 35.0,
+      "hit_rate": 0.7242,
+      "false_alarm_rate": 0.5485,
+      "specificity": 0.8042,
+      "episode_detection_rate": 0.9048,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 35.5,
+      "hit_rate": 0.7167,
+      "false_alarm_rate": 0.5386,
+      "specificity": 0.8138,
+      "episode_detection_rate": 0.9048,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 37.5,
+      "hit_rate": 0.6548,
+      "false_alarm_rate": 0.5252,
+      "specificity": 0.8388,
+      "episode_detection_rate": 0.8571,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 40.0,
+      "hit_rate": 0.5535,
+      "false_alarm_rate": 0.514,
+      "specificity": 0.8697,
+      "episode_detection_rate": 0.8095,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 42.5,
+      "hit_rate": 0.4972,
+      "false_alarm_rate": 0.4763,
+      "specificity": 0.8994,
+      "episode_detection_rate": 0.7619,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 45.0,
+      "hit_rate": 0.4221,
+      "false_alarm_rate": 0.4539,
+      "specificity": 0.9219,
+      "episode_detection_rate": 0.6667,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 47.5,
+      "hit_rate": 0.3677,
+      "false_alarm_rate": 0.4384,
+      "specificity": 0.9361,
+      "episode_detection_rate": 0.619,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 50.0,
+      "hit_rate": 0.3227,
+      "false_alarm_rate": 0.413,
+      "specificity": 0.9495,
+      "episode_detection_rate": 0.4762,
+      "median_lead_time_hours": 23.5
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 52.5,
+      "hit_rate": 0.3039,
+      "false_alarm_rate": 0.3415,
+      "specificity": 0.9649,
+      "episode_detection_rate": 0.4762,
+      "median_lead_time_hours": 23.5
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 55.0,
+      "hit_rate": 0.2589,
+      "false_alarm_rate": 0.3065,
+      "specificity": 0.9745,
+      "episode_detection_rate": 0.4762,
+      "median_lead_time_hours": 22.5
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 57.5,
+      "hit_rate": 0.2026,
+      "false_alarm_rate": 0.28,
+      "specificity": 0.9825,
+      "episode_detection_rate": 0.4286,
+      "median_lead_time_hours": 18.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 60.0,
+      "hit_rate": 0.1614,
+      "false_alarm_rate": 0.2586,
+      "specificity": 0.9875,
+      "episode_detection_rate": 0.4286,
+      "median_lead_time_hours": 18.0
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 62.5,
+      "hit_rate": 0.1426,
+      "false_alarm_rate": 0.2549,
+      "specificity": 0.9891,
+      "episode_detection_rate": 0.1905,
+      "median_lead_time_hours": 11.5
+    },
+    {
+      "percentile": 95,
+      "threshold_pm25": 65.0,
+      "hit_rate": 0.1163,
+      "false_alarm_rate": 0.253,
+      "specificity": 0.9912,
+      "episode_detection_rate": 0.0476,
+      "median_lead_time_hours": 21.0
+    }
+  ],
+  "current_operating_point": {
+    "percentile": 90,
+    "threshold_pm25": 35.5,
+    "hit_rate": 0.5385,
+    "false_alarm_rate": 0.4481,
+    "specificity": 0.9027,
+    "episode_detection_rate": 0.8095,
+    "median_lead_time_hours": 24.0
+  },
+  "best_at_primary_false_alarm_rate": {
+    "percentile": 75,
+    "threshold_pm25": 37.5,
+    "hit_rate": 0.2214,
+    "false_alarm_rate": 0.2484,
+    "specificity": 0.9837,
+    "episode_detection_rate": 0.2857,
+    "median_lead_time_hours": 23.0
+  },
+  "best_youden_j": {
+    "percentile": 75,
+    "threshold_pm25": 25.0,
+    "hit_rate": 0.7017,
+    "false_alarm_rate": 0.5124,
+    "specificity": 0.8359,
+    "episode_detection_rate": 0.9048,
+    "median_lead_time_hours": 24.0
+  },
+  "caveat": "35.5 ug/m3 is the EPA UNHEALTHY_SENSITIVE floor, not a tuned number. Moving it means the alert stops meaning 'forecast to reach the level EPA names for sensitive groups', which is a change to what the product claims, not a calibration. Reported as measurement; the recommendation is stated separately.",
+  "primary_reference": {
+    "note": "The operating point p90 / 35.5 was selected on 2023 alone.",
+    "primary_2023": {
+      "hit_rate": 0.7953,
+      "false_alarm_rate": 0.2538,
+      "specificity": 0.7996,
+      "alertable_hour_prevalence": 0.4255,
+      "median_lead_time_hours": 24.0,
+      "events_evaluated": 33,
+      "distinct_episodes": 33,
+      "episode_detection_rate": 0.9394,
+      "episode_detection_ci95": [
+        0.8039,
+        0.9832
+      ]
+    }
+  }
+}

@@ -1,7 +1,7 @@
 PY := .venv/bin/python
 export PYTHONPATH := src
 
-.PHONY: help venv contract data features train validate scenario serve demo check test offline refresh clean
+.PHONY: help venv contract data features train validate report saturation ablations scenario serve demo check test offline refresh clean
 
 help:
 	@echo "make venv      - create .venv and install dependencies"
@@ -10,6 +10,9 @@ help:
 	@echo "make features  - build data/processed/features.parquet"
 	@echo "make train     - train models, write models/v1/metrics.json"
 	@echo "make validate  - score two held-out events, write metrics_by_event.json (~10 min)"
+	@echo "make report    - corrected metrics + calibration into diagnostics/ (~15 min)"
+	@echo "make saturation- fire-feature saturation diagnostic, no retrain"
+	@echo "make ablations - isolated dryness / ENSO ablations (~30 min)"
 	@echo "make scenario  - precompute the demo scenario SQLite"
 	@echo "make serve     - run the API on :8000"
 	@echo "make check     - contract + offline + metrics regression gates"
@@ -42,6 +45,11 @@ train:
 validate:
 	$(PY) scripts/06_validate_events.py
 
+# Corrected metrics report, threshold recalibration and above-range analysis.
+# Writes only to diagnostics/; models/v1 stays frozen and is re-checksummed.
+report:
+	$(PY) scripts/10_metrics_and_calibration.py
+
 scenario:
 	$(PY) scripts/04_precompute_scenario.py
 
@@ -69,3 +77,11 @@ check: test offline
 
 clean:
 	rm -rf data/processed/*.parquet models/v1/*.joblib models/v1/*.pt
+
+# Phase 2D experiments. Both write only to diagnostics/ and re-checksum the
+# served artifacts and the feature matrix before exiting.
+saturation:
+	$(PY) scripts/12_saturation_diagnostic.py
+
+ablations:
+	$(PY) scripts/13_ablations.py

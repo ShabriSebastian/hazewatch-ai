@@ -1,0 +1,84 @@
+{
+  "generated_at": "2026-08-20T13:47:00Z",
+  "model_version": "1.0.0",
+  "supersedes": "models/v1/metrics.json alert figures (frozen, pre-deduplication)",
+  "spatial_resolution": {
+    "source": "CAMS reanalysis via Open-Meteo",
+    "native_resolution_deg": 0.4,
+    "note": "CAMS global composition is ~0.4 degrees native. The Pontianak institutions sit ~3 km apart, as do the Kuching ones, so each trio shares one grid cell and receives an identical PM2.5 series. Forecasts and alerts are per-locality, not per-institution. Institutions listed together cannot be distinguished by this data source, and no metric here should be read as evidence about one site rather than its locality.",
+    "groups": {
+      "id-ptk-bpbd": [
+        "id-ptk-bpbd",
+        "id-ptk-sman1",
+        "id-ptk-soedarso"
+      ],
+      "my-kch-greenroad": [
+        "my-kch-greenroad",
+        "my-kch-hus",
+        "my-kch-jpbn"
+      ]
+    },
+    "distinct_receptors": 2,
+    "institutions": 6
+  },
+  "runs": {
+    "primary_served_2023": {
+      "label": "Primary \u2014 served model, Aug\u2013Oct 2023",
+      "alerts": {
+        "hit_rate": 0.7953,
+        "false_alarm_rate": 0.2538,
+        "specificity": 0.7996,
+        "alertable_hour_prevalence": 0.4255,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 33,
+        "distinct_episodes": 33,
+        "episode_detection_rate": 0.9394,
+        "episode_detection_ci95": [
+          0.8039,
+          0.9832
+        ]
+      }
+    },
+    "validation_2023": {
+      "label": "Validation model, Aug\u2013Oct 2023",
+      "alerts": {
+        "hit_rate": 0.7632,
+        "false_alarm_rate": 0.2651,
+        "specificity": 0.7961,
+        "alertable_hour_prevalence": 0.4255,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 33,
+        "distinct_episodes": 33,
+        "episode_detection_rate": 0.9394,
+        "episode_detection_ci95": [
+          0.8039,
+          0.9832
+        ]
+      }
+    },
+    "validation_2024": {
+      "label": "Validation model, Aug\u2013Oct 2024",
+      "alerts": {
+        "hit_rate": 0.5385,
+        "false_alarm_rate": 0.4481,
+        "specificity": 0.9027,
+        "alertable_hour_prevalence": 0.182,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 21,
+        "distinct_episodes": 21,
+        "episode_detection_rate": 0.8095,
+        "episode_detection_ci95": [
+          0.6,
+          0.9233
+        ]
+      }
+    }
+  },
+  "notes": [
+    "PM2.5 targets are ECMWF CAMS reanalysis, not ground-station measurements.",
+    "Hotspots are NASA FIRMS detections; this system does not detect fires itself.",
+    "Episode counts are distinct counts. The events_evaluated field in models/v1/metrics.json counts every institution and reports 99 where there are 33; it is superseded, not corrected in place.",
+    "hit_rate is hour-level; episode_detection_rate is episode-level. Both are reported because they answer different questions and differ materially.",
+    "specificity is prevalence-free. false_alarm_rate is 1-precision and is not comparable across seasons with different base rates."
+  ]
+}

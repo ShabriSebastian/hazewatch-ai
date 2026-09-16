@@ -1,0 +1,103 @@
+{
+  "generated_at": "2026-08-20T13:23:23Z",
+  "purpose": "Phase 2A: rescore both validation runs on distinct PM2.5 receptors. The three Pontianak institutions share one CAMS series and the three Kuching institutions share another, so every published count is inflated threefold. Internal reporting - models/v1 is not modified.",
+  "root_cause": "Upstream CAMS resolution (~0.4 deg native), not a join or broadcast defect. Six separate requests on six distinct cache keys snapped to five Open-Meteo grid cells and returned two distinct pm2_5 arrays.",
+  "distinct_receptors": [
+    "id-ptk-bpbd",
+    "my-kch-greenroad"
+  ],
+  "n_institutions": 6,
+  "runs": {
+    "primary_served_2023": {
+      "as_published": {
+        "hit_rate": 0.7953,
+        "false_alarm_rate": 0.2536,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 99
+      },
+      "deduplicated": {
+        "hit_rate": 0.7953,
+        "false_alarm_rate": 0.2538,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 33
+      },
+      "receptors_scored": [
+        "id-ptk-bpbd",
+        "my-kch-greenroad"
+      ],
+      "episode_detection_rate": {
+        "n_episodes": 33,
+        "point": 0.9394,
+        "ci95_low": 0.8485,
+        "ci95_high": 1.0
+      },
+      "alertable_hour_prevalence": 0.4255,
+      "false_positive_rate": 0.2004,
+      "specificity": 0.7996,
+      "peak_observed_pm25": 307.3
+    },
+    "validation_2023": {
+      "as_published": {
+        "hit_rate": 0.7587,
+        "false_alarm_rate": 0.2649,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 99
+      },
+      "deduplicated": {
+        "hit_rate": 0.7632,
+        "false_alarm_rate": 0.2651,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 33
+      },
+      "receptors_scored": [
+        "id-ptk-bpbd",
+        "my-kch-greenroad"
+      ],
+      "episode_detection_rate": {
+        "n_episodes": 33,
+        "point": 0.9394,
+        "ci95_low": 0.8485,
+        "ci95_high": 1.0
+      },
+      "alertable_hour_prevalence": 0.4255,
+      "false_positive_rate": 0.2039,
+      "specificity": 0.7961,
+      "peak_observed_pm25": 307.3
+    },
+    "validation_2024": {
+      "as_published": {
+        "hit_rate": 0.5378,
+        "false_alarm_rate": 0.4501,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 63
+      },
+      "deduplicated": {
+        "hit_rate": 0.5385,
+        "false_alarm_rate": 0.4481,
+        "median_lead_time_hours": 24.0,
+        "events_evaluated": 21
+      },
+      "receptors_scored": [
+        "id-ptk-bpbd",
+        "my-kch-greenroad"
+      ],
+      "episode_detection_rate": {
+        "n_episodes": 21,
+        "point": 0.8095,
+        "ci95_low": 0.619,
+        "ci95_high": 0.9524
+      },
+      "alertable_hour_prevalence": 0.182,
+      "false_positive_rate": 0.0973,
+      "specificity": 0.9027,
+      "peak_observed_pm25": 66.4
+    }
+  },
+  "notes": [
+    "as_published reproduces the figures in models/v1/metrics.json and metrics_by_event.json; deduplicated scores one institution per distinct observed PM2.5 series.",
+    "episode_detection_rate is NOT the published hit_rate. hit_rate is hour-level (of issuance hours with a breach coming, how many carried a warning); episode_detection_rate is episode-level (of distinct observed episodes, how many were warned about before onset). Both are reported; they take different values.",
+    "Only the episode-level rate carries a bootstrap interval, resampled over distinct episodes. Issuance hours within an episode are autocorrelated, so a naive interval on hit_rate would be far too narrow, and two receptors leave no honest way to widen it.",
+    "specificity / false_positive_rate are prevalence-free and are the figures to compare across years; FAR is 1-precision and is not.",
+    "models/v1 and data/replay are not written by this script."
+  ]
+}

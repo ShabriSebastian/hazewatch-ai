@@ -295,4 +295,6 @@ src/haze/
   api/               FastAPI app, schemas, routers
 scripts/             00 contract, 01 download, 02 features, 03 train,
                      04 precompute, 05 offline smoke test
+frontend/            Next.js dashboard — Lite and Pro screens, deployed
+                     separately from the API (see DEPLOYMENT.md)
 ```

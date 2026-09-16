@@ -118,10 +118,29 @@ def main() -> int:
     print(
         f"\n  Alert performance (triggered on p{config.ALERT_TRIGGER_PERCENTILE} band):"
     )
-    print(f"    hit rate           {alerts['hit_rate']:.1%}")
-    print(f"    false alarm rate   {alerts['false_alarm_rate']:.1%}")
+    print(f"    hit rate (hourly)  {alerts['hit_rate']:.1%}")
+    print(
+        f"    false alarm rate   {alerts['false_alarm_rate']:.1%}"
+        f"   (prevalence {alerts['alertable_hour_prevalence']:.1%})"
+    )
+    print(f"    specificity        {alerts['specificity']:.1%}   <- compare across years")
     print(f"    median lead time   {alerts['median_lead_time_hours']:.0f} h")
-    print(f"    episodes evaluated {alerts['events_evaluated']}")
+    ci = alerts["episode_detection_ci95"] or [float("nan"), float("nan")]
+    print(
+        f"    episode detection  {alerts['episode_detection_rate']:.1%} of "
+        f"{alerts['distinct_episodes']} distinct episodes "
+        f"(95% CI [{ci[0]:.1%}, {ci[1]:.1%}])"
+    )
+
+    spatial = evaluate.spatial_resolution(df)
+    print(
+        f"\n  Spatial resolution: {spatial['institutions']} institutions resolve to "
+        f"{spatial['distinct_receptors']} receptors at ~{spatial['native_resolution_deg']} deg; "
+        "forecasts are per-locality."
+    )
+    for rep, members in spatial["groups"].items():
+        if len(members) > 1:
+            print(f"    {rep} also covers {', '.join(m for m in members if m != rep)}")
 
     model_name = "rf-forecast"
     notes = [
@@ -134,6 +153,14 @@ def main() -> int:
         "Alerts trigger on the upper prediction band rather than the point forecast: "
         "a missed episode and a false alarm carry very different costs. Both rates "
         "are reported.",
+        "Forecasts are per-locality, not per-institution: CAMS is ~0.4 degrees "
+        "native and each city's institutions share one grid cell, so six "
+        "institutions resolve to two receptors. See spatial_resolution.",
+        "Two alert rates are co-primary. hit_rate is hour-level; "
+        "episode_detection_rate is the share of distinct episodes warned about "
+        "before onset, and carries a 95% Wilson interval because its denominator "
+        "is small. false_alarm_rate is 1-precision and moves with the base rate; "
+        "specificity is the prevalence-free figure to compare across seasons.",
         f"Test window {config.TEST_START}..{config.TEST_END} excluded from training.",
     ]
 
@@ -221,6 +248,7 @@ def main() -> int:
         "r2_attribution_raw": round(attr_r2, 4),
         "horizons": horizons,
         "alerts": alerts,
+        "spatial_resolution": spatial,
         "top_features": top_features,
         "alert_trigger_percentile": config.ALERT_TRIGGER_PERCENTILE,
         "trigger_sweep": trigger_sweep,

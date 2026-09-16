@@ -1,0 +1,110 @@
+{
+  "generated_at": "2026-08-20T13:54:58Z",
+  "question": "Are fire features pinned near their trained maximum during the hours whose observations exceed the training range?",
+  "pinned_definition": "feature >= 85% of its training maximum",
+  "training_target_max_pm25": 112.9,
+  "windows": {
+    "2023": {
+      "window": "2023-08-16..2023-10-15",
+      "pairs_total": 210816,
+      "pairs_alertable": 40371,
+      "pairs_beyond_range": 6192,
+      "features": {
+        "ufei_24h": {
+          "training_max": 16251.734375,
+          "pinned_rate_beyond_range": 0.0,
+          "pinned_rate_alertable": 0.0,
+          "pinned_rate_all": 0.0,
+          "lift_vs_all": null,
+          "phi_with_beyond_range": null
+        },
+        "ufei_48h": {
+          "training_max": 24286.21484375,
+          "pinned_rate_beyond_range": 0.0,
+          "pinned_rate_alertable": 0.0,
+          "pinned_rate_all": 0.0,
+          "lift_vs_all": null,
+          "phi_with_beyond_range": null
+        },
+        "ufei_72h": {
+          "training_max": 25172.390625,
+          "pinned_rate_beyond_range": 0.0,
+          "pinned_rate_alertable": 0.0,
+          "pinned_rate_all": 0.0,
+          "lift_vs_all": null,
+          "phi_with_beyond_range": null
+        },
+        "ufei_from_ID": {
+          "training_max": 24035.626953125,
+          "pinned_rate_beyond_range": 0.0,
+          "pinned_rate_alertable": 0.0,
+          "pinned_rate_all": 0.0,
+          "lift_vs_all": null,
+          "phi_with_beyond_range": null
+        },
+        "hotspots_0_50km": {
+          "training_max": 108.0,
+          "pinned_rate_beyond_range": 0.0031,
+          "pinned_rate_alertable": 0.03,
+          "pinned_rate_all": 0.008,
+          "lift_vs_all": 0.39,
+          "phi_with_beyond_range": -0.0096
+        },
+        "hotspots_50_150km": {
+          "training_max": 848.0,
+          "pinned_rate_beyond_range": 0.0,
+          "pinned_rate_alertable": 0.0,
+          "pinned_rate_all": 0.0,
+          "lift_vs_all": null,
+          "phi_with_beyond_range": null
+        },
+        "hotspots_150_400km": {
+          "training_max": 1910.0,
+          "pinned_rate_beyond_range": 0.0,
+          "pinned_rate_alertable": 0.0,
+          "pinned_rate_all": 0.0,
+          "lift_vs_all": null,
+          "phi_with_beyond_range": null
+        },
+        "frp_0_50km": {
+          "training_max": 1218.4500732421875,
+          "pinned_rate_beyond_range": 0.0066,
+          "pinned_rate_alertable": 0.0409,
+          "pinned_rate_all": 0.0094,
+          "lift_vs_all": 0.7,
+          "phi_with_beyond_range": -0.0051
+        },
+        "frp_50_150km": {
+          "training_max": 18931.80078125,
+          "pinned_rate_beyond_range": 0.0,
+          "pinned_rate_alertable": 0.0,
+          "pinned_rate_all": 0.0,
+          "lift_vs_all": null,
+          "phi_with_beyond_range": null
+        },
+        "frp_150_400km": {
+          "training_max": 33159.2421875,
+          "pinned_rate_beyond_range": 0.0,
+          "pinned_rate_alertable": 0.0,
+          "pinned_rate_all": 0.0,
+          "lift_vs_all": null,
+          "phi_with_beyond_range": null
+        }
+      }
+    },
+    "2024": {
+      "window": "2024-08-16..2024-10-15",
+      "pairs_total": 210816,
+      "pairs_alertable": 8640,
+      "pairs_beyond_range": 0,
+      "features": {},
+      "note": "No pair in this window observes above the 112.9 ug/m3 training max (window maximum 66.4). There is no beyond-range set to diagnose here; saturation cannot be assessed and this window is not evidence either way."
+    }
+  },
+  "verdict": {
+    "saturation_present": false,
+    "max_pinned_rate_on_beyond_range_pairs": 0.0066,
+    "max_abs_phi": 0.0096,
+    "statement": "Fire features are NOT pinned near their trained maximum during the beyond-range hours. Saturation is not the mechanism behind the underprediction, and no saturation-motivated remedy should be proposed on this evidence. The missing-signal hypothesis (2D.1, 2D.2) is unaffected - it does not depend on saturation."
+  }
+}

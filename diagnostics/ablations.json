@@ -1,0 +1,189 @@
+{
+  "generated_at": "2026-08-20T14:04:30Z",
+  "purpose": "Phase 2D isolated ablations: dryness and ENSO regime, never stacked.",
+  "protocol": {
+    "split": "validation model - both fire seasons withheld",
+    "embargo_hours": 24,
+    "hyperparameters": {
+      "n_estimators": 300,
+      "min_samples_leaf": 20,
+      "max_features": "sqrt",
+      "random_state": 42
+    },
+    "trigger": "p90 band at 35.5 ug/m3"
+  },
+  "control_reproduces_published_baseline": true,
+  "control_max_drift": 0.0,
+  "arms": {
+    "control": {
+      "label": "baseline",
+      "n_features": 37,
+      "added": [],
+      "windows": {
+        "2023": {
+          "hit_rate": 0.7632,
+          "false_alarm_rate": 0.2651,
+          "specificity": 0.7961,
+          "alertable_hour_prevalence": 0.4255,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 33,
+          "distinct_episodes": 33,
+          "episode_detection_rate": 0.9394,
+          "episode_detection_ci95": [
+            0.8039,
+            0.9832
+          ]
+        },
+        "2024": {
+          "hit_rate": 0.5385,
+          "false_alarm_rate": 0.4481,
+          "specificity": 0.9027,
+          "alertable_hour_prevalence": 0.182,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 21,
+          "distinct_episodes": 21,
+          "episode_detection_rate": 0.8095,
+          "episode_detection_ci95": [
+            0.6,
+            0.9233
+          ]
+        }
+      }
+    },
+    "dryness": {
+      "label": "baseline + consecutive_dry_days",
+      "n_features": 38,
+      "added": [
+        "consecutive_dry_days"
+      ],
+      "added_feature_importance_at_24h": {
+        "consecutive_dry_days": 0.00826
+      },
+      "added_feature_rank_at_24h": {
+        "consecutive_dry_days": 28
+      },
+      "windows": {
+        "2023": {
+          "hit_rate": 0.7632,
+          "false_alarm_rate": 0.2541,
+          "specificity": 0.8074,
+          "alertable_hour_prevalence": 0.4255,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 33,
+          "distinct_episodes": 33,
+          "episode_detection_rate": 0.9394,
+          "episode_detection_ci95": [
+            0.8039,
+            0.9832
+          ]
+        },
+        "2024": {
+          "hit_rate": 0.5441,
+          "false_alarm_rate": 0.4455,
+          "specificity": 0.9027,
+          "alertable_hour_prevalence": 0.182,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 21,
+          "distinct_episodes": 21,
+          "episode_detection_rate": 0.8095,
+          "episode_detection_ci95": [
+            0.6,
+            0.9233
+          ]
+        }
+      }
+    },
+    "enso": {
+      "label": "baseline + enso_regime",
+      "n_features": 38,
+      "added": [
+        "enso_regime"
+      ],
+      "added_feature_importance_at_24h": {
+        "enso_regime": 0.00963
+      },
+      "added_feature_rank_at_24h": {
+        "enso_regime": 25
+      },
+      "windows": {
+        "2023": {
+          "hit_rate": 0.7713,
+          "false_alarm_rate": 0.2619,
+          "specificity": 0.7973,
+          "alertable_hour_prevalence": 0.4255,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 33,
+          "distinct_episodes": 33,
+          "episode_detection_rate": 0.9394,
+          "episode_detection_ci95": [
+            0.8039,
+            0.9832
+          ]
+        },
+        "2024": {
+          "hit_rate": 0.5291,
+          "false_alarm_rate": 0.446,
+          "specificity": 0.9052,
+          "alertable_hour_prevalence": 0.182,
+          "median_lead_time_hours": 24.0,
+          "events_evaluated": 21,
+          "distinct_episodes": 21,
+          "episode_detection_rate": 0.8095,
+          "episode_detection_ci95": [
+            0.6,
+            0.9233
+          ]
+        }
+      }
+    }
+  },
+  "paired_vs_control": {
+    "dryness": {
+      "2023": {
+        "episodes_compared": 33,
+        "control_caught_ablation_missed": 0,
+        "ablation_caught_control_missed": 0,
+        "net_episodes_gained": 0,
+        "mcnemar_exact_p": 1.0
+      },
+      "2024": {
+        "episodes_compared": 21,
+        "control_caught_ablation_missed": 0,
+        "ablation_caught_control_missed": 0,
+        "net_episodes_gained": 0,
+        "mcnemar_exact_p": 1.0
+      }
+    },
+    "enso": {
+      "2023": {
+        "episodes_compared": 33,
+        "control_caught_ablation_missed": 0,
+        "ablation_caught_control_missed": 0,
+        "net_episodes_gained": 0,
+        "mcnemar_exact_p": 1.0
+      },
+      "2024": {
+        "episodes_compared": 21,
+        "control_caught_ablation_missed": 0,
+        "ablation_caught_control_missed": 0,
+        "net_episodes_gained": 0,
+        "mcnemar_exact_p": 1.0
+      }
+    }
+  },
+  "verdict": {
+    "stop_condition": "2024 episode detection must exceed the baseline Wilson upper bound of 92.3% to count as signal.",
+    "passed": {
+      "dryness": false,
+      "enso": false
+    },
+    "any_passed": false,
+    "power_note": "With 21 distinct episodes the only outcomes above 92.3% are 20/21 (95.2%) and 21/21 (100%); 19/21 is 90.5% and fails. The criterion therefore admits exactly two passing results and cannot detect a real but modest improvement. The paired McNemar figures are reported alongside because they retain the pairing and have more power, but the stated criterion is what decides the stop."
+  },
+  "caveats": [
+    "ENSO: across the whole archive there is one fire season per regime (2022 La Nina, 2023 El Nino, 2024 neutral). The validation protocol withholds 2023 and 2024, so training contains exactly ONE labelled fire season. The 2024 window it must predict is a regime x season combination never seen in training. Read any effect as an upper bound on harm, not as evidence about the feature.",
+    "ENSO: ONI values are recalled, not fetched - see the provenance warning in src/haze/features/regime.py. The categorical encoding is robust to decimal error; the phase assignment per fire season is not in doubt.",
+    "Dryness: precipitation is measured at the receptor, but the fires driving these episodes are 150-400 km upwind. BMKG applies HTH over the fire region. A receptor-level dry-day count may therefore be measuring the wrong place; gridded precipitation over the fire domain is already cached and is the obvious follow-up.",
+    "Dryness has limited dynamic range here: the archive maximum is 12 consecutive dry days and the 90th percentile is 1."
+  ]
+}

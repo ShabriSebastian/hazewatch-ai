@@ -76,6 +76,10 @@ def make_sequences(
 ):
     """Build (n, seq_len, f) windows per institution.
 
+    Note that institutions sharing a CAMS grid cell contribute near-duplicate
+    windows with identical targets, so the effective sample is roughly a third
+    of the window count.
+
     Sequences are cut per site so a window never straddles two locations, and
     any window with a gap in inputs or targets is dropped rather than imputed.
     """
