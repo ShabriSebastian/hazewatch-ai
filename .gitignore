@@ -1,0 +1,31 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# setuptools build artifacts: rebuilt by `pip install -e .`
+build/
+*.egg-info/
+
+# Cached raw downloads: large, and reproducible via `make data`.
+data/raw/
+data/processed/*.parquet
+
+# Trained model artifacts: rebuild with `make train`.
+models/v1/*.joblib
+models/v1/*.pt
+
+# The scenario database and metrics.json are deliberately NOT ignored -
+# they are the demo, and the demo must survive a fresh clone without a
+# network connection or a 20-minute rebuild.
+
+# Frontend
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+.env.local
+.env*.local
+
+# macOS
+.DS_Store

@@ -1,0 +1,23 @@
+# Keep the build context small and the image free of things the API never reads.
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.git/
+.github/
+
+# Training artifacts: 2 GB of forests the serving path never loads.
+models/v1/*.joblib
+models/v1/*.pt
+
+# Raw and intermediate data: rebuildable, and not read at request time.
+data/raw/
+data/processed/
+
+# Not part of the running service.
+tests/
+scripts/
+notebooks/
+api_contract/
+*.md
+Makefile

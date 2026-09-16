@@ -1,0 +1,130 @@
+{
+  "model_name": "rf-forecast",
+  "model_version": "1.0.0",
+  "trained_at": "2026-08-12T10:32:42Z",
+  "train_period": "2022-08-01..2024-12-31 minus val and test",
+  "test_period": "2023-08-16..2023-10-15",
+  "test_period_held_out": true,
+  "r2_attribution": 0.032,
+  "r2_attribution_raw": -0.074,
+  "horizons": [
+    {
+      "lead_hours": 6,
+      "model_mae": 12.02,
+      "persistence_mae": 13.76,
+      "climatology_mae": 17.67,
+      "improvement_vs_persistence": 0.1266
+    },
+    {
+      "lead_hours": 12,
+      "model_mae": 12.89,
+      "persistence_mae": 17.02,
+      "climatology_mae": 17.56,
+      "improvement_vs_persistence": 0.2424
+    },
+    {
+      "lead_hours": 24,
+      "model_mae": 13.03,
+      "persistence_mae": 15.27,
+      "climatology_mae": 17.36,
+      "improvement_vs_persistence": 0.1466
+    }
+  ],
+  "alerts": {
+    "hit_rate": 0.8349,
+    "false_alarm_rate": 0.2556,
+    "median_lead_time_hours": 24.0,
+    "events_evaluated": 118
+  },
+  "top_features": [
+    {
+      "feature": "precip_24h_sum",
+      "contribution": 0.0991
+    },
+    {
+      "feature": "ufei_72h",
+      "contribution": 0.0811
+    },
+    {
+      "feature": "boundary_layer_height",
+      "contribution": 0.0742
+    },
+    {
+      "feature": "ufei_48h",
+      "contribution": 0.0718
+    },
+    {
+      "feature": "hour_sin",
+      "contribution": 0.062
+    },
+    {
+      "feature": "ufei_from_ID",
+      "contribution": 0.0564
+    },
+    {
+      "feature": "frp_150_400km",
+      "contribution": 0.0491
+    },
+    {
+      "feature": "precipitation",
+      "contribution": 0.0431
+    },
+    {
+      "feature": "hotspots_50_150km",
+      "contribution": 0.0424
+    },
+    {
+      "feature": "frp_50_150km",
+      "contribution": 0.0415
+    },
+    {
+      "feature": "temperature_2m",
+      "contribution": 0.0401
+    },
+    {
+      "feature": "ufei_24h",
+      "contribution": 0.0395
+    }
+  ],
+  "alert_trigger_percentile": 90,
+  "trigger_sweep": [
+    {
+      "percentile": 75,
+      "hit_rate": 0.6197,
+      "false_alarm_rate": 0.1492,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 80,
+      "hit_rate": 0.6721,
+      "false_alarm_rate": 0.1712,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 85,
+      "hit_rate": 0.7412,
+      "false_alarm_rate": 0.2111,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 90,
+      "hit_rate": 0.8349,
+      "false_alarm_rate": 0.2556,
+      "median_lead_time_hours": 24.0
+    },
+    {
+      "percentile": 95,
+      "hit_rate": 0.9198,
+      "false_alarm_rate": 0.3302,
+      "median_lead_time_hours": 24.0
+    }
+  ],
+  "notes": [
+    "PM2.5 targets are ECMWF CAMS reanalysis, not ground-station measurements.",
+    "Hotspots are NASA FIRMS detections; this system does not detect fires itself.",
+    "The held-out episode peaks above the training maximum (307 vs 113 ug/m3), which a tree ensemble cannot extrapolate past; the model therefore under-predicts the most extreme hours. r2_attribution is reported in log space for that reason, and the forecast is trained in raw space.",
+    "Alerts trigger on the upper prediction band rather than the point forecast: a missed episode and a false alarm carry very different costs. Both rates are reported.",
+    "Test window 2023-08-16..2023-10-15 excluded from training.",
+    "A GRU was trained but did not beat the Random Forest on held-out data (+24h MAE 13.68 vs 13.03 ug/m3); the Random Forest is served instead."
+  ]
+}
