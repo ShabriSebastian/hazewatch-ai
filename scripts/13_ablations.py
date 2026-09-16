@@ -47,7 +47,7 @@ import pandas as pd  # noqa: E402
 
 from haze import config  # noqa: E402
 from haze.features import regime  # noqa: E402
-from haze.models import evaluate, rf  # noqa: E402
+from haze.models import baselines, evaluate, rf  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location(
     "_validate_events", Path(__file__).resolve().parent / "06_validate_events.py"
@@ -72,14 +72,52 @@ BASELINE_2024 = {"hit_rate": 0.5385, "episode_detection_rate": 0.8095}
 # detection counts as signal only if it clears the baseline Wilson upper bound.
 STOP_CONDITION_UPPER = 0.923
 
+# The Upwind Fire Exposure Index terms. Removing them leaves the *naive*
+# alternative already in the feature set - raw hotspot counts and summed FRP by
+# distance ring - so the no_ufei arm is not "fire blindness", it is "count fires
+# in a radius and ignore the wind". That is the comparison the physical
+# weighting has to win to justify itself.
+UFEI_FEATURES = ["ufei_24h", "ufei_48h", "ufei_72h", "ufei_from_ID", "ufei_from_MY"]
+
+# (transform, added, removed). Every 2D/2E arm adds and removes nothing, so
+# their published nulls are reproduced by this harness unchanged - which the
+# control-drift check below verifies rather than assumes.
 ARMS = {
-    "control": (lambda df: df, []),
-    "dryness": (regime.add_dryness, ["consecutive_dry_days"]),
-    "enso": (regime.add_enso, ["enso_regime"]),
+    "control": (lambda df: df, [], []),
+    "dryness": (regime.add_dryness, ["consecutive_dry_days"], []),
+    "enso": (regime.add_enso, ["enso_regime"], []),
     # 2E: the same index measured where the fuel is rather than where the people
     # are, repairing the flaw 2D.1's null exposed.
-    "upwind_dryness": (regime.add_upwind_dryness, ["upwind_dry_days"]),
+    "upwind_dryness": (regime.add_upwind_dryness, ["upwind_dry_days"], []),
+    # Phase 3: does the physical weighting earn its place over raw fire count?
+    "no_ufei": (lambda df: df, [], UFEI_FEATURES),
 }
+
+# ------------------------------------------------------------------------
+# Pre-registered before the no_ufei run, so the bar cannot be moved to fit the
+# result. Mirrors the STOP_CONDITION_UPPER pattern 2D used.
+#
+# The evidence for UFEI to date is a feature-importance ranking. That shows the
+# forest splits on it; it says nothing about whether a forest denied it would do
+# worse, because importance is measured against the model's own splits and not
+# against an alternative. So:
+#
+#   PRIMARY (forecast). Removing UFEI must cost at least one net episode on the
+#   paired McNemar comparison against control, summed over both windows. Paired
+#   because with 21 and 33 episodes two independent intervals can barely
+#   distinguish anything, and the pairing is what carries the power.
+#
+#   SECONDARY (forecast). Or the no-UFEI arm's episode detection must fall below
+#   the control's 95% Wilson lower bound on either window.
+#
+#   CO-PRIMARY (attribution). Or removing UFEI must lower the attribution
+#   model's held-out R2 in log space. This one matters most for the published
+#   claim: the attribution model is fire-and-weather-only, and it is *its*
+#   importances the README cites as evidence for the transboundary story.
+#
+# If none of the three fires, UFEI has not been shown to beat counting fires in
+# a radius, and the README must say so.
+UFEI_WILSON_LOWER = {"2023": 0.8039, "2024": 0.6000}
 
 
 def mcnemar_exact(b: int, c: int) -> float:
@@ -113,9 +151,9 @@ def score(models, features, frame, receptors) -> tuple[dict, list]:
 
 
 def run_arm(name: str, df: pd.DataFrame, base_features: list[str]) -> dict:
-    transform, extra = ARMS[name]
+    transform, extra, removed = ARMS[name]
     frame = transform(df)
-    features = base_features + extra
+    features = [f for f in base_features if f not in removed] + extra
 
     train, _, test_2023 = evaluate.split(
         frame, extra_holdouts=[SECOND_EVENT], embargo_hours=EMBARGO_HOURS
@@ -126,12 +164,22 @@ def run_arm(name: str, df: pd.DataFrame, base_features: list[str]) -> dict:
     ].copy()
     receptors = evaluate.distinct_receptors(frame)
 
-    label = "baseline" if not extra else f"baseline + {', '.join(extra)}"
+    label = "baseline"
+    if extra:
+        label += f" + {', '.join(extra)}"
+    if removed:
+        label += f" - {', '.join(removed)}"
     print(f"\n=== {name} ({label}; {len(features)} features) ===")
     print(f"  training {len(ALL_HORIZONS)} forests on {len(train):,} rows...")
     models = rf.train_forecast(train, features, ALL_HORIZONS)
 
-    out: dict = {"label": label, "n_features": len(features), "added": extra, "windows": {}}
+    out: dict = {
+        "label": label,
+        "n_features": len(features),
+        "added": extra,
+        "removed": removed,
+        "windows": {},
+    }
     for window_label, window in (("2023", test_2023), ("2024", test_2024)):
         metrics, flags = score(models, features, window, receptors)
         ci = metrics["episode_detection_ci95"]
@@ -169,6 +217,54 @@ def run_arm(name: str, df: pd.DataFrame, base_features: list[str]) -> dict:
     return out
 
 
+def run_attribution_arm(name: str, df: pd.DataFrame, base_features: list[str]) -> dict:
+    """The fire-and-weather-only model, with and without the UFEI terms.
+
+    Separate from the forecast arms because it answers the question the README
+    actually leans on. RF-attribution carries no PM2.5 lags, so it cannot fall
+    back on persistence and must explain concentration from fire and weather -
+    and it is its feature importances that are cited as evidence for the
+    transboundary claim. If UFEI can be removed from *this* model without
+    hurting it, the ranking was telling us about the forest's splits rather than
+    about the physics.
+
+    One forest, not twenty-four, so this costs seconds rather than minutes.
+    """
+    transform, extra, removed = ARMS[name]
+    frame = transform(df)
+    features = [f for f in base_features if f not in removed] + extra
+
+    train, _, test_2023 = evaluate.split(
+        frame, extra_holdouts=[SECOND_EVENT], embargo_hours=EMBARGO_HOURS
+    )
+    start, end = SECOND_EVENT
+    test_2024 = frame[
+        (frame["time"] >= start) & (frame["time"] <= end + " 23:59:59")
+    ].copy()
+
+    model, cols = rf.train_attribution(train, features)
+
+    out = {"n_features": len(cols), "removed": removed, "windows": {}}
+    for label, window in (("2023", test_2023), ("2024", test_2024)):
+        pred = rf.predict(model, window, cols, log=rf.LOG_ATTRIBUTION)
+        truth = window["pm25"].to_numpy(dtype=float)
+        log = lambda v: np.log1p(np.clip(v, 0, None))  # noqa: E731
+        out["windows"][label] = {
+            "r2_log": round(baselines.r2(log(truth), log(pred)), 4),
+            "r2_raw": round(baselines.r2(truth, pred), 4),
+            "mae": round(baselines.mae(truth, pred), 2),
+        }
+        print(
+            f"    {label}: R2(log) {out['windows'][label]['r2_log']:+.4f}  "
+            f"R2(raw) {out['windows'][label]['r2_raw']:+.4f}  "
+            f"MAE {out['windows'][label]['mae']:.2f}"
+        )
+    top = rf.importances(model, cols, top=6)
+    out["top_features"] = top
+    print("    top drivers: " + ", ".join(f["feature"] for f in top))
+    return out
+
+
 def pair_against_control(control: dict, arm: dict, window: str) -> dict:
     """Discordant pairs on the same episodes, plus an exact McNemar p-value."""
     key = lambda r: (r["institution_id"], r["onset"])  # noqa: E731
@@ -183,6 +279,61 @@ def pair_against_control(control: dict, arm: dict, window: str) -> dict:
         "ablation_caught_control_missed": c,
         "net_episodes_gained": c - b,
         "mcnemar_exact_p": round(mcnemar_exact(b, c), 4),
+    }
+
+
+def ufei_verdict(results: dict, comparisons: dict, attribution: dict) -> dict:
+    """Decide the pre-registered criterion. Direction-agnostic by construction."""
+    paired = comparisons["no_ufei"]
+    net_lost = sum(paired[w]["control_caught_ablation_missed"] for w in ("2023", "2024"))
+    net_gained = sum(paired[w]["ablation_caught_control_missed"] for w in ("2023", "2024"))
+    primary = net_lost - net_gained >= 1
+
+    detection = {
+        w: results["no_ufei"]["windows"][w]["metrics"]["episode_detection_rate"]
+        for w in ("2023", "2024")
+    }
+    secondary = any(detection[w] < UFEI_WILSON_LOWER[w] for w in detection)
+
+    co_primary = None
+    if attribution:
+        ctrl = attribution["control"]["windows"]["2023"]["r2_log"]
+        arm = attribution["no_ufei"]["windows"]["2023"]["r2_log"]
+        co_primary = arm < ctrl
+
+    earns = bool(primary or secondary or co_primary)
+    return {
+        "criterion": (
+            "Pre-registered. UFEI earns its place if removing it (a) costs >=1 net "
+            "episode on the paired McNemar across both windows, or (b) drops episode "
+            "detection below the control's 95% Wilson lower bound on either window, "
+            "or (c) lowers the attribution model's held-out R2 in log space."
+        ),
+        "net_episodes_lost_by_removing_ufei": net_lost - net_gained,
+        "episode_detection_without_ufei": detection,
+        "control_wilson_lower_bound": UFEI_WILSON_LOWER,
+        "attribution_r2_log_2023": (
+            None if not attribution else {
+                "control": attribution["control"]["windows"]["2023"]["r2_log"],
+                "no_ufei": attribution["no_ufei"]["windows"]["2023"]["r2_log"],
+            }
+        ),
+        "primary_paired_episodes": bool(primary),
+        "secondary_detection_below_bound": bool(secondary),
+        "co_primary_attribution_r2": co_primary,
+        "ufei_earns_its_place": earns,
+        "note": (
+            "The naive alternative is not 'no fire information'. Raw hotspot counts "
+            "and summed FRP in 0-50/50-150/150-400 km rings stay in the feature set "
+            "when UFEI is removed, so this compares physical weighting against "
+            "counting fires in a radius - not against blindness."
+            if earns else
+            "No arm of the criterion fired. On this evidence the bearing/FRP/decay "
+            "weighting has NOT been shown to beat raw fire counts in distance rings, "
+            "and the feature-importance ranking cited elsewhere is not a substitute: "
+            "importance is measured against the model's own splits, not against an "
+            "alternative model. Report this plainly."
+        ),
     }
 
 
@@ -249,6 +400,23 @@ def main() -> int:
             f"exact McNemar p = {d['mcnemar_exact_p']:.3f}"
         )
 
+    # -- the attribution co-primary ---------------------------------------
+    attribution: dict = {}
+    if "no_ufei" in arms_tested:
+        print("\n=== attribution model (fire + weather only) ===")
+        for name in ("control", "no_ufei"):
+            print(f"  {name}:")
+            attribution[name] = run_attribution_arm(name, df, base_features)
+
+    ufei = ufei_verdict(results, comparisons, attribution) if "no_ufei" in arms_tested else None
+    if ufei:
+        print(
+            f"\nUFEI criterion: earns its place = {ufei['ufei_earns_its_place']}  "
+            f"(paired {ufei['primary_paired_episodes']}, "
+            f"detection {ufei['secondary_detection_below_bound']}, "
+            f"attribution R2 {ufei['co_primary_attribution_r2']})"
+        )
+
     passed = {
         name: bool(
             results[name]["windows"]["2024"]["metrics"]["episode_detection_rate"]
@@ -304,6 +472,8 @@ def main() -> int:
             for name, arm in results.items()
         },
         "paired_vs_control": comparisons,
+        "attribution": attribution,
+        "ufei_verdict": ufei,
         "verdict": verdict,
         "caveats": [
             "ENSO: across the whole archive there is one fire season per regime "

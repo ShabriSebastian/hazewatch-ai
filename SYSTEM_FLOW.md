@@ -64,12 +64,19 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
                      ▼
         [ 06_validate_events.py ]  second independent event (Sept 2024)
            ! retrains its own forests; refuses to touch served artifacts
+           ! also rescores the SERVED model on distinct receptors, so the
+             corrected 33-episode count exists without a retrain
+                     ▼
+          (metrics_by_event.json) ──► merged into GET /model/metrics as
+           `validation_events` + `alerts_corrected` (additive, contract intact)
                      ▼
         [ 04_precompute_scenario.py ] ──► (scenario_2023_sept.sqlite)
            every hour of the episode precomputed: observations, forecasts,
            alert states, notifications  → demo runs with no network, no GPU
                      ▼
-        [ 05_offline_smoke_test.py ]  123 checks, Wi-Fi OFF  ── "safe to record"
+        [ 05_offline_smoke_test.py ]  135 checks, Wi-Fi OFF  ── "safe to record"
+           ! now pins the exact bookmark figures the docs quote, not just
+             properties like "lead >= 6h" - an 18h that had become 17h passed
         [ 00_export_contract.py ]     openapi.json — 18 paths, 43 schemas, FROZEN
 ```
 
@@ -429,19 +436,28 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
  │                       │ Non-alert samples read "Clear", not Safe/Watch, │
  │                       │ because that distinction was not fetched.       │
  ├───────────────────────┼─────────────────────────────────────────────────┤
- │ Performance is quoted │ 79.5% hit · 25.4% false alarm · 24h median lead │
- │ from one place        │ · 99 episodes — served by /model/metrics,       │
- │                       │ never hardcoded in the UI.                      │
+ │ Performance is quoted │ 93.9% episode detection of 33 distinct          │
+ │ from one place        │ episodes · 79.5% hit · 25.4% false alarm ·      │
+ │                       │ 24h median lead, 64.5% of it on that            │
+ │                       │ ceiling. Served by /model/metrics, never        │
+ │                       │ hardcoded — but note NO UI surface reads        │
+ │                       │ that endpoint today; it is served, not          │
+ │                       │ displayed. `alerts_corrected` is the            │
+ │                       │ deduplicated block; the frozen `alerts`         │
+ │                       │ still reports 99 and is left as published.      │
  ├───────────────────────┼─────────────────────────────────────────────────┤
  │ "Median lead" is a    │ alert_metrics searches a window of exactly      │
- │ capped maximum, not   │ `horizon` hours before each onset, so per-      │
- │ an unbounded median   │ episode lead cannot exceed 24 and the median    │
- │                       │ sits on its bound. It reads 24.0 at EVERY       │
+ │ censored statistic,   │ `horizon` hours before each onset, so per-      │
+ │ not an unbounded      │ episode lead cannot exceed 24 and the median    │
+ │ median                │ sits on its bound. It reads 24.0 at EVERY       │
  │                       │ trigger percentile from p75 to p95 while hit    │
  │                       │ rate moves 58% → 90% — the signature of a       │
- │                       │ statistic against its ceiling. True median is   │
- │                       │ ≥24h and unmeasured; widening the window is     │
- │                       │ what would turn it into an estimate.            │
+ │                       │ statistic against its ceiling. MEASURED:        │
+ │                       │ 64.5% of 2023 episodes sit exactly on it,       │
+ │                       │ 70.6% of 2024's. True median is ≥24h and        │
+ │                       │ unmeasured; only widening the window would      │
+ │                       │ turn it into an estimate. Published beside      │
+ │                       │ the median everywhere it appears.               │
  └─────────────────────────────────────────────────────────────────────────┘
 ```
 

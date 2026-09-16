@@ -453,7 +453,25 @@ class AlertMetrics(BaseModel):
             "comparable across seasons with different base rates; use specificity."
         )
     )
-    median_lead_time_hours: float
+    median_lead_time_hours: float = Field(
+        description=(
+            "Censored at the forecast horizon: the search window for a warning is "
+            "exactly that wide, so no episode can record a longer lead and this "
+            "median rests on its own bound. Never quote it without "
+            "lead_time_at_ceiling_share."
+        )
+    )
+    lead_time_ceiling_hours: int | None = Field(
+        default=None, description="The bound the median above is censored at."
+    )
+    lead_time_at_ceiling_share: float | None = Field(
+        default=None,
+        description=(
+            "Share of episodes whose warning lead sits exactly on the ceiling. The "
+            "measured size of the censoring: near 1.0 means the median is reporting "
+            "the window width, not the model's true notice period."
+        ),
+    )
     events_evaluated: int = Field(
         description=(
             "Episodes counted per institution. Institutions sharing a grid cell "
@@ -476,6 +494,36 @@ class AlertMetrics(BaseModel):
     episode_detection_ci95: list[float] | None = Field(
         default=None, description="95% Wilson interval on episode_detection_rate."
     )
+
+
+class ValidationEvent(BaseModel):
+    """One independently held-out fire season, scored by the validation model.
+
+    A single held-out episode shows the model was not fitted to its own test
+    set. It does not show the result survives a different year - and a reviewer
+    is entitled to suspect one validation event of being the flattering one. So
+    a second model is trained with *both* seasons withheld and each is scored
+    with the metric code above.
+
+    These are **not** the served model's numbers and must never be shown on the
+    same row as them: this is a different artifact with a smaller training set.
+    `ModelMetrics.alerts_corrected` carries the served model's own figures,
+    recomputed through the identical path so the two are comparable.
+    """
+
+    key: str = Field(description="e.g. 'sept_2024'")
+    label: str
+    window: str = Field(description="Inclusive date window, 'YYYY-MM-DD..YYYY-MM-DD'.")
+    role: str = Field(description="Why this window is in the set.")
+    horizons: list[HorizonMetrics] = Field(
+        description=(
+            "Absolute MAE is not comparable between windows with different peak "
+            "concentrations; improvement_vs_persistence is what compares across years."
+        )
+    )
+    alerts: AlertMetrics
+    peak_observed_pm25: float | None = None
+    rows_evaluated: int | None = None
 
 
 class TriggerOperatingPoint(BaseModel):
@@ -541,5 +589,23 @@ class ModelMetrics(BaseModel):
         default=[],
         description="The full hit-rate/false-alarm trade-off curve, so the chosen "
         "operating point is visible rather than implicit.",
+    )
+    validation_events: list[ValidationEvent] | None = Field(
+        default=None,
+        description=(
+            "Independently held-out fire seasons, scored by a model that has seen "
+            "none of them. Published so a second, less flattering event is visible "
+            "beside the demo one rather than living in an internal file."
+        ),
+    )
+    alerts_corrected: AlertMetrics | None = Field(
+        default=None,
+        description=(
+            "The served model's alert figures recomputed on distinct receptors. "
+            "`alerts` above is frozen at the training run that wrote metrics.json and "
+            "counts each of the six institutions separately, reporting 99 episodes "
+            "where there are 33; this block is the corrected count and is the one to "
+            "quote. The frozen field is retained, not silently rewritten."
+        ),
     )
     notes: list[str] = []

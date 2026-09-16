@@ -1,0 +1,189 @@
+{
+  "generated_at": "2026-09-01T04:29:10Z",
+  "purpose": "Put a computation behind the r = +0.52 daily correlation the README quotes, and test whether attribution really is stronger at daily resolution than hourly.",
+  "protocol": {
+    "source_region": "config.WEST_KALIMANTAN_BBOX",
+    "hotspot_counting": "FIRMS detections inside the source bbox per UTC day, deduplicated across sensors by features.build.load_hotspots.",
+    "receptors": {
+      "kuching": "my-kch-greenroad",
+      "pontianak": "id-ptk-bpbd"
+    },
+    "max_lag_days": 5,
+    "attribution_features": "fire and weather only - no PM2.5 lags, no day-of-year, matching haze.models.rf.attribution_features",
+    "holdouts": [
+      "2023-08-16..2023-10-15",
+      "2024-08-16..2024-10-15"
+    ],
+    "hyperparameters": {
+      "n_estimators": 300,
+      "min_samples_leaf": 20,
+      "max_features": "sqrt",
+      "random_state": 42
+    }
+  },
+  "correlation_profile": {
+    "full_archive": {
+      "kuching": {
+        "institution_id": "my-kch-greenroad",
+        "n_days": 884,
+        "r_by_lag_days": {
+          "0": 0.4351,
+          "1": 0.4241,
+          "2": 0.4321,
+          "3": 0.4055,
+          "4": 0.3284,
+          "5": 0.2508
+        },
+        "peak_lag_days": 0,
+        "peak_r": 0.4351
+      },
+      "pontianak": {
+        "institution_id": "id-ptk-bpbd",
+        "n_days": 884,
+        "r_by_lag_days": {
+          "0": 0.2405,
+          "1": 0.3586,
+          "2": 0.4025,
+          "3": 0.474,
+          "4": 0.4359,
+          "5": 0.3819
+        },
+        "peak_lag_days": 3,
+        "peak_r": 0.474
+      }
+    },
+    "held_out_2023": {
+      "kuching": {
+        "institution_id": "my-kch-greenroad",
+        "n_days": 61,
+        "r_by_lag_days": {
+          "0": 0.5891,
+          "1": 0.5612,
+          "2": 0.4523,
+          "3": 0.2816,
+          "4": 0.1426,
+          "5": 0.0165
+        },
+        "peak_lag_days": 0,
+        "peak_r": 0.5891
+      },
+      "pontianak": {
+        "institution_id": "id-ptk-bpbd",
+        "n_days": 61,
+        "r_by_lag_days": {
+          "0": -0.1614,
+          "1": 0.1112,
+          "2": 0.3099,
+          "3": 0.5256,
+          "4": 0.4665,
+          "5": 0.3291
+        },
+        "peak_lag_days": 3,
+        "peak_r": 0.5256
+      }
+    },
+    "held_out_2024": {
+      "kuching": {
+        "institution_id": "my-kch-greenroad",
+        "n_days": 61,
+        "r_by_lag_days": {
+          "0": 0.4605,
+          "1": 0.4517,
+          "2": 0.5582,
+          "3": 0.5906,
+          "4": 0.3349,
+          "5": 0.0988
+        },
+        "peak_lag_days": 3,
+        "peak_r": 0.5906
+      },
+      "pontianak": {
+        "institution_id": "id-ptk-bpbd",
+        "n_days": 61,
+        "r_by_lag_days": {
+          "0": 0.2039,
+          "1": 0.4452,
+          "2": 0.5011,
+          "3": 0.5258,
+          "4": 0.5939,
+          "5": 0.5756
+        },
+        "peak_lag_days": 4,
+        "peak_r": 0.5939
+      }
+    }
+  },
+  "daily_attribution": {
+    "min_samples_leaf_20": {
+      "min_samples_leaf": 20,
+      "n_train_days": 1396,
+      "windows": {
+        "2023": {
+          "n_days": 122,
+          "model_r2_log": -0.1262,
+          "model_r2_raw": -0.1649,
+          "persistence_r2_log": 0.4261,
+          "climatology_r2_log": -0.9392,
+          "model_mae": 13.93,
+          "persistence_mae": 11.22,
+          "climatology_mae": 17.1
+        },
+        "2024": {
+          "n_days": 122,
+          "model_r2_log": 0.1798,
+          "model_r2_raw": 0.2552,
+          "persistence_r2_log": 0.2979,
+          "climatology_r2_log": -0.923,
+          "model_mae": 4.72,
+          "persistence_mae": 4.17,
+          "climatology_mae": 6.8
+        }
+      }
+    },
+    "min_samples_leaf_5": {
+      "min_samples_leaf": 5,
+      "n_train_days": 1396,
+      "windows": {
+        "2023": {
+          "n_days": 122,
+          "model_r2_log": -0.0704,
+          "model_r2_raw": -0.1272,
+          "persistence_r2_log": 0.4261,
+          "climatology_r2_log": -0.9392,
+          "model_mae": 13.71,
+          "persistence_mae": 11.22,
+          "climatology_mae": 17.1
+        },
+        "2024": {
+          "n_days": 122,
+          "model_r2_log": 0.2092,
+          "model_r2_raw": 0.317,
+          "persistence_r2_log": 0.2979,
+          "climatology_r2_log": -0.923,
+          "model_mae": 4.57,
+          "persistence_mae": 4.17,
+          "climatology_mae": 6.8
+        }
+      }
+    }
+  },
+  "daily_attribution_best_on_2023": "min_samples_leaf_5",
+  "hourly_attribution_r2_log": 0.032,
+  "daily_vs_hourly": {
+    "leaf_setting_used": "min_samples_leaf_5",
+    "daily_r2_log_2023": -0.0704,
+    "daily_persistence_r2_log_2023": 0.4261,
+    "hourly_r2_log_2023": 0.032,
+    "daily_beats_its_own_baselines": false,
+    "daily_beats_hourly_r2": false,
+    "signal_lives_at_daily_resolution": false
+  },
+  "caveats": [
+    "Daily aggregation leaves ~1.8k receptor-days against ~127k hourly rows, so a daily model is fighting a 72x smaller training set as well as a different resolution. Both leaf settings are reported and the more favourable one decides the verdict, so the result is not an artifact of hyperparameters tuned for the hourly problem.",
+    "An R2 that rises with aggregation is not by itself evidence: averaging removes variance, and daily persistence and climatology rise too. Only the margin over those baselines supports the claim, which is why both are reported beside the model.",
+    "Correlation over the full archive mixes fire seasons with the wet season, when neither series moves. The per-window profiles are reported alongside so the figure is not read as a single constant.",
+    "The lag profile is a correlation, not a transport model. It cannot separate transport time from the fact that fires and haze are both driven by the same dry spell.",
+    "PM2.5 is ECMWF CAMS reanalysis, not ground-station measurement, at daily resolution exactly as it is hourly.",
+    "Two receptors is a small sample for a claim about how peak lag varies with distance. The profile is published so the reader can see how thin the evidence for that ordering is."
+  ]
+}

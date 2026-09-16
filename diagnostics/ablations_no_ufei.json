@@ -1,0 +1,798 @@
+{
+  "generated_at": "2026-09-01T04:41:17Z",
+  "purpose": "Phase 2D isolated ablations: dryness and ENSO regime, never stacked.",
+  "protocol": {
+    "split": "validation model - both fire seasons withheld",
+    "embargo_hours": 24,
+    "hyperparameters": {
+      "n_estimators": 300,
+      "min_samples_leaf": 20,
+      "max_features": "sqrt",
+      "random_state": 42
+    },
+    "trigger": "p90 band at 35.5 ug/m3"
+  },
+  "control_reproduces_published_baseline": true,
+  "control_max_drift": 0.0,
+  "arms": {
+    "control": {
+      "label": "baseline",
+      "n_features": 37,
+      "added": [],
+      "removed": [],
+      "windows": {
+        "2023": {
+          "hit_rate": 0.7632,
+          "false_alarm_rate": 0.2651,
+          "specificity": 0.7961,
+          "alertable_hour_prevalence": 0.4255,
+          "median_lead_time_hours": 24.0,
+          "lead_time_ceiling_hours": 24,
+          "lead_time_at_ceiling_share": 0.6452,
+          "events_evaluated": 33,
+          "distinct_episodes": 33,
+          "episode_detection_rate": 0.9394,
+          "episode_detection_ci95": [
+            0.8039,
+            0.9832
+          ],
+          "episode_flags": [
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-08-16 00:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-08-18 13:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-08-19 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-08-20 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-04 04:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-08 08:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-11 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-15 12:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-16 06:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-26 16:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-01 23:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-04 01:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-05 04:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-07 07:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-08 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-08-17 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-08-19 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-08-29 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-08-31 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-03 10:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-04 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-05 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-11 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-22 10:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-23 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-24 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-26 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-27 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-01 09:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-03 10:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-04 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-04 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-06 10:00:00+00:00",
+              "warned": 1
+            }
+          ]
+        },
+        "2024": {
+          "hit_rate": 0.5385,
+          "false_alarm_rate": 0.4481,
+          "specificity": 0.9027,
+          "alertable_hour_prevalence": 0.182,
+          "median_lead_time_hours": 24.0,
+          "lead_time_ceiling_hours": 24,
+          "lead_time_at_ceiling_share": 0.7059,
+          "events_evaluated": 21,
+          "distinct_episodes": 21,
+          "episode_detection_rate": 0.8095,
+          "episode_detection_ci95": [
+            0.6,
+            0.9233
+          ],
+          "episode_flags": [
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-05 21:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-07 19:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-09 15:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-18 08:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-19 05:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-08-17 12:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-08-19 12:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-02 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-04 15:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-05 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-05 10:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-06 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-09 19:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-13 12:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-15 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-16 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-16 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-19 13:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-20 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-21 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-10-08 16:00:00+00:00",
+              "warned": 1
+            }
+          ]
+        }
+      }
+    },
+    "no_ufei": {
+      "label": "baseline - ufei_24h, ufei_48h, ufei_72h, ufei_from_ID, ufei_from_MY",
+      "n_features": 32,
+      "added": [],
+      "removed": [
+        "ufei_24h",
+        "ufei_48h",
+        "ufei_72h",
+        "ufei_from_ID",
+        "ufei_from_MY"
+      ],
+      "windows": {
+        "2023": {
+          "hit_rate": 0.7416,
+          "false_alarm_rate": 0.2451,
+          "specificity": 0.8216,
+          "alertable_hour_prevalence": 0.4255,
+          "median_lead_time_hours": 24.0,
+          "lead_time_ceiling_hours": 24,
+          "lead_time_at_ceiling_share": 0.6774,
+          "events_evaluated": 33,
+          "distinct_episodes": 33,
+          "episode_detection_rate": 0.9394,
+          "episode_detection_ci95": [
+            0.8039,
+            0.9832
+          ],
+          "episode_flags": [
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-08-16 00:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-08-18 13:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-08-19 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-08-20 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-04 04:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-08 08:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-11 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-15 12:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-16 06:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-09-26 16:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-01 23:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-04 01:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-05 04:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-07 07:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2023-10-08 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-08-17 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-08-19 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-08-29 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-08-31 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-03 10:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-04 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-05 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-11 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-22 10:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-23 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-24 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-26 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-09-27 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-01 09:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-03 10:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-04 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-04 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2023-10-06 10:00:00+00:00",
+              "warned": 1
+            }
+          ]
+        },
+        "2024": {
+          "hit_rate": 0.531,
+          "false_alarm_rate": 0.463,
+          "specificity": 0.8981,
+          "alertable_hour_prevalence": 0.182,
+          "median_lead_time_hours": 24.0,
+          "lead_time_ceiling_hours": 24,
+          "lead_time_at_ceiling_share": 0.6471,
+          "events_evaluated": 21,
+          "distinct_episodes": 21,
+          "episode_detection_rate": 0.8095,
+          "episode_detection_ci95": [
+            0.6,
+            0.9233
+          ],
+          "episode_flags": [
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-05 21:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-07 19:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-09 15:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-18 08:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "id-ptk-bpbd",
+              "onset": "2024-09-19 05:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-08-17 12:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-08-19 12:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-02 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-04 15:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-05 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-05 10:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-06 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-09 19:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-13 12:00:00+00:00",
+              "warned": 0
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-15 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-16 00:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-16 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-19 13:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-20 12:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-09-21 11:00:00+00:00",
+              "warned": 1
+            },
+            {
+              "institution_id": "my-kch-greenroad",
+              "onset": "2024-10-08 16:00:00+00:00",
+              "warned": 1
+            }
+          ]
+        }
+      }
+    }
+  },
+  "paired_vs_control": {
+    "no_ufei": {
+      "2023": {
+        "episodes_compared": 33,
+        "control_caught_ablation_missed": 0,
+        "ablation_caught_control_missed": 0,
+        "net_episodes_gained": 0,
+        "mcnemar_exact_p": 1.0
+      },
+      "2024": {
+        "episodes_compared": 21,
+        "control_caught_ablation_missed": 0,
+        "ablation_caught_control_missed": 0,
+        "net_episodes_gained": 0,
+        "mcnemar_exact_p": 1.0
+      }
+    }
+  },
+  "attribution": {
+    "control": {
+      "n_features": 29,
+      "removed": [],
+      "windows": {
+        "2023": {
+          "r2_log": -0.0268,
+          "r2_raw": -0.1029,
+          "mae": 15.5
+        },
+        "2024": {
+          "r2_log": 0.2198,
+          "r2_raw": 0.2383,
+          "mae": 5.76
+        }
+      },
+      "top_features": [
+        {
+          "feature": "precip_24h_sum",
+          "contribution": 0.1061
+        },
+        {
+          "feature": "ufei_72h",
+          "contribution": 0.0832
+        },
+        {
+          "feature": "boundary_layer_height",
+          "contribution": 0.0723
+        },
+        {
+          "feature": "ufei_48h",
+          "contribution": 0.0688
+        },
+        {
+          "feature": "hour_sin",
+          "contribution": 0.0579
+        },
+        {
+          "feature": "ufei_from_ID",
+          "contribution": 0.0575
+        }
+      ]
+    },
+    "no_ufei": {
+      "n_features": 24,
+      "removed": [
+        "ufei_24h",
+        "ufei_48h",
+        "ufei_72h",
+        "ufei_from_ID",
+        "ufei_from_MY"
+      ],
+      "windows": {
+        "2023": {
+          "r2_log": -0.1723,
+          "r2_raw": -0.1553,
+          "mae": 16.22
+        },
+        "2024": {
+          "r2_log": 0.1603,
+          "r2_raw": 0.1621,
+          "mae": 5.89
+        }
+      },
+      "top_features": [
+        {
+          "feature": "precip_24h_sum",
+          "contribution": 0.129
+        },
+        {
+          "feature": "boundary_layer_height",
+          "contribution": 0.0876
+        },
+        {
+          "feature": "frp_50_150km",
+          "contribution": 0.0869
+        },
+        {
+          "feature": "frp_150_400km",
+          "contribution": 0.0836
+        },
+        {
+          "feature": "hour_sin",
+          "contribution": 0.0669
+        },
+        {
+          "feature": "hotspots_50_150km",
+          "contribution": 0.065
+        }
+      ]
+    }
+  },
+  "ufei_verdict": {
+    "criterion": "Pre-registered. UFEI earns its place if removing it (a) costs >=1 net episode on the paired McNemar across both windows, or (b) drops episode detection below the control's 95% Wilson lower bound on either window, or (c) lowers the attribution model's held-out R2 in log space.",
+    "net_episodes_lost_by_removing_ufei": 0,
+    "episode_detection_without_ufei": {
+      "2023": 0.9394,
+      "2024": 0.8095
+    },
+    "control_wilson_lower_bound": {
+      "2023": 0.8039,
+      "2024": 0.6
+    },
+    "attribution_r2_log_2023": {
+      "control": -0.0268,
+      "no_ufei": -0.1723
+    },
+    "primary_paired_episodes": false,
+    "secondary_detection_below_bound": false,
+    "co_primary_attribution_r2": true,
+    "ufei_earns_its_place": true,
+    "note": "The naive alternative is not 'no fire information'. Raw hotspot counts and summed FRP in 0-50/50-150/150-400 km rings stay in the feature set when UFEI is removed, so this compares physical weighting against counting fires in a radius - not against blindness."
+  },
+  "verdict": {
+    "stop_condition": "2024 episode detection must exceed the baseline Wilson upper bound of 92.3% to count as signal.",
+    "passed": {
+      "no_ufei": false
+    },
+    "any_passed": false,
+    "power_note": "With 21 distinct episodes the only outcomes above 92.3% are 20/21 (95.2%) and 21/21 (100%); 19/21 is 90.5% and fails. The criterion therefore admits exactly two passing results and cannot detect a real but modest improvement. The paired McNemar figures are reported alongside because they retain the pairing and have more power, but the stated criterion is what decides the stop."
+  },
+  "caveats": [
+    "ENSO: across the whole archive there is one fire season per regime (2022 La Nina, 2023 El Nino, 2024 neutral). The validation protocol withholds 2023 and 2024, so training contains exactly ONE labelled fire season. The 2024 window it must predict is a regime x season combination never seen in training. Read any effect as an upper bound on harm, not as evidence about the feature.",
+    "ENSO: ONI values are recalled, not fetched - see the provenance warning in src/haze/features/regime.py. The categorical encoding is robust to decimal error; the phase assignment per fire season is not in doubt.",
+    "Dryness: precipitation is measured at the receptor, but the fires driving these episodes are 150-400 km upwind. BMKG applies HTH over the fire region. A receptor-level dry-day count may therefore be measuring the wrong place; gridded precipitation over the fire domain is already cached and is the obvious follow-up.",
+    "Dryness has limited dynamic range here: the archive maximum is 12 consecutive dry days and the 90th percentile is 1."
+  ]
+}

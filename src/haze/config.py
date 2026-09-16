@@ -154,10 +154,10 @@ BOOKMARKS = [
         "label": "Both countries alerted, 18h ahead",
         "timestamp": "2023-09-02T16:00:00Z",
         "description": (
-            "All six institutions alerted across two countries. Kuching is warned 18 "
-            "hours ahead while its air reads 13 ug/m3 - good, nothing visibly wrong. "
-            "Observation later confirms a peak of 49 ug/m3. Pontianak, alerted from "
-            "its own fires, is forecast to 58 ug/m3. Attribution for Sarawak: "
+            "All six institutions alerted across two countries. Kuching is warned 17 "
+            "hours ahead while its air reads 12.8 ug/m3 - good, nothing visibly wrong. "
+            "Observation later confirms a peak of 49.2 ug/m3. Pontianak, alerted from "
+            "its own fires, is forecast to 57.7 ug/m3. Attribution for Sarawak: "
             "West Kalimantan, Indonesia."
         ),
     },

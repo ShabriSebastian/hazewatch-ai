@@ -1,7 +1,7 @@
 PY := .venv/bin/python
 export PYTHONPATH := src
 
-.PHONY: help venv contract data features train validate report saturation ablations scenario serve demo check test offline refresh clean
+.PHONY: help venv contract data features train validate report saturation ablations attribution scenario serve demo check test offline refresh clean
 
 help:
 	@echo "make venv      - create .venv and install dependencies"
@@ -12,7 +12,8 @@ help:
 	@echo "make validate  - score two held-out events, write metrics_by_event.json (~10 min)"
 	@echo "make report    - corrected metrics + calibration into diagnostics/ (~15 min)"
 	@echo "make saturation- fire-feature saturation diagnostic, no retrain"
-	@echo "make ablations - isolated dryness / ENSO ablations (~30 min)"
+	@echo "make ablations - isolated feature ablations, incl. no_ufei (~40 min)"
+	@echo "make attribution- daily-resolution attribution refit + lag profile (~1 min)"
 	@echo "make scenario  - precompute the demo scenario SQLite"
 	@echo "make serve     - run the API on :8000"
 	@echo "make check     - contract + offline + metrics regression gates"
@@ -85,3 +86,9 @@ saturation:
 
 ablations:
 	$(PY) scripts/13_ablations.py
+
+# Puts a computation behind the daily correlation the README quotes, and tests
+# whether attribution is actually stronger at daily resolution. Writes only to
+# diagnostics/; re-checksums the served artifacts and the feature matrix.
+attribution:
+	$(PY) scripts/14_daily_attribution.py

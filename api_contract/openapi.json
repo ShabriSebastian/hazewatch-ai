@@ -156,21 +156,111 @@
       },
       "AlertMetrics": {
         "properties": {
+          "alertable_hour_prevalence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Alertable Hour Prevalence"
+          },
+          "distinct_episodes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Episodes counted per distinct PM2.5 series.",
+            "title": "Distinct Episodes"
+          },
+          "episode_detection_ci95": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "95% Wilson interval on episode_detection_rate.",
+            "title": "Episode Detection Ci95"
+          },
+          "episode_detection_rate": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Episode-level: of distinct episodes, how many were warned before onset.",
+            "title": "Episode Detection Rate"
+          },
           "events_evaluated": {
+            "description": "Episodes counted per institution. Institutions sharing a grid cell count separately, so this exceeds distinct_episodes.",
             "title": "Events Evaluated",
             "type": "integer"
           },
           "false_alarm_rate": {
+            "description": "1 - precision. Depends on how often the event occurs, so it is not comparable across seasons with different base rates; use specificity.",
             "title": "False Alarm Rate",
             "type": "number"
           },
           "hit_rate": {
+            "description": "Hour-level: of issuance hours with a breach coming, how many warned.",
             "title": "Hit Rate",
             "type": "number"
           },
+          "lead_time_at_ceiling_share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Share of episodes whose warning lead sits exactly on the ceiling. The measured size of the censoring: near 1.0 means the median is reporting the window width, not the model's true notice period.",
+            "title": "Lead Time At Ceiling Share"
+          },
+          "lead_time_ceiling_hours": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The bound the median above is censored at.",
+            "title": "Lead Time Ceiling Hours"
+          },
           "median_lead_time_hours": {
+            "description": "Censored at the forecast horizon: the search window for a warning is exactly that wide, so no episode can record a longer lead and this median rests on its own bound. Never quote it without lead_time_at_ceiling_share.",
             "title": "Median Lead Time Hours",
             "type": "number"
+          },
+          "specificity": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Prevalence-free. The figure to compare across years.",
+            "title": "Specificity"
           }
         },
         "required": [
@@ -1097,6 +1187,17 @@
           "alerts": {
             "$ref": "#/components/schemas/AlertMetrics"
           },
+          "alerts_corrected": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AlertMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The served model's alert figures recomputed on distinct receptors. `alerts` above is frozen at the training run that wrote metrics.json and counts each of the six institutions separately, reporting 99 episodes where there are 33; this block is the corrected count and is the one to quote. The frozen field is retained, not silently rewritten."
+          },
           "horizons": {
             "items": {
               "$ref": "#/components/schemas/HorizonMetrics"
@@ -1144,6 +1245,17 @@
             "description": "The same figure in raw ug/m3 space, for completeness.",
             "title": "R2 Attribution Raw"
           },
+          "spatial_resolution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SpatialResolution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Which institutions the PM2.5 source can and cannot tell apart."
+          },
           "test_period": {
             "title": "Test Period",
             "type": "string"
@@ -1177,6 +1289,21 @@
             },
             "title": "Trigger Sweep",
             "type": "array"
+          },
+          "validation_events": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ValidationEvent"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Independently held-out fire seasons, scored by a model that has seen none of them. Published so a second, less flattering event is visible beside the demo one rather than living in an internal file.",
+            "title": "Validation Events"
           }
         },
         "required": [
@@ -1517,6 +1644,53 @@
         "title": "SimulateNotificationRequest",
         "type": "object"
       },
+      "SpatialResolution": {
+        "description": "What the PM2.5 source can actually resolve.\n\nCAMS global composition is ~0.4 degrees native. The three Pontianak\ninstitutions sit ~3 km apart, as do the three Kuching ones, so all three of\neach share a grid cell and receive the identical series. Forecasts are\ntherefore **per-locality**, not per-institution, and this block says so\nrather than leaving a reader to infer it from six identical rows.",
+        "properties": {
+          "distinct_receptors": {
+            "title": "Distinct Receptors",
+            "type": "integer"
+          },
+          "groups": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "description": "Representative institution id -> every institution sharing its cell.",
+            "title": "Groups",
+            "type": "object"
+          },
+          "institutions": {
+            "title": "Institutions",
+            "type": "integer"
+          },
+          "native_resolution_deg": {
+            "title": "Native Resolution Deg",
+            "type": "number"
+          },
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "source": {
+            "description": "e.g. 'CAMS reanalysis via Open-Meteo'",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "native_resolution_deg",
+          "note",
+          "groups",
+          "distinct_receptors",
+          "institutions"
+        ],
+        "title": "SpatialResolution",
+        "type": "object"
+      },
       "TriggerOperatingPoint": {
         "properties": {
           "false_alarm_rate": {
@@ -1660,6 +1834,73 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "ValidationEvent": {
+        "description": "One independently held-out fire season, scored by the validation model.\n\nA single held-out episode shows the model was not fitted to its own test\nset. It does not show the result survives a different year - and a reviewer\nis entitled to suspect one validation event of being the flattering one. So\na second model is trained with *both* seasons withheld and each is scored\nwith the metric code above.\n\nThese are **not** the served model's numbers and must never be shown on the\nsame row as them: this is a different artifact with a smaller training set.\n`ModelMetrics.alerts_corrected` carries the served model's own figures,\nrecomputed through the identical path so the two are comparable.",
+        "properties": {
+          "alerts": {
+            "$ref": "#/components/schemas/AlertMetrics"
+          },
+          "horizons": {
+            "description": "Absolute MAE is not comparable between windows with different peak concentrations; improvement_vs_persistence is what compares across years.",
+            "items": {
+              "$ref": "#/components/schemas/HorizonMetrics"
+            },
+            "title": "Horizons",
+            "type": "array"
+          },
+          "key": {
+            "description": "e.g. 'sept_2024'",
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "peak_observed_pm25": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Observed Pm25"
+          },
+          "role": {
+            "description": "Why this window is in the set.",
+            "title": "Role",
+            "type": "string"
+          },
+          "rows_evaluated": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rows Evaluated"
+          },
+          "window": {
+            "description": "Inclusive date window, 'YYYY-MM-DD..YYYY-MM-DD'.",
+            "title": "Window",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "window",
+          "role",
+          "horizons",
+          "alerts"
+        ],
+        "title": "ValidationEvent",
         "type": "object"
       }
     }

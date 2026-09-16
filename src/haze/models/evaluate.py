@@ -298,6 +298,16 @@ def alert_metrics(
     horizon. Lead time is measured per distinct observed episode: how far ahead
     of its onset the first correct warning was issued.
 
+    `median_lead_time_hours` is a **censored** statistic and must never be quoted
+    alone. The search window above is exactly `horizon` hours wide, so no episode
+    can record a lead above it and the median sits on its own bound - it reads
+    24.0 at every trigger percentile from p75 to p95 while the hit rate moves
+    58% to 90%, which is the signature of a statistic against a ceiling rather
+    than a property of the model. `lead_time_at_ceiling_share` measures how much
+    of the distribution is piled on that bound, and is reported beside the median
+    everywhere the median appears. The true median is >= the ceiling and remains
+    unmeasured; only widening the search window would turn it into an estimate.
+
     `trigger` supplies an alternative set of predictions to fire alerts on -
     normally the upper prediction band. A warning system is not a regression
     scoreboard: missing an episode costs a school an outdoor assembly in
@@ -392,6 +402,14 @@ def alert_metrics(
             round(denom_hit / denom_prev, 4) if denom_prev else 0.0
         ),
         "median_lead_time_hours": round(float(np.median(lead_times)), 1) if lead_times else 0.0,
+        # The median above is censored at the horizon; this says how hard.
+        # Same population as the median, so the two describe one thing.
+        "lead_time_ceiling_hours": horizon,
+        "lead_time_at_ceiling_share": (
+            round(sum(1 for t in lead_times if t >= horizon) / len(lead_times), 4)
+            if lead_times
+            else 0.0
+        ),
         "events_evaluated": events_total,
         "distinct_episodes": distinct_episodes,
         "episode_detection_rate": (

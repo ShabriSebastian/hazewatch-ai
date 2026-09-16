@@ -24,8 +24,12 @@ Two things this script must never do, because the demo depends on them:
   byte-identical payloads afterwards. The script re-checksums the served
   artifacts before exiting and fails loudly if any of them moved.
 
-Output: `models/v1/metrics_by_event.json`. Internal reporting only - nothing here
-reaches the frozen API contract.
+Output: `models/v1/metrics_by_event.json`. This *is* served: `GET /api/v1/model/
+metrics` merges it in under `validation_events` and `alerts_corrected`, additively,
+so the frozen contract is unchanged and a reader of the API sees the second event
+rather than only the flattering first one. It was scoped "internal reporting" when
+only one event had been scored; leaving a second held-out result in a file nobody
+reads is the same failure as not running it.
 """
 
 from __future__ import annotations
@@ -38,6 +42,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import joblib  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
@@ -155,11 +160,18 @@ def reconnaissance(df: pd.DataFrame, start: str, end: str) -> dict:
 # --------------------------------------------------------------------------
 # Scoring
 # --------------------------------------------------------------------------
-def score_event(models, features, train, frame, label: str) -> dict:
+def score_event(models, features, train, frame, label: str, receptors) -> dict:
     """Horizon skill and alert performance for one held-out window.
 
     Uses exactly the metric functions the served model publishes, so the numbers
     in the two artifacts are directly comparable rather than merely similar.
+
+    `receptors` deduplicates the scoring to one institution per distinct PM2.5
+    series. Without it this function counted each of the Pontianak and Kuching
+    trios three times and reported a hit rate of 0.7587 where the corrected
+    figure is 0.7632 - two numbers for one quantity, differing only because two
+    scripts disagreed about the denominator. `scripts/10_metrics_and_calibration`
+    always passed it; this one did not.
     """
     print(f"\n  scoring {label} ({len(frame):,} rows)")
 
@@ -179,7 +191,10 @@ def score_event(models, features, train, frame, label: str) -> dict:
     reported = {k: v for k, v in predictions.items() if k in REPORT_HORIZONS}
     horizons = evaluate.horizon_metrics(frame, train, reported)
     alerts = evaluate.alert_metrics(
-        frame, predictions, trigger=trigger(config.ALERT_TRIGGER_PERCENTILE)
+        frame,
+        predictions,
+        trigger=trigger(config.ALERT_TRIGGER_PERCENTILE),
+        receptors=receptors,
     )
 
     for row in horizons:
@@ -193,7 +208,9 @@ def score_event(models, features, train, frame, label: str) -> dict:
         f"    alerts: hit {alerts['hit_rate']:.1%} (hourly)  "
         f"false alarm {alerts['false_alarm_rate']:.1%}  "
         f"specificity {alerts['specificity']:.1%}  "
-        f"median lead {alerts['median_lead_time_hours']:.0f}h"
+        f"median lead {alerts['median_lead_time_hours']:.0f}h "
+        f"({alerts['lead_time_at_ceiling_share']:.1%} at the "
+        f"{alerts['lead_time_ceiling_hours']}h ceiling)"
     )
     print(
         f"    episode detection {alerts['episode_detection_rate']:.1%} of "
@@ -214,6 +231,7 @@ def score_event(models, features, train, frame, label: str) -> dict:
             {lead: v[keep] for lead, v in predictions.items()},
             trigger={lead: v[keep] for lead, v in trigger(
                 config.ALERT_TRIGGER_PERCENTILE).items()},
+            receptors=receptors,
         )
         print(
             f"      {country}: hit {by_country[country]['hit_rate']:.1%}  "
@@ -223,13 +241,16 @@ def score_event(models, features, train, frame, label: str) -> dict:
 
     sweep = []
     for pct in SWEEP_PERCENTILES:
-        row = evaluate.alert_metrics(frame, predictions, trigger=trigger(pct))
+        row = evaluate.alert_metrics(
+            frame, predictions, trigger=trigger(pct), receptors=receptors
+        )
         sweep.append(
             {
                 "percentile": pct,
                 "hit_rate": row["hit_rate"],
                 "false_alarm_rate": row["false_alarm_rate"],
                 "median_lead_time_hours": row["median_lead_time_hours"],
+                "lead_time_at_ceiling_share": row["lead_time_at_ceiling_share"],
             }
         )
 
@@ -240,6 +261,47 @@ def score_event(models, features, train, frame, label: str) -> dict:
         "trigger_sweep": sweep,
         "peak_observed_pm25": round(float(frame["pm25"].max()), 1),
         "rows_evaluated": int(len(frame)),
+    }
+
+
+def score_served_model(df, train, features, receptors) -> dict | None:
+    """The served model's own 2023 numbers, recomputed rather than copied.
+
+    `models/v1/metrics.json` is frozen at the training run that wrote it and
+    predates the receptor deduplication: its `events_evaluated` counts all six
+    institutions and reports 99 episodes where there are 33. Copying those
+    figures forward would put an inflated count beside a corrected one inside a
+    single artifact, which is worse than either number alone.
+
+    So the served forests are loaded read-only and scored through the identical
+    code path as the validation model. The frozen file is not rewritten - it
+    stays exactly as published, and `main` re-checksums it to prove so.
+    """
+    path = config.MODELS / "rf_forecast.joblib"
+    if not path.exists():
+        print("\n  no served forecast model on disk; skipping the served comparison.")
+        return None
+
+    print("\n  loading the served forecast model (read-only)...")
+    bundle = joblib.load(path)
+    _, _, test_2023 = evaluate.split(df)
+    scored = score_event(
+        bundle["models"], bundle["features"], train, test_2023, "served_2023", receptors
+    )
+    del bundle
+
+    return {
+        "event": "sept_2023",
+        "label": "Served model, Aug-Oct 2023 (the published demo scenario)",
+        "note": (
+            "The served model, whose training set still contains the 2024 season. "
+            "Any gap against the validation model's sept_2023 row is the measured "
+            "cost of withholding a second haze season, not a regression. These "
+            "figures are recomputed here on distinct receptors; the frozen "
+            "models/v1/metrics.json still carries the pre-deduplication counts and "
+            "is deliberately left untouched."
+        ),
+        **scored,
     }
 
 
@@ -270,6 +332,17 @@ def main() -> int:
     df = pd.read_parquet(config.FEATURES_PARQUET)
     with config.FEATURE_SPEC.open() as fh:
         features = json.load(fh)["features"]
+
+    # One institution per genuinely distinct PM2.5 series. Every alert figure
+    # below is scored on these, so no count is inflated by the trios that share
+    # a CAMS grid cell.
+    spatial = evaluate.spatial_resolution(df)
+    receptors = list(spatial["groups"])
+    print(
+        f"Spatial resolution: {spatial['institutions']} institutions resolve to "
+        f"{spatial['distinct_receptors']} receptors {receptors}; "
+        "alerts are scored per locality.\n"
+    )
 
     # -- reconnaissance ---------------------------------------------------
     print("Candidate windows (identical calendar span, different years):")
@@ -319,26 +392,15 @@ def main() -> int:
     results = []
     frames = {"sept_2023": test_2023, "sept_2024": test_2024}
     for event in EVENTS:
-        scored = score_event(models, features, train, frames[event["key"]], event["key"])
+        scored = score_event(
+            models, features, train, frames[event["key"]], event["key"], receptors
+        )
         results.append({**{k: v for k, v in event.items() if k != "window"},
                         "window": f"{event['window'][0]}..{event['window'][1]}",
                         **scored})
 
-    # -- the served model's published numbers, for comparison -------------
-    served_reference = None
-    if config.METRICS_JSON.exists():
-        with config.METRICS_JSON.open() as fh:
-            served = json.load(fh)
-        served_reference = {
-            "event": "sept_2023",
-            "note": (
-                "The served model, whose training set still contains the 2024 season. "
-                "Any gap against the validation model's sept_2023 row is the measured "
-                "cost of withholding a second haze season, not a regression."
-            ),
-            "horizons": served.get("horizons"),
-            "alerts": served.get("alerts"),
-        }
+    # -- the served model, scored through this same code ------------------
+    served_reference = score_served_model(df, baseline_train, features, receptors)
 
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -356,7 +418,8 @@ def main() -> int:
             "identical_to_served_pipeline": True,
             "persisted": False,
         },
-        "spatial_resolution": evaluate.spatial_resolution(df),
+        "spatial_resolution": spatial,
+        "scored_on_receptors": receptors,
         "events": results,
         "served_model_reference": served_reference,
         "rejected_candidates": [
@@ -380,12 +443,21 @@ def main() -> int:
             "configuration. The full sweep is reported per event.",
             "PM2.5 targets are ECMWF CAMS reanalysis, not ground-station measurements.",
             "Forecasts are per-locality, not per-institution: CAMS is ~0.4 degrees "
-            "native and each city's institutions share one grid cell. events_evaluated "
-            "counts every institution and so triples the real figure; "
-            "distinct_episodes is the count to quote.",
+            "native and each city's institutions share one grid cell, so six "
+            "institutions resolve to two receptors. Every figure here is scored on "
+            "those two, listed under scored_on_receptors.",
             "hit_rate is hour-level and episode_detection_rate is episode-level; both "
             "are reported. specificity, not false_alarm_rate, is what survives a "
             "change in base rate between seasons.",
+            "median_lead_time_hours is censored: the search window equals the "
+            f"{config.FORECAST_HORIZON_HOURS}h forecast horizon, so no episode can "
+            "record a longer lead and the median rests on its own bound. "
+            "lead_time_at_ceiling_share gives the share of episodes piled on that "
+            "bound and must be quoted with it. The true median is unmeasured.",
+            "Absolute MAE is not comparable between these two windows. The 2023 event "
+            "peaks at 307 ug/m3 and the 2024 one at 66, so the 2024 errors are smaller "
+            "because the season was cleaner, not because the model is better. "
+            "improvement_vs_persistence is the column that compares across years.",
         ],
     }
 

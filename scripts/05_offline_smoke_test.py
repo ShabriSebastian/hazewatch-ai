@@ -67,6 +67,67 @@ def get(path: str):
     return response.json() if response.status_code == 200 else {}
 
 
+# The exact figures quoted in README.md, SYSTEM_FLOW.md and config.BOOKMARKS.
+#
+# README says "every figure below is asserted by scripts/05_offline_smoke_test.py".
+# That was not true: the bookmark checks below assert *properties* - that Sarawak
+# alerts while Indonesia does not, that the lead is at least 6h - which is a much
+# weaker claim than the numbers printed beside them. A documented 18h that had
+# quietly become 17h passed every one of them, and did: README and config both
+# carried 18h/13 ug/m3 for `crossborder` where the API returns 17h/12.8.
+#
+# So the published numbers are pinned here. The scenario database is precomputed
+# and frozen, so these are stable; if one moves, either the demo changed or the
+# documentation is wrong, and both are worth failing the build for.
+DOCUMENTED_BOOKMARK_FIGURES = {
+    "first_warning": {
+        "institution_id": "my-kch-greenroad",
+        "lead_time_hours": 18,
+        "observed_now_pm25": 27.0,
+        "forecast_peak_pm25": 35.8,
+    },
+    "crossborder": {
+        "institution_id": "my-kch-greenroad",
+        "lead_time_hours": 17,
+        "observed_now_pm25": 12.8,
+        "forecast_peak_pm25": 38.5,
+    },
+    "severe": {
+        "institution_id": "id-ptk-bpbd",
+        "lead_time_hours": 1,
+        "observed_now_pm25": 39.6,
+        "forecast_peak_pm25": 86.0,
+    },
+}
+
+
+def check_documented_figures(key: str) -> None:
+    """Every number the documentation prints for this bookmark, asserted exactly."""
+    expected = DOCUMENTED_BOOKMARK_FIGURES.get(key)
+    if expected is None:
+        return
+    inst = expected["institution_id"]
+
+    alert = (client.get(f"/api/v1/institutions/{inst}/alert").json() or {}).get("alert")
+    check(alert is not None, f"{key}: {inst} must be alerting as documented")
+    if alert is None:
+        return
+    observation = client.get(f"/api/v1/institutions/{inst}/observation").json()
+
+    measured = {
+        "lead_time_hours": alert["lead_time_hours"],
+        "observed_now_pm25": round(observation["pm25"], 1),
+        "forecast_peak_pm25": round(alert["forecast_peak_pm25"], 1),
+    }
+    for field, want in expected.items():
+        if field == "institution_id":
+            continue
+        check(
+            measured[field] == want,
+            f"{key}: documented {field} is {want}, API returns {measured[field]}",
+        )
+
+
 def check_warning_was_verified(institution_id: str, issued_at: str, label: str) -> None:
     """A warning shown on camera must be one that observation later confirmed.
 
@@ -187,6 +248,7 @@ def main() -> int:
                 len(transboundary) == 3,
                 "first_warning: all Sarawak alerts attributed across the border",
             )
+            check_documented_figures(key)
             check_warning_was_verified("my-kch-greenroad", bookmark["timestamp"], key)
 
         if key == "crossborder":
@@ -216,6 +278,7 @@ def main() -> int:
                 lead = my_alerts["alerts"][0]["lead_time_hours"]
                 print(f"    warning lead    {lead} h")
                 check(lead >= 6, f"crossborder: lead time {lead}h is at least 6h")
+            check_documented_figures(key)
             check_warning_was_verified("my-kch-greenroad", bookmark["timestamp"], key)
 
         if key == "severe":
@@ -229,6 +292,7 @@ def main() -> int:
             )
             print(f"    Pontianak peak  {worst} ug/m3")
             check(worst >= 55.5, f"severe: forecast reaches UNHEALTHY (got {worst})")
+            check_documented_figures(key)
             # No lead-time assertion here. By this point Pontianak is inside the
             # episode, so the threshold crossing is imminent and a short lead is
             # the correct answer. This bookmark's claim is severity; lead time is

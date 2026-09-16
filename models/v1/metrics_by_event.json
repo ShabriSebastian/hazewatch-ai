@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13T12:25:38Z",
+  "generated_at": "2026-09-01T03:11:49Z",
   "purpose": "Generalisation evidence: one pipeline, two independent held-out events, identical metrics. Internal reporting - not served by the API.",
   "validation_model": {
     "holdouts": [
@@ -18,6 +18,29 @@
     "identical_to_served_pipeline": true,
     "persisted": false
   },
+  "spatial_resolution": {
+    "source": "CAMS reanalysis via Open-Meteo",
+    "native_resolution_deg": 0.4,
+    "note": "CAMS global composition is ~0.4 degrees native. The Pontianak institutions sit ~3 km apart, as do the Kuching ones, so each trio shares one grid cell and receives an identical PM2.5 series. Forecasts and alerts are per-locality, not per-institution. Institutions listed together cannot be distinguished by this data source, and no metric here should be read as evidence about one site rather than its locality.",
+    "groups": {
+      "id-ptk-bpbd": [
+        "id-ptk-bpbd",
+        "id-ptk-sman1",
+        "id-ptk-soedarso"
+      ],
+      "my-kch-greenroad": [
+        "my-kch-greenroad",
+        "my-kch-hus",
+        "my-kch-jpbn"
+      ]
+    },
+    "distinct_receptors": 2,
+    "institutions": 6
+  },
+  "scored_on_receptors": [
+    "id-ptk-bpbd",
+    "my-kch-greenroad"
+  ],
   "events": [
     {
       "key": "sept_2023",
@@ -48,55 +71,90 @@
         }
       ],
       "alerts": {
-        "hit_rate": 0.7587,
-        "false_alarm_rate": 0.2649,
+        "hit_rate": 0.7632,
+        "false_alarm_rate": 0.2651,
+        "specificity": 0.7961,
+        "alertable_hour_prevalence": 0.4255,
         "median_lead_time_hours": 24.0,
-        "events_evaluated": 99
+        "lead_time_ceiling_hours": 24,
+        "lead_time_at_ceiling_share": 0.6452,
+        "events_evaluated": 33,
+        "distinct_episodes": 33,
+        "episode_detection_rate": 0.9394,
+        "episode_detection_ci95": [
+          0.8039,
+          0.9832
+        ]
       },
       "alerts_by_country": {
         "ID": {
           "hit_rate": 0.8722,
           "false_alarm_rate": 0.1763,
+          "specificity": 0.7763,
+          "alertable_hour_prevalence": 0.5451,
           "median_lead_time_hours": 24.0,
-          "events_evaluated": 45
+          "lead_time_ceiling_hours": 24,
+          "lead_time_at_ceiling_share": 0.7692,
+          "events_evaluated": 15,
+          "distinct_episodes": 15,
+          "episode_detection_rate": 0.8667,
+          "episode_detection_ci95": [
+            0.6212,
+            0.9626
+          ]
         },
         "MY": {
-          "hit_rate": 0.5565,
-          "false_alarm_rate": 0.4346,
+          "hit_rate": 0.5692,
+          "false_alarm_rate": 0.4321,
+          "specificity": 0.8091,
+          "alertable_hour_prevalence": 0.306,
           "median_lead_time_hours": 24.0,
-          "events_evaluated": 54
+          "lead_time_ceiling_hours": 24,
+          "lead_time_at_ceiling_share": 0.5556,
+          "events_evaluated": 18,
+          "distinct_episodes": 18,
+          "episode_detection_rate": 1.0,
+          "episode_detection_ci95": [
+            0.8241,
+            1.0
+          ]
         }
       },
       "trigger_sweep": [
         {
           "percentile": 75,
-          "hit_rate": 0.5765,
-          "false_alarm_rate": 0.138,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.5787,
+          "false_alarm_rate": 0.1376,
+          "median_lead_time_hours": 24.0,
+          "lead_time_at_ceiling_share": 0.7
         },
         {
           "percentile": 80,
-          "hit_rate": 0.6118,
-          "false_alarm_rate": 0.161,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.6132,
+          "false_alarm_rate": 0.1623,
+          "median_lead_time_hours": 24.0,
+          "lead_time_at_ceiling_share": 0.5833
         },
         {
           "percentile": 85,
-          "hit_rate": 0.6691,
-          "false_alarm_rate": 0.2065,
-          "median_lead_time_hours": 23.5
+          "hit_rate": 0.6693,
+          "false_alarm_rate": 0.2072,
+          "median_lead_time_hours": 23.5,
+          "lead_time_at_ceiling_share": 0.5
         },
         {
           "percentile": 90,
-          "hit_rate": 0.7587,
-          "false_alarm_rate": 0.2649,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.7632,
+          "false_alarm_rate": 0.2651,
+          "median_lead_time_hours": 24.0,
+          "lead_time_at_ceiling_share": 0.6452
         },
         {
           "percentile": 95,
-          "hit_rate": 0.9026,
-          "false_alarm_rate": 0.3374,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.9005,
+          "false_alarm_rate": 0.3381,
+          "median_lead_time_hours": 24.0,
+          "lead_time_at_ceiling_share": 0.8387
         }
       ],
       "peak_observed_pm25": 307.3,
@@ -131,55 +189,90 @@
         }
       ],
       "alerts": {
-        "hit_rate": 0.5378,
-        "false_alarm_rate": 0.4501,
+        "hit_rate": 0.5385,
+        "false_alarm_rate": 0.4481,
+        "specificity": 0.9027,
+        "alertable_hour_prevalence": 0.182,
         "median_lead_time_hours": 24.0,
-        "events_evaluated": 63
+        "lead_time_ceiling_hours": 24,
+        "lead_time_at_ceiling_share": 0.7059,
+        "events_evaluated": 21,
+        "distinct_episodes": 21,
+        "episode_detection_rate": 0.8095,
+        "episode_detection_ci95": [
+          0.6,
+          0.9233
+        ]
       },
       "alerts_by_country": {
         "ID": {
           "hit_rate": 0.4266,
-          "false_alarm_rate": 0.5436,
+          "false_alarm_rate": 0.5379,
+          "specificity": 0.9463,
+          "alertable_hour_prevalence": 0.0977,
           "median_lead_time_hours": 24.0,
-          "events_evaluated": 15
+          "lead_time_ceiling_hours": 24,
+          "lead_time_at_ceiling_share": 0.6,
+          "events_evaluated": 5,
+          "distinct_episodes": 5,
+          "episode_detection_rate": 1.0,
+          "episode_detection_ci95": [
+            0.5655,
+            1.0
+          ]
         },
         "MY": {
-          "hit_rate": 0.5786,
-          "false_alarm_rate": 0.4179,
+          "hit_rate": 0.5795,
+          "false_alarm_rate": 0.4175,
+          "specificity": 0.8492,
+          "alertable_hour_prevalence": 0.2664,
           "median_lead_time_hours": 24.0,
-          "events_evaluated": 48
+          "lead_time_ceiling_hours": 24,
+          "lead_time_at_ceiling_share": 0.75,
+          "events_evaluated": 16,
+          "distinct_episodes": 16,
+          "episode_detection_rate": 0.75,
+          "episode_detection_ci95": [
+            0.505,
+            0.8982
+          ]
         }
       },
       "trigger_sweep": [
         {
           "percentile": 75,
-          "hit_rate": 0.2752,
-          "false_alarm_rate": 0.2971,
-          "median_lead_time_hours": 21.0
+          "hit_rate": 0.272,
+          "false_alarm_rate": 0.3062,
+          "median_lead_time_hours": 20.0,
+          "lead_time_at_ceiling_share": 0.2727
         },
         {
           "percentile": 80,
-          "hit_rate": 0.3271,
-          "false_alarm_rate": 0.3312,
-          "median_lead_time_hours": 22.0
+          "hit_rate": 0.3265,
+          "false_alarm_rate": 0.3308,
+          "median_lead_time_hours": 22.0,
+          "lead_time_at_ceiling_share": 0.4167
         },
         {
           "percentile": 85,
-          "hit_rate": 0.4015,
-          "false_alarm_rate": 0.3779,
-          "median_lead_time_hours": 23.0
+          "hit_rate": 0.4071,
+          "false_alarm_rate": 0.3746,
+          "median_lead_time_hours": 23.0,
+          "lead_time_at_ceiling_share": 0.4667
         },
         {
           "percentile": 90,
-          "hit_rate": 0.5378,
-          "false_alarm_rate": 0.4501,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.5385,
+          "false_alarm_rate": 0.4481,
+          "median_lead_time_hours": 24.0,
+          "lead_time_at_ceiling_share": 0.7059
         },
         {
           "percentile": 95,
-          "hit_rate": 0.7161,
-          "false_alarm_rate": 0.5405,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.7167,
+          "false_alarm_rate": 0.5386,
+          "median_lead_time_hours": 24.0,
+          "lead_time_at_ceiling_share": 0.7368
         }
       ],
       "peak_observed_pm25": 66.4,
@@ -188,7 +281,8 @@
   ],
   "served_model_reference": {
     "event": "sept_2023",
-    "note": "The served model, whose training set still contains the 2024 season. Any gap against the validation model's sept_2023 row is the measured cost of withholding a second haze season, not a regression.",
+    "label": "Served model, Aug-Oct 2023 (the published demo scenario)",
+    "note": "The served model, whose training set still contains the 2024 season. Any gap against the validation model's sept_2023 row is the measured cost of withholding a second haze season, not a regression. These figures are recomputed here on distinct receptors; the frozen models/v1/metrics.json still carries the pre-deduplication counts and is deliberately left untouched.",
     "horizons": [
       {
         "lead_hours": 6,
@@ -214,10 +308,93 @@
     ],
     "alerts": {
       "hit_rate": 0.7953,
-      "false_alarm_rate": 0.2536,
+      "false_alarm_rate": 0.2538,
+      "specificity": 0.7996,
+      "alertable_hour_prevalence": 0.4255,
       "median_lead_time_hours": 24.0,
-      "events_evaluated": 99
-    }
+      "lead_time_ceiling_hours": 24,
+      "lead_time_at_ceiling_share": 0.6452,
+      "events_evaluated": 33,
+      "distinct_episodes": 33,
+      "episode_detection_rate": 0.9394,
+      "episode_detection_ci95": [
+        0.8039,
+        0.9832
+      ]
+    },
+    "alerts_by_country": {
+      "ID": {
+        "hit_rate": 0.881,
+        "false_alarm_rate": 0.1749,
+        "specificity": 0.7763,
+        "alertable_hour_prevalence": 0.5451,
+        "median_lead_time_hours": 24.0,
+        "lead_time_ceiling_hours": 24,
+        "lead_time_at_ceiling_share": 0.7692,
+        "events_evaluated": 15,
+        "distinct_episodes": 15,
+        "episode_detection_rate": 0.8667,
+        "episode_detection_ci95": [
+          0.6212,
+          0.9626
+        ]
+      },
+      "MY": {
+        "hit_rate": 0.6429,
+        "false_alarm_rate": 0.395,
+        "specificity": 0.815,
+        "alertable_hour_prevalence": 0.306,
+        "median_lead_time_hours": 24.0,
+        "lead_time_ceiling_hours": 24,
+        "lead_time_at_ceiling_share": 0.5556,
+        "events_evaluated": 18,
+        "distinct_episodes": 18,
+        "episode_detection_rate": 1.0,
+        "episode_detection_ci95": [
+          0.8241,
+          1.0
+        ]
+      }
+    },
+    "trigger_sweep": [
+      {
+        "percentile": 75,
+        "hit_rate": 0.5835,
+        "false_alarm_rate": 0.1477,
+        "median_lead_time_hours": 24.0,
+        "lead_time_at_ceiling_share": 0.5909
+      },
+      {
+        "percentile": 80,
+        "hit_rate": 0.638,
+        "false_alarm_rate": 0.1727,
+        "median_lead_time_hours": 23.5,
+        "lead_time_at_ceiling_share": 0.5
+      },
+      {
+        "percentile": 85,
+        "hit_rate": 0.6982,
+        "false_alarm_rate": 0.2091,
+        "median_lead_time_hours": 24.0,
+        "lead_time_at_ceiling_share": 0.5333
+      },
+      {
+        "percentile": 90,
+        "hit_rate": 0.7953,
+        "false_alarm_rate": 0.2538,
+        "median_lead_time_hours": 24.0,
+        "lead_time_at_ceiling_share": 0.6452
+      },
+      {
+        "percentile": 95,
+        "hit_rate": 0.9021,
+        "false_alarm_rate": 0.3349,
+        "median_lead_time_hours": 24.0,
+        "lead_time_at_ceiling_share": 0.871
+      }
+    ],
+    "peak_observed_pm25": 307.3,
+    "rows_evaluated": 8784
   },
   "rejected_candidates": [
     {
@@ -477,6 +654,10 @@
     "Training rows in the 24h before each held-out window are also dropped: their forecast targets reach inside the window. This makes the validation holdout marginally stricter than the served model's.",
     "The served model's training set contains the 2024 season, which is why a second model is trained here rather than scoring 2024 on the served one - that would be evaluating on seen data.",
     "Alert metrics trigger on the p90 prediction band, matching the served configuration. The full sweep is reported per event.",
-    "PM2.5 targets are ECMWF CAMS reanalysis, not ground-station measurements."
+    "PM2.5 targets are ECMWF CAMS reanalysis, not ground-station measurements.",
+    "Forecasts are per-locality, not per-institution: CAMS is ~0.4 degrees native and each city's institutions share one grid cell, so six institutions resolve to two receptors. Every figure here is scored on those two, listed under scored_on_receptors.",
+    "hit_rate is hour-level and episode_detection_rate is episode-level; both are reported. specificity, not false_alarm_rate, is what survives a change in base rate between seasons.",
+    "median_lead_time_hours is censored: the search window equals the 24h forecast horizon, so no episode can record a longer lead and the median rests on its own bound. lead_time_at_ceiling_share gives the share of episodes piled on that bound and must be quoted with it. The true median is unmeasured.",
+    "Absolute MAE is not comparable between these two windows. The 2023 event peaks at 307 ug/m3 and the 2024 one at 66, so the 2024 errors are smaller because the season was cleaner, not because the model is better. improvement_vs_persistence is the column that compares across years."
   ]
 }
