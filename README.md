@@ -130,10 +130,16 @@ Alert performance — the numbers a head teacher can actually act on:
 
 | Metric | Value |
 |---|---|
-| Hit rate | **83.5%** |
-| False alarm rate | **25.6%** |
+| Hit rate | **79.5%** |
+| False alarm rate | **25.4%** |
 | Median warning lead time | **24 h** |
-| Episodes evaluated | 118 |
+| Episodes evaluated | 99 |
+
+Every institution alerts at the same 35.5 µg/m³, the floor of the EPA "Unhealthy for
+Sensitive Groups" band. An earlier revision discounted that to 28.4 for hospitals; it was
+removed, because 35.5 is already the sensitive-groups number and the extra lead time it was
+reaching for is what the p90 band below already provides. These figures are measured at the
+single threshold.
 
 Alerts fire on the 90th-percentile prediction band rather than the point forecast. Missing
 an episode and raising a false alarm are not equally costly, so the operating point is
@@ -141,11 +147,11 @@ chosen from a sweep recomputed on every training run (`metrics.json` -> `trigger
 
 | Trigger | Hit rate | False alarms |
 |---|---|---|
-| p75 | 62.0% | 14.9% |
-| p80 | 67.2% | 17.1% |
-| p85 | 74.1% | 21.1% |
-| **p90** | **83.5%** | **25.6%** |
-| p95 | 92.0% | 33.0% |
+| p75 | 58.2% | 14.6% |
+| p80 | 63.4% | 17.1% |
+| p85 | 69.8% | 20.9% |
+| **p90** | **79.5%** | **25.4%** |
+| p95 | 90.1% | 33.6% |
 
 The choice moves when the model changes — compacting the forests narrowed the prediction
 spread and shifted the optimum from p85 to p90 — so it is re-derived and published rather
@@ -243,7 +249,7 @@ discovered than disclosed.
    is **90.1 µg/m³**, because `min_samples_leaf=20` means every leaf averages at least
    twenty rows and none is a pure extreme. The Pontianak forecast tops out at 86 against
    an observed 307. This does not affect alerting, which depends on crossing the
-   35.5 µg/m³ threshold and gets that right 83.5% of the time, but it does mean the
+   35.5 µg/m³ threshold and gets that right 79.5% of the time, but it does mean the
    forecast magnitude should not be read as a severity estimate during extreme episodes.
    Rather than leave that in a README where a user will never see it, the API says so per
    forecast point: `beyond_training_range` and the `uncertainty` block mark exactly where

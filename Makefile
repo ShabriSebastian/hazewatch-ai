@@ -1,7 +1,7 @@
 PY := .venv/bin/python
 export PYTHONPATH := src
 
-.PHONY: help venv contract data features train validate scenario serve demo check test offline clean
+.PHONY: help venv contract data features train validate scenario serve demo check test offline refresh clean
 
 help:
 	@echo "make venv      - create .venv and install dependencies"
@@ -14,6 +14,7 @@ help:
 	@echo "make serve     - run the API on :8000"
 	@echo "make check     - contract + offline + metrics regression gates"
 	@echo "make offline   - pre-recording gate: run with Wi-Fi OFF"
+	@echo "make refresh   - regenerate the published live snapshot (~60s, needs internet)"
 
 # The full development environment: serving deps plus everything needed to
 # rebuild the demo. A deployment installs the base package only - see Dockerfile.
@@ -56,6 +57,12 @@ test:
 
 offline:
 	$(PY) scripts/05_offline_smoke_test.py
+
+# Regenerate and publish the live snapshot the Pro dashboard reads. Safe to run
+# at any time: it publishes only if the new snapshot passes its checks, and
+# otherwise leaves the existing one in place. Never touches the replay demo.
+refresh:
+	@bash scripts/refresh_snapshot.sh
 
 check: test offline
 	@echo "All gates passed."

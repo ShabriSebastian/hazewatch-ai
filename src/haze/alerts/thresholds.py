@@ -24,19 +24,25 @@ CATEGORY_ORDER: tuple[str, ...] = tuple(name for name, _ in CATEGORIES)
 CATEGORY_RANK: dict[str, int] = {name: i for i, name in enumerate(CATEGORY_ORDER)}
 
 # An institution is alerted when the forecast is expected to reach at least
-# this category.
+# this category. One threshold, 35.5 ug/m3, for every institution type.
+#
+# A per-type sensitivity factor was tried and removed. It multiplied this floor
+# by 0.8 for hospitals, alerting them at 28.4. The intent was earlier warning
+# for vulnerable populations, but it was wrong on three counts and should not
+# be reintroduced:
+#
+#   1. 35.5 is already the floor of "Unhealthy for *Sensitive Groups*" - the
+#      EPA category named for exactly the population a hospital serves.
+#      Discounting it again applies the same allowance twice.
+#   2. Earlier warning is already delivered system-wide, and is documented, by
+#      triggering on the p90 upper prediction band rather than the point
+#      forecast (config.ALERT_TRIGGER_PERCENTILE). The factor double-counted
+#      that margin through a second, undocumented mechanism.
+#   3. 28.4 falls inside MODERATE, so alert_threshold() returned a Threshold
+#      whose `category` field its own `pm25` value contradicted. Hospitals were
+#      served 96 alerts carrying severity "MODERATE" alongside
+#      UNHEALTHY_SENSITIVE respiratory-surge actions.
 DEFAULT_ALERT_CATEGORY = "UNHEALTHY_SENSITIVE"
-
-# Institutions serving more vulnerable populations trigger earlier, at a
-# fraction of the category floor. A full tier earlier would put hospitals at
-# 12.1 ug/m3, below the region's ordinary baseline of ~18 - the alert would
-# never clear and would carry no information. 0.8 buys meaningful extra lead
-# time while still sitting above background.
-SENSITIVITY_FACTOR_BY_TYPE = {
-    "school": 1.0,
-    "hospital": 0.8,
-    "authority": 1.0,
-}
 
 # US AQI index breakpoints, paired with CATEGORIES above, for the numeric aqi_us field.
 _AQI_BREAKPOINTS: tuple[tuple[float, float, float, float], ...] = (
@@ -73,10 +79,19 @@ def category_floor(category: str) -> float:
 
 
 def alert_threshold(institution_type: str) -> Threshold:
-    """The PM2.5 level at which this kind of institution should be alerted."""
-    factor = SENSITIVITY_FACTOR_BY_TYPE.get(institution_type, 1.0)
-    pm25 = round(category_floor(DEFAULT_ALERT_CATEGORY) * factor, 1)
-    return Threshold(category=DEFAULT_ALERT_CATEGORY, pm25=pm25)
+    """The PM2.5 level at which an institution should be alerted: 35.5 ug/m3.
+
+    `institution_type` no longer affects the number and is kept only so callers
+    need not change. Institution type still selects the *wording* of
+    `recommended_actions` (see `rules.RECOMMENDED_ACTIONS`) - what a hospital
+    does about the same air differs from what a school does, but the air does
+    not.
+    """
+    del institution_type  # retained for call-site compatibility
+    return Threshold(
+        category=DEFAULT_ALERT_CATEGORY,
+        pm25=category_floor(DEFAULT_ALERT_CATEGORY),
+    )
 
 
 def aqi_us(pm25: float) -> int:

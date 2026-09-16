@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-12T13:35:46Z",
+  "generated_at": "2026-08-13T12:25:38Z",
   "purpose": "Generalisation evidence: one pipeline, two independent held-out events, identical metrics. Internal reporting - not served by the API.",
   "validation_model": {
     "holdouts": [
@@ -48,54 +48,54 @@
         }
       ],
       "alerts": {
-        "hit_rate": 0.7924,
-        "false_alarm_rate": 0.255,
+        "hit_rate": 0.7587,
+        "false_alarm_rate": 0.2649,
         "median_lead_time_hours": 24.0,
-        "events_evaluated": 118
+        "events_evaluated": 99
       },
       "alerts_by_country": {
         "ID": {
-          "hit_rate": 0.8887,
-          "false_alarm_rate": 0.1859,
+          "hit_rate": 0.8722,
+          "false_alarm_rate": 0.1763,
           "median_lead_time_hours": 24.0,
-          "events_evaluated": 47
+          "events_evaluated": 45
         },
         "MY": {
-          "hit_rate": 0.6523,
-          "false_alarm_rate": 0.3622,
+          "hit_rate": 0.5565,
+          "false_alarm_rate": 0.4346,
           "median_lead_time_hours": 24.0,
-          "events_evaluated": 71
+          "events_evaluated": 54
         }
       },
       "trigger_sweep": [
         {
           "percentile": 75,
-          "hit_rate": 0.5953,
-          "false_alarm_rate": 0.1399,
+          "hit_rate": 0.5765,
+          "false_alarm_rate": 0.138,
           "median_lead_time_hours": 24.0
         },
         {
           "percentile": 80,
-          "hit_rate": 0.6384,
-          "false_alarm_rate": 0.1596,
+          "hit_rate": 0.6118,
+          "false_alarm_rate": 0.161,
           "median_lead_time_hours": 24.0
         },
         {
           "percentile": 85,
-          "hit_rate": 0.702,
-          "false_alarm_rate": 0.2005,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.6691,
+          "false_alarm_rate": 0.2065,
+          "median_lead_time_hours": 23.5
         },
         {
           "percentile": 90,
-          "hit_rate": 0.7924,
-          "false_alarm_rate": 0.255,
+          "hit_rate": 0.7587,
+          "false_alarm_rate": 0.2649,
           "median_lead_time_hours": 24.0
         },
         {
           "percentile": 95,
-          "hit_rate": 0.9158,
-          "false_alarm_rate": 0.3304,
+          "hit_rate": 0.9026,
+          "false_alarm_rate": 0.3374,
           "median_lead_time_hours": 24.0
         }
       ],
@@ -131,54 +131,54 @@
         }
       ],
       "alerts": {
-        "hit_rate": 0.6152,
-        "false_alarm_rate": 0.4173,
+        "hit_rate": 0.5378,
+        "false_alarm_rate": 0.4501,
         "median_lead_time_hours": 24.0,
-        "events_evaluated": 74
+        "events_evaluated": 63
       },
       "alerts_by_country": {
         "ID": {
-          "hit_rate": 0.5828,
-          "false_alarm_rate": 0.5415,
+          "hit_rate": 0.4266,
+          "false_alarm_rate": 0.5436,
           "median_lead_time_hours": 24.0,
-          "events_evaluated": 16
+          "events_evaluated": 15
         },
         "MY": {
-          "hit_rate": 0.6256,
-          "false_alarm_rate": 0.3661,
+          "hit_rate": 0.5786,
+          "false_alarm_rate": 0.4179,
           "median_lead_time_hours": 24.0,
-          "events_evaluated": 58
+          "events_evaluated": 48
         }
       },
       "trigger_sweep": [
         {
           "percentile": 75,
-          "hit_rate": 0.3597,
-          "false_alarm_rate": 0.2434,
-          "median_lead_time_hours": 23.0
+          "hit_rate": 0.2752,
+          "false_alarm_rate": 0.2971,
+          "median_lead_time_hours": 21.0
         },
         {
           "percentile": 80,
-          "hit_rate": 0.4244,
-          "false_alarm_rate": 0.2828,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.3271,
+          "false_alarm_rate": 0.3312,
+          "median_lead_time_hours": 22.0
         },
         {
           "percentile": 85,
-          "hit_rate": 0.4953,
-          "false_alarm_rate": 0.3448,
-          "median_lead_time_hours": 24.0
+          "hit_rate": 0.4015,
+          "false_alarm_rate": 0.3779,
+          "median_lead_time_hours": 23.0
         },
         {
           "percentile": 90,
-          "hit_rate": 0.6152,
-          "false_alarm_rate": 0.4173,
+          "hit_rate": 0.5378,
+          "false_alarm_rate": 0.4501,
           "median_lead_time_hours": 24.0
         },
         {
           "percentile": 95,
-          "hit_rate": 0.7763,
-          "false_alarm_rate": 0.5083,
+          "hit_rate": 0.7161,
+          "false_alarm_rate": 0.5405,
           "median_lead_time_hours": 24.0
         }
       ],
@@ -213,10 +213,10 @@
       }
     ],
     "alerts": {
-      "hit_rate": 0.8349,
-      "false_alarm_rate": 0.2556,
+      "hit_rate": 0.7953,
+      "false_alarm_rate": 0.2536,
       "median_lead_time_hours": 24.0,
-      "events_evaluated": 118
+      "events_evaluated": 99
     }
   },
   "rejected_candidates": [
@@ -247,9 +247,9 @@
           {
             "institution_id": "id-ptk-soedarso",
             "country": "ID",
-            "threshold_pm25": 28.4,
-            "alertable_event_hours": 310,
-            "observed_episodes": 13
+            "threshold_pm25": 35.5,
+            "alertable_event_hours": 146,
+            "observed_episodes": 6
           },
           {
             "institution_id": "id-ptk-bpbd",
@@ -268,9 +268,9 @@
           {
             "institution_id": "my-kch-hus",
             "country": "MY",
-            "threshold_pm25": 28.4,
-            "alertable_event_hours": 24,
-            "observed_episodes": 1
+            "threshold_pm25": 35.5,
+            "alertable_event_hours": 0,
+            "observed_episodes": 0
           },
           {
             "institution_id": "my-kch-jpbn",
@@ -280,8 +280,8 @@
             "observed_episodes": 0
           }
         ],
-        "total_alertable_event_hours": 626,
-        "total_observed_episodes": 26,
+        "total_alertable_event_hours": 438,
+        "total_observed_episodes": 18,
         "indonesian_share_of_upwind_exposure_at_kuching": 0.9606,
         "max_upwind_hotspots_150_400km": 726
       }
@@ -311,9 +311,9 @@
         {
           "institution_id": "id-ptk-soedarso",
           "country": "ID",
-          "threshold_pm25": 28.4,
-          "alertable_event_hours": 310,
-          "observed_episodes": 13
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 146,
+          "observed_episodes": 6
         },
         {
           "institution_id": "id-ptk-bpbd",
@@ -332,9 +332,9 @@
         {
           "institution_id": "my-kch-hus",
           "country": "MY",
-          "threshold_pm25": 28.4,
-          "alertable_event_hours": 24,
-          "observed_episodes": 1
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 0,
+          "observed_episodes": 0
         },
         {
           "institution_id": "my-kch-jpbn",
@@ -344,8 +344,8 @@
           "observed_episodes": 0
         }
       ],
-      "total_alertable_event_hours": 626,
-      "total_observed_episodes": 26,
+      "total_alertable_event_hours": 438,
+      "total_observed_episodes": 18,
       "indonesian_share_of_upwind_exposure_at_kuching": 0.9606,
       "max_upwind_hotspots_150_400km": 726
     },
@@ -372,9 +372,9 @@
         {
           "institution_id": "id-ptk-soedarso",
           "country": "ID",
-          "threshold_pm25": 28.4,
-          "alertable_event_hours": 902,
-          "observed_episodes": 26
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 798,
+          "observed_episodes": 31
         },
         {
           "institution_id": "id-ptk-bpbd",
@@ -393,9 +393,9 @@
         {
           "institution_id": "my-kch-hus",
           "country": "MY",
-          "threshold_pm25": 28.4,
-          "alertable_event_hours": 821,
-          "observed_episodes": 43
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 448,
+          "observed_episodes": 19
         },
         {
           "institution_id": "my-kch-jpbn",
@@ -405,8 +405,8 @@
           "observed_episodes": 19
         }
       ],
-      "total_alertable_event_hours": 4215,
-      "total_observed_episodes": 169,
+      "total_alertable_event_hours": 3738,
+      "total_observed_episodes": 150,
       "indonesian_share_of_upwind_exposure_at_kuching": 0.9872,
       "max_upwind_hotspots_150_400km": 983
     },
@@ -433,9 +433,9 @@
         {
           "institution_id": "id-ptk-soedarso",
           "country": "ID",
-          "threshold_pm25": 28.4,
-          "alertable_event_hours": 179,
-          "observed_episodes": 9
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 143,
+          "observed_episodes": 6
         },
         {
           "institution_id": "id-ptk-bpbd",
@@ -454,9 +454,9 @@
         {
           "institution_id": "my-kch-hus",
           "country": "MY",
-          "threshold_pm25": 28.4,
-          "alertable_event_hours": 673,
-          "observed_episodes": 33
+          "threshold_pm25": 35.5,
+          "alertable_event_hours": 390,
+          "observed_episodes": 21
         },
         {
           "institution_id": "my-kch-jpbn",
@@ -466,8 +466,8 @@
           "observed_episodes": 21
         }
       ],
-      "total_alertable_event_hours": 1918,
-      "total_observed_episodes": 96,
+      "total_alertable_event_hours": 1599,
+      "total_observed_episodes": 81,
       "indonesian_share_of_upwind_exposure_at_kuching": 0.986,
       "max_upwind_hotspots_150_400km": 1910
     }

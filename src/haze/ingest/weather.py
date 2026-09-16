@@ -46,7 +46,7 @@ def _cache_path(kind: str, lat: float, lon: float, start: str, end: str, variabl
 
 def _fetch(
     url: str, params: dict, cache, retries: int = 6, pause: float = 3.0,
-    cached_only: bool = False,
+    cached_only: bool = False, refresh: bool = False,
 ) -> dict:
     """Fetch with disk caching and backoff.
 
@@ -57,8 +57,14 @@ def _fetch(
     `cached_only` makes a miss return empty instead of reaching for the network.
     Everything downstream of the download step uses it, so feature building,
     training and the demo can never silently depend on connectivity.
+
+    `refresh` is the opposite guarantee, and exists for live inference. The cache
+    key contains only the start and end *dates*, so two runs on the same day hit
+    the same key - a second run would silently reuse the first run's response and
+    present hours-old weather as current. A caller claiming to be live must pass
+    `refresh=True` so the bytes are actually fetched now.
     """
-    if cache.exists():
+    if cache.exists() and not refresh:
         with cache.open() as fh:
             return json.load(fh)
 
@@ -104,10 +110,93 @@ def _to_frame(payload: dict, variables) -> pd.DataFrame:
     return df
 
 
+# How many locations to ask for in a single request. Open-Meteo accepts
+# comma-separated coordinates and returns one entry per location, in request
+# order. 25 keeps the URL well short of any practical length limit.
+BATCH_SIZE = 25
+
+
+def weather_batch(
+    points: list[tuple[float, float]], start: str, end: str,
+) -> dict[tuple[float, float], pd.DataFrame]:
+    """Hourly weather for many points, a batch per request rather than one each.
+
+    Exists because the live path is latency-bound, not bandwidth-bound. Fetching
+    the 120-cell wind grid one point at a time takes ~100 s on a laptop but over
+    fifteen minutes from a CI runner, which blew the job timeout. Batching turns
+    120 requests into five.
+
+    Deliberately does not touch the on-disk cache. The cache is keyed per point
+    and is what the training pipeline reads; a batch response would either have
+    to be split across those keys or introduce a second key space, and the only
+    caller here is the live path, which refetches by definition.
+
+    Results are matched to the requested points **by position** - Open-Meteo
+    snaps coordinates to its model grid, so the returned latitude/longitude do
+    not equal what was asked for and cannot be used as keys.
+    """
+    out: dict[tuple[float, float], pd.DataFrame] = {}
+
+    for i in range(0, len(points), BATCH_SIZE):
+        chunk = points[i : i + BATCH_SIZE]
+        params = {
+            "latitude": ",".join(str(lat) for lat, _ in chunk),
+            "longitude": ",".join(str(lon) for _, lon in chunk),
+            "start_date": start,
+            "end_date": end,
+            "hourly": ",".join(WEATHER_VARS),
+            "timezone": "UTC",
+            "wind_speed_unit": "ms",
+        }
+        full = f"{ARCHIVE_URL}?{urllib.parse.urlencode(params)}"
+
+        last: Exception | None = None
+        payload = None
+        for attempt in range(6):
+            try:
+                with urllib.request.urlopen(full, timeout=180) as resp:
+                    payload = json.load(resp)
+                break
+            except urllib.error.HTTPError as exc:
+                last = exc
+                if exc.code == 429:
+                    wait = 60.0 * (attempt + 1)
+                    print(f"    rate limited, waiting {wait:.0f}s...")
+                    time.sleep(wait)
+                    continue
+                if attempt < 5:
+                    time.sleep(3.0 * (attempt + 1))
+            except Exception as exc:
+                last = exc
+                if attempt < 5:
+                    time.sleep(3.0 * (attempt + 1))
+
+        if payload is None:
+            raise RuntimeError(f"Open-Meteo batch fetch failed: {last}")
+
+        # A single-location request returns an object, not a list.
+        entries = payload if isinstance(payload, list) else [payload]
+        if len(entries) != len(chunk):
+            raise RuntimeError(
+                f"Open-Meteo returned {len(entries)} entries for {len(chunk)} "
+                "requested locations - refusing to guess the mapping"
+            )
+        for point, entry in zip(chunk, entries):
+            out[point] = _to_frame(entry, WEATHER_VARS)
+
+    return out
+
+
 def weather(
-    lat: float, lon: float, start: str, end: str, cached_only: bool = False
+    lat: float, lon: float, start: str, end: str, cached_only: bool = False,
+    refresh: bool = False,
 ) -> pd.DataFrame:
-    """Hourly ERA5 reanalysis weather at a point."""
+    """Hourly ERA5 reanalysis weather at a point.
+
+    For recent dates this endpoint returns forecast-model output rather than ERA5
+    reanalysis - verified byte-identical to api.open-meteo.com/v1/forecast over
+    48 overlapping hours. Live callers should surface that as a caveat.
+    """
     cache = _cache_path("era5", lat, lon, start, end, WEATHER_VARS)
     payload = _fetch(
         ARCHIVE_URL,
@@ -122,12 +211,14 @@ def weather(
         },
         cache,
         cached_only=cached_only,
+        refresh=refresh,
     )
     return _to_frame(payload, WEATHER_VARS)
 
 
 def air_quality(
-    lat: float, lon: float, start: str, end: str, cached_only: bool = False
+    lat: float, lon: float, start: str, end: str, cached_only: bool = False,
+    refresh: bool = False,
 ) -> pd.DataFrame:
     """Hourly CAMS PM2.5/PM10 at a point. This is the model target."""
     cache = _cache_path("cams", lat, lon, start, end, AIR_VARS)
@@ -143,6 +234,7 @@ def air_quality(
         },
         cache,
         cached_only=cached_only,
+        refresh=refresh,
     )
     return _to_frame(payload, AIR_VARS)
 
