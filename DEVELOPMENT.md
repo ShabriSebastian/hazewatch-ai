@@ -65,3 +65,35 @@ cd frontend && npm run dev
 ```
 
 Both that file and `.env.local` are gitignored.
+
+## Alert history is accumulated, not queried
+
+`data/live/history.json` holds one compact record per published snapshot,
+appended by `scripts/09_append_history.py` from the publish stage of
+`scripts/refresh_snapshot.sh`.
+
+It works this way because there is no alternative. The replay backend could be
+asked for `/alerts` at any past timestamp, so Alert History was built by firing
+seven requests at seven offsets. Live data has no past to query — a snapshot is
+one observed instant, and the refresh used to overwrite the previous one. So the
+history has to be accumulated as it happens.
+
+Two consequences the UI is required to honour:
+
+- **The record is sparse and irregular.** Refreshes are manual. Two records may
+  be twenty minutes or three weeks apart. Every entry carries its own
+  `generated_at`, and the dashboard renders the interval between entries rather
+  than letting adjacent rows imply continuity.
+- **A gap is not "no alert".** It means nobody published then. The Alert History
+  screen says this in as many words, because the alternative is a reader
+  inferring calm air from an absence of entries.
+
+Retention is the newest 180 records (`--max-records`), which keeps the file
+reviewable in a diff and bounded in the browser. Records hold only the fields
+the history screen reads — a full snapshot is ~84 KB, most of it forecast curves
+and hotspot geometry that describe a prediction rather than an outcome.
+
+The publish gate (`scripts/08_gate_snapshot.py`) exits 2 when a candidate
+differs from the published one only by timestamps, so an unchanged snapshot
+never reaches the append step. The appender is also idempotent by
+`generated_at`, so running it by hand cannot double-record.

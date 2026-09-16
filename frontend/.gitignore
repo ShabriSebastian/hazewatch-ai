@@ -2,3 +2,4 @@
 
 # Local snapshot used for development and the migration self-checks.
 public/dev-snapshot.json
+public/dev-history.json

@@ -48,24 +48,6 @@ export interface InstitutionList {
   institutions: Institution[];
 }
 
-export interface Bookmark {
-  key: string;
-  label: string;
-  description: string;
-  timestamp: string;
-}
-
-export interface ReplayState {
-  scenario_id: string;
-  scenario_name: string;
-  clock: string;
-  start: string;
-  end: string;
-  playing: boolean;
-  speed: number;
-  bookmarks: Bookmark[];
-}
-
 export interface InstitutionCompact {
   id: string;
   name: string;

@@ -72,7 +72,8 @@ function Timeline({ items, institution }: { items: StatusTimelinePoint[]; instit
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm lg:p-5">
       <h3 className="flex items-center gap-2 text-sm font-extrabold text-ink"><Clock3 size={16} /> Recent alert timeline</h3>
       <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] text-slate-500">
-        ⓘ Reconstructed by sampling the alerts endpoint over the past 24 hours of the replay.
+        ⓘ One entry per published snapshot. Publishing is manual, so the intervals vary
+        and a gap means nothing was recorded then — not that the air was clear.
       </div>
 
       {items.length === 0 ? (
@@ -162,7 +163,11 @@ function LatestChange({ items }: { items: StatusTimelinePoint[] }) {
     return (
       <>
         {chip(Boolean(newest.alert))}
-        <span className="text-[10px] font-normal text-slate-500">unchanged over the last 24h</span>
+        <span className="text-[10px] font-normal text-slate-500">
+          {items.length <= 1
+            ? "only one observation recorded"
+            : `unchanged across ${items.length} recorded observations`}
+        </span>
       </>
     );
   }

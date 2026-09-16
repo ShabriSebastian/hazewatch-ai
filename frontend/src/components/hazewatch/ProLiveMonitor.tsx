@@ -79,7 +79,7 @@ function statusBadge(status: RegionalStatus) {
 }
 
 function formatClock(iso?: string | null) {
-  if (!iso) return "local replay";
+  if (!iso) return "unknown";
   return new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Kuching",
     hour: "2-digit",
@@ -416,7 +416,7 @@ function Loaded({ data }: { data: ScreenData }) {
           <RegionalMap institutions={institutions} forecasts={forecasts} alerts={alerts} hotspotCells={hotspotSummary.cells} />
           <div className="space-y-3">
             <section className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4">
-              <div className="flex items-center justify-between"><h3 className="flex items-center gap-2 text-sm font-extrabold text-ink"><MapPinned size={15} /> Next {PRO_HORIZON_HOURS} Hours</h3><span className="rounded-lg bg-violet-100 px-2 py-1 text-[9px] font-bold text-violet-700">Replay {formatClock(at ?? health.clock)}</span></div>
+              <div className="flex items-center justify-between"><h3 className="flex items-center gap-2 text-sm font-extrabold text-ink"><MapPinned size={15} /> Next {PRO_HORIZON_HOURS} Hours</h3><span className="rounded-lg bg-violet-100 px-2 py-1 text-[9px] font-bold text-violet-700">Issued {formatClock(at ?? health.clock)}</span></div>
               <h4 className="mt-3 text-lg font-extrabold text-slate-800">Haze impact is expected to increase</h4>
               <div className="mt-4 grid grid-cols-3 gap-3 text-[10px]">
                 <div className="border-r border-slate-200"><p className="text-slate-500">Source</p><p className="mt-1 font-extrabold text-slate-700">{sourceRegion?.split(",")[0] ?? "—"}</p></div>

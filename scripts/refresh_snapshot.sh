@@ -17,6 +17,7 @@ cd "$(dirname "$0")/.."
 ROOT="$(pwd)"
 PY=".venv/bin/python"
 PUBLISHED="data/live/latest.json"
+HISTORY="data/live/history.json"
 CANDIDATE="$(mktemp -t hazesnap).json"
 RAW_URL="https://raw.githubusercontent.com/ShabriSebastian/hazewatch-ai/main/data/live/latest.json"
 
@@ -63,7 +64,16 @@ esac
 say "4/5  Publishing"
 cp "$CANDIDATE" "$PUBLISHED"
 rm -f "$CANDIDATE"
-git add "$PUBLISHED"
+
+# Append to the history before committing, so the snapshot and the record of it
+# land in the same commit and cannot drift apart. The gate above has already
+# exited 2 for a candidate that differs only by timestamps, so an unchanged
+# snapshot never reaches this line and never adds a record.
+PYTHONPATH=src "$PY" scripts/09_append_history.py \
+  --snapshot "$PUBLISHED" --history "$HISTORY" \
+  || die "Could not append to the alert history. Nothing was committed."
+
+git add "$PUBLISHED" "$HISTORY"
 git commit -q -m "live snapshot $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 git push -q origin main
 echo "     ok - committed and pushed"

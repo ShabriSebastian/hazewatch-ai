@@ -40,7 +40,7 @@ function localTime(iso: string, country: string) {
 
 /**
  * A standalone timestamp needs its date. Bare HH:MM on the message header and
- * footer read as "today" while the replay clock sits days away - the same defect
+ * footer read as "today" while the snapshot was issued days earlier - the same defect
  * fixed on Institution Detail and Alert History. The peak *window* below is a
  * start-end range inside one forecast, where bare times are still right.
  */
@@ -121,7 +121,7 @@ function ReliabilityIndicator({ forecast }: { forecast: Forecast }) {
         <Info size={14} className="mt-0.5 flex-none text-slate-500" />
         <div>
           <p className="font-extrabold text-slate-700">Forecast reliability</p>
-          <p>Reliability detail is unavailable for this replay.</p>
+          <p>Reliability detail is unavailable for this snapshot.</p>
         </div>
       </div>
     );

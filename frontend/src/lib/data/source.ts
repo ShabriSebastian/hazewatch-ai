@@ -31,7 +31,12 @@ import {
   type LiveSnapshot,
   type SnapshotInstitution,
 } from "@/lib/live/snapshot";
-import type { StatusTimelinePoint } from "@/lib/ui/timeline";
+import {
+  describeGap,
+  fetchHistory,
+  recordedPoints,
+  type RecordedPoint,
+} from "@/lib/live/history";
 import { createLocalNotification } from "./notification";
 
 /**
@@ -83,21 +88,29 @@ function resolveRecord(
 }
 
 /**
- * The alert states this snapshot records, newest first.
+ * The alert states actually recorded for this institution, newest first.
  *
- * One published snapshot is one observed instant, so this is a single point.
- * Workstream 3 replaces it with a reader over the archive of past snapshots;
- * the shape is already what that reader will return, so screens consuming it
- * do not change again.
+ * Read from the accumulated history plus the snapshot on display. This is a
+ * sparse list of moments someone published, not a time series: the intervals
+ * between entries vary and are carried on each point as `gapHours`, because a
+ * gap means "nobody looked", not "nothing happened".
  */
-function timelineFrom(
+async function timelineFor(
   snapshot: LiveSnapshot,
   record: SnapshotInstitution,
-): StatusTimelinePoint[] {
-  return [{ at: snapshot.generated_at, alert: record.alert }];
+): Promise<RecordedPoint[]> {
+  const history = await fetchHistory();
+  return recordedPoints(history, record.institution_id, {
+    at: snapshot.generated_at,
+    alert: record.alert,
+  });
 }
 
-function base(snapshot: LiveSnapshot, record: SnapshotInstitution) {
+function base(
+  snapshot: LiveSnapshot,
+  record: SnapshotInstitution,
+  statusTimeline: RecordedPoint[],
+) {
   return {
     at: snapshot.generated_at,
     generatedAt: snapshot.generated_at,
@@ -108,7 +121,7 @@ function base(snapshot: LiveSnapshot, record: SnapshotInstitution) {
     institution: record.institution,
     forecast: toForecast(record),
     alertResponse: toAlertResponse(record),
-    statusTimeline: timelineFrom(snapshot, record),
+    statusTimeline,
   } as const;
 }
 
@@ -121,7 +134,7 @@ export async function loadLiteOverviewData(institutionId?: string | null) {
     institutionId,
     process.env.NEXT_PUBLIC_HAZE_INSTITUTION_ID,
   );
-  return base(snapshot, record);
+  return base(snapshot, record, await timelineFor(snapshot, record));
 }
 
 export async function loadLiteAlertHistoryData(institutionId?: string | null) {
@@ -158,7 +171,7 @@ export async function loadProInstitutionDetailData(institutionId?: string | null
   );
 
   return {
-    ...base(snapshot, record),
+    ...base(snapshot, record, await timelineFor(snapshot, record)),
     hotspotSummary: toHotspotSummary(snapshot),
   } as const;
 }
@@ -184,6 +197,14 @@ export type ProHistoryEvent = {
   direction?: string;
   transportHours?: number;
   notificationState: "prepared" | "sent" | "monitoring" | "none";
+  /**
+   * Hours back to the previously recorded observation, and that interval in
+   * words. Null on the oldest entry. Carried so the screen can show that these
+   * are discrete recorded moments with gaps between them, rather than letting
+   * adjacent rows imply a continuous record.
+   */
+  gapHours?: number | null;
+  gapLabel?: string | null;
 };
 
 export async function loadProAlertHistoryData(institutionId?: string | null) {
@@ -211,10 +232,20 @@ export async function loadProAlertHistoryData(institutionId?: string | null) {
           ? `Cross-border transport toward ${base.institution.admin_region}`
           : `Transport within ${base.institution.admin_region}`,
         notificationState: "prepared" as const,
+        gapHours: point.gapHours,
+        gapLabel: point.gapHours === null || point.gapHours === undefined
+          ? null
+          : describeGap(point.gapHours),
       };
     });
 
-  return { ...base, historyEvents } as const;
+  return {
+    ...base,
+    historyEvents,
+    /** Every recorded observation, alerting or not — the screen needs the
+     *  non-alerting ones to say honestly how much was actually observed. */
+    recordedObservations: base.statusTimeline.length,
+  } as const;
 }
 
 export async function loadProNotificationPreviewData(institutionId?: string | null) {

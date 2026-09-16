@@ -234,7 +234,7 @@ function LiteOverviewLoaded({ data }: { data: ScreenData }) {
           ⓘ This Lite view is designed for institution staff and focuses on what they need to know and do next.
         </div>
         <p className="mt-2 text-[10px] text-slate-400">
-          PM2.5 values are {forecast.current.source === "cams_reanalysis" ? "CAMS reanalysis, not ground-station measurements" : `from ${forecast.current.source.replace(/_/g, " ")}`}. Alerting uses the upper prediction band operating point defined by the frozen contract.
+          PM2.5 values are CAMS composition via Open-Meteo, not ground-station measurements. Alerting uses the upper prediction band, not the central estimate.
         </p>
       </main>
     </AppShell>

@@ -19,6 +19,7 @@ import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { ALERT_THRESHOLD_PM25, GOOD_MAX_PM25 } from "@/lib/ui/threshold";
 import type { ProHistoryEvent, ProHistoryStatus } from "@/lib/data/source";
 import { DataUnavailable } from "./DataUnavailable";
+import { GapMarker, RecordedHistoryNotice } from "./RecordedHistoryNotice";
 import { ProAppShell } from "./ProAppShell";
 
 type ScreenData = Awaited<ReturnType<typeof loadProAlertHistoryData>>;
@@ -153,7 +154,7 @@ function WhatChanged({ selected, previous }: { selected: ProHistoryEvent; previo
         <div className="flex justify-between gap-4"><span className="text-slate-500">Estimated transport</span><strong>{previous?.transportHours ?? "—"} → {selected.transportHours ?? "—"}</strong></div>
         <div className="flex justify-between gap-4"><span className="text-slate-500">Haze direction</span><strong>{selected.direction ?? "—"}</strong></div>
       </div>
-      <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[9px] leading-4 text-slate-600">Rebuilt from sampled /alerts responses. That endpoint carries status, peak and source country, but no transport estimate — that lives on the forecast attribution, shown on Institution Detail.</div>
+      <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[9px] leading-4 text-slate-600">Built from the alert recorded in each published snapshot. A record carries status, peak and source country, but no transport estimate — that lives on the forecast attribution, shown on Institution Detail.</div>
     </section>
   );
 }
@@ -218,17 +219,36 @@ export function ProAlertHistory() {
   const highestPeak = Math.max(...data.historyEvents.map((event) => event.forecastPeak ?? 0));
   const latestWatch = data.historyEvents.find((event) => event.status === "watch");
 
+  // Both describe the shape of what was actually recorded, which is the thing
+  // this screen has to be honest about.
+  const stamps = data.statusTimeline.map((point) => Date.parse(point.at)).filter(Number.isFinite);
+  const historySpanHours = stamps.length > 1
+    ? (Math.max(...stamps) - Math.min(...stamps)) / 3_600_000
+    : null;
+  const gaps = data.statusTimeline
+    .map((point) => point.gapHours)
+    .filter((g): g is number => typeof g === "number");
+  const largestGapHours = gaps.length ? Math.max(...gaps) : null;
+
   return (
     <ProAppShell activePage="alert-history" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} institutions={data.institutions} current={data.institution} health={data.health} at={data.at} issuedAt={data.issuedAt} issuedOffsetHours={data.issuedOffsetHours}>
       <main className="min-w-0 bg-white">
         <div className="px-6 py-5 xl:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
-            <div><h2 className="text-[30px] font-extrabold tracking-tight text-ink">Alert History</h2><p className="mt-1 text-xs text-slate-500">Review past alerts and changes in haze risk over time.</p></div>
+            <div><h2 className="text-[30px] font-extrabold tracking-tight text-ink">Alert History</h2><p className="mt-1 text-xs text-slate-500">Alerts recorded at each published snapshot.</p></div>
             <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">Viewing: <strong className="ml-2 text-slate-800">{data.institution.name}</strong></div>
           </div>
 
-          <section className="mt-4 flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/50 p-3">
-            <span className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600"><Clock3 size={13} /> Scenario window</span>
+          <div className="mt-4">
+            <RecordedHistoryNotice
+              recordedObservations={data.recordedObservations}
+              spanHours={historySpanHours}
+              largestGapHours={largestGapHours}
+            />
+          </div>
+
+          <section className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50/50 p-3">
+            <span className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600"><Clock3 size={13} /> Recorded observations</span>
             <div className="flex flex-wrap gap-2">
               {(["all", "safe", "watch", "alert"] as FilterStatus[]).map((status) => <button key={status} onClick={() => setFilter(status)} className={`rounded-lg px-3 py-2 text-[10px] font-extrabold capitalize ${filter === status ? "bg-blue-600 text-white" : "border border-slate-200 bg-white text-slate-600"}`}>{status === "all" ? "All statuses" : statusLabel(status)}</button>)}
             </div>
@@ -236,7 +256,7 @@ export function ProAlertHistory() {
           </section>
 
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-blue-100 text-blue-700"><Filter size={19} /></div><div><p className="text-[10px] text-slate-500">Recorded Events</p><p className="text-2xl font-extrabold text-blue-700">{data.historyEvents.length}</p><p className="text-[9px] text-slate-500">in current replay scenario</p></div></div></div>
+            <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-blue-100 text-blue-700"><Filter size={19} /></div><div><p className="text-[10px] text-slate-500">Recorded Events</p><p className="text-2xl font-extrabold text-blue-700">{data.historyEvents.length}</p><p className="text-[9px] text-slate-500">of {data.recordedObservations} recorded observations</p></div></div></div>
             <div className="rounded-2xl border border-red-100 bg-red-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-red-100 text-red-700"><AlertTriangle size={19} /></div><div><p className="text-[10px] text-slate-500">Current Status</p><p className="text-2xl font-extrabold text-red-600">{statusLabel(currentStatus)}</p><p className="text-[9px] text-slate-500">forecast-based operational state</p></div></div></div>
             <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-violet-100 text-violet-700"><TrendingUp size={19} /></div><div><p className="text-[10px] text-slate-500">Highest Trigger Peak</p><p className="text-2xl font-extrabold text-violet-700">{highestPeak.toFixed(1)}<span className="ml-1 text-sm">µg/m³</span></p><p className="text-[9px] text-slate-500">upper prediction band</p></div></div></div>
             <div className="rounded-2xl border border-orange-100 bg-orange-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-orange-100 text-orange-700"><Gauge size={19} /></div><div><p className="text-[10px] text-slate-500">Latest Change</p><p className="text-xl font-extrabold text-orange-600">{latestWatch ? "Watch → Alert" : `→ ${statusLabel(currentStatus)}`}</p><p className="text-[9px] text-slate-500">human action only when Alert</p></div></div></div>
@@ -249,14 +269,17 @@ export function ProAlertHistory() {
           </div>
 
           <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
-            <div className="flex items-center justify-between gap-3"><div><h3 className="text-sm font-extrabold text-slate-800">Alert Timeline</h3><p className="mt-1 text-[10px] text-slate-500">Chronological history of major forecast-state changes.</p></div><span className="text-[9px] text-slate-400">{filtered.length} shown</span></div>
+            <div className="flex items-center justify-between gap-3"><div><h3 className="text-sm font-extrabold text-slate-800">Alert Timeline</h3><p className="mt-1 text-[10px] text-slate-500">Each entry is one published snapshot. Intervals between them vary.</p></div><span className="text-[9px] text-slate-400">{filtered.length} shown</span></div>
             <div className="mt-3 space-y-2">
               {filtered.map((event) => (
-                <button key={event.id} onClick={() => setSelectedId(event.id)} className={`grid w-full grid-cols-[92px_18px_70px_1fr_auto] items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${selected.id === event.id ? "border-blue-300 bg-blue-50/50" : event.status === "alert" ? "border-red-200 bg-red-50/40" : event.status === "watch" ? "border-amber-200 bg-amber-50/40" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
+                <div key={event.id}>
+                <GapMarker gapHours={event.gapHours} />
+                <button onClick={() => setSelectedId(event.id)} className={`grid w-full grid-cols-[92px_18px_70px_1fr_auto] items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${selected.id === event.id ? "border-blue-300 bg-blue-50/50" : event.status === "alert" ? "border-red-200 bg-red-50/40" : event.status === "watch" ? "border-amber-200 bg-amber-50/40" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
                   {/*
-                    Dated, like the Alert Details panel above. The timeline spans
-                    exactly 24 hours, so its first and last rows rendered the same
-                    bare HH:MM and read as duplicates.
+                    Dated, not bare HH:MM. Entries can be minutes or weeks apart
+                    now that each one is a published snapshot rather than a fixed
+                    offset on a replay clock, so the date carries real
+                    information and a bare clock time would mislead.
                   */}
                   <span className="text-[10px] font-extrabold text-slate-700">{formatDay(event.timestamp).replace(/ \d{4}$/, "")} {formatClock(event.timestamp)}</span>
                   <span className={`h-2.5 w-2.5 rounded-full ${dotClass(event.status)}`} />
@@ -264,11 +287,12 @@ export function ProAlertHistory() {
                   <span className="min-w-0"><strong className="block text-[10px] text-slate-800">{event.title}</strong><span className="mt-1 block truncate text-[9px] text-slate-500">{event.description}</span></span>
                   <span className="text-right text-[9px] font-semibold text-slate-500">{event.notificationState === "prepared" ? "Prepared · Not sent" : event.notificationState === "monitoring" ? "Monitoring only" : event.notificationState === "sent" ? "Sent to admin contact" : "No action needed"}</span>
                 </button>
+                </div>
               ))}
             </div>
           </section>
 
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[9px] text-slate-400"><span>PM2.5 values follow the API contract; alerting uses pm25_upper ≥{ALERT_THRESHOLD_PM25} µg/m³.</span><span>Safe/Watch are monitoring states only; Confirm & Send appears only for Alert.</span></div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3 text-[9px] text-slate-400"><span>PM2.5 values are CAMS via Open-Meteo; alerting uses pm25_upper ≥{ALERT_THRESHOLD_PM25} µg/m³.</span><span>Safe/Watch are monitoring states only; Confirm & Send appears only for Alert.</span></div>
         </div>
       </main>
     </ProAppShell>

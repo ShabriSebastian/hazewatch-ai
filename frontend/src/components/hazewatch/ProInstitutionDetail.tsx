@@ -60,7 +60,7 @@ function formatTime(iso?: string | null) {
  * Timestamps that are not "now" must carry their date.
  *
  * The status timeline samples back exactly 24 hours, so a bare HH:MM on the
- * oldest sample renders the *same string* as the current replay clock - every
+ * oldest sample renders the *same string* as the newest - every
  * institution, every bookmark. That collision is what made a historical lead
  * time read as a second, contradictory current one.
  */
@@ -315,7 +315,7 @@ export function ProInstitutionDetail() {
           <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-blue-100 text-blue-700"><Gauge size={20} /></div><div><p className="text-[10px] text-slate-500">Current PM2.5</p><p className="text-2xl font-extrabold text-blue-700">{forecast.current.pm25.toFixed(1)}<span className="ml-1 text-sm">µg/m³</span></p><p className="text-[9px] text-slate-500">{forecast.current.source.replaceAll("_", " ")}</p></div></div></div>
             <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-violet-100 text-violet-700"><TrendingUp size={20} /></div><div><p className="text-[10px] text-slate-500">Forecast trigger peak</p><p className="text-2xl font-extrabold text-violet-700">{peak.toFixed(1)}<span className="ml-1 text-sm">µg/m³</span></p><p className="text-[9px] text-slate-500">p90 upper prediction band</p></div></div></div>
-            <div className="rounded-2xl border border-orange-100 bg-orange-50/80 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-orange-100 text-orange-700"><Clock3 size={20} /></div><div><p className="text-[10px] text-slate-500">Warning lead time</p><p className="text-2xl font-extrabold text-orange-600">{warningLead ?? "—"}<span className="ml-1 text-sm">hours</span></p><p className="text-[9px] text-slate-500">time before threshold crossing, as of the replay clock</p></div></div></div>
+            <div className="rounded-2xl border border-orange-100 bg-orange-50/80 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-orange-100 text-orange-700"><Clock3 size={20} /></div><div><p className="text-[10px] text-slate-500">Warning lead time</p><p className="text-2xl font-extrabold text-orange-600">{warningLead ?? "—"}<span className="ml-1 text-sm">hours</span></p><p className="text-[9px] text-slate-500">time before threshold crossing, as of the snapshot</p></div></div></div>
             <div className="rounded-2xl border border-red-100 bg-red-50/70 p-4"><div className="flex items-center gap-3"><div className="grid h-11 w-11 place-items-center rounded-full bg-red-100 text-red-700"><AlertTriangle size={20} /></div><div><p className="text-[10px] text-slate-500">Forecast Status</p><p className="text-2xl font-extrabold text-red-600">{statusLabel(status)}</p><p className="text-[9px] text-slate-500">Safe ≤{GOOD_MAX_PM25} · Watch {GOOD_MAX_PM25 + 0.1}–{ALERT_THRESHOLD_PM25 - 0.1} · Alert ≥{ALERT_THRESHOLD_PM25}</p></div></div></div>
           </div>
 
@@ -377,7 +377,7 @@ export function ProInstitutionDetail() {
               own `at` and pass it on every read. Reading it here put a timestamp
               five days adrift of the data on the page.
             */}
-            <span>PM2.5 source: {forecast.current.source.replaceAll("_", " ")} · replay clock {at ?? health.clock ? formatStamp(at ?? health.clock) : "local"}</span>
+            <span>PM2.5 source: {forecast.current.source.replaceAll("_", " ")} · snapshot {at ?? health.clock ? formatStamp(at ?? health.clock) : "unknown"}</span>
             <span>{forecast.attribution.transboundary ? "Transboundary attribution active" : "No cross-border attribution for this institution"}</span>
           </div>
         </div>
