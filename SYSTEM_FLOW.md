@@ -408,6 +408,11 @@ not three confirmations. Recovering finer detail would need a different PM2.5 so
  │                       │ snapshot's provenance, repeated in metrics      │
  │                       │ `notes`.                                        │
  ├───────────────────────┼─────────────────────────────────────────────────┤
+ │ Fire is assumed, not  │ Every feature is fire-specific, so a non-fire   │
+ │ established           │ aerosol source would still be narrated as       │
+ │                       │ transboundary haze. Untested against a real     │
+ │                       │ such event. See README limitation 9.            │
+ ├───────────────────────┼─────────────────────────────────────────────────┤
  │ No fabricated history │ History is accumulated, never synthesised: one  │
  │                       │ record per PUBLISHED snapshot. It is sparse and │
  │                       │ irregular because publishing is manual, and the │

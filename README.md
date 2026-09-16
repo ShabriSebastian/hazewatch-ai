@@ -461,6 +461,17 @@ discovered than disclosed.
    The UFEI features rank among the top drivers, but they explain a modest share of hourly
    variance, and that figure is reported as measured.
    See `scripts/14_daily_attribution.py` and `diagnostics/daily_attribution.json`.
+9. **Every elevated PM2.5 reading is attributed to biomass burning.** The predictive
+   features are fire-specific — hotspot counts, Fire Radiative Power, and the UFEI
+   exposure kernel built on both. A different aerosol source affecting the same region —
+   volcanic ash, dust, industrial pollution — would not be correctly forecast by a model
+   trained only on fire signals, and the "Cross-Border Haze Risk Detected" banner and the
+   attribution narrative beneath it would most likely present it as fire-sourced
+   transboundary haze rather than flagging it as a different or uncertain source.
+
+   This has not been tested against a real non-fire elevated-PM2.5 event. It is a
+   structural gap in what the system was built to distinguish, not a measured failure
+   rate, and it is stated here rather than inferred from the feature list.
 
 ## Layout
 

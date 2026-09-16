@@ -411,6 +411,11 @@ Legend: `>>` user action · `< >` decision · `[ ]` screen · `═══` state 
  │    It accumulates one record per publish, so it starts nearly empty and    │
  │    fills at whatever rate someone runs `make refresh`.                     │
  ├───────────────────────────────────────────────────────────────────────────┤
+ │ 1c. THE HAZE NARRATIVE ASSUMES THE SOURCE IS FIRE.                        │
+ │    "Smoke is arriving from…" and "Haze Movement" are stated without a     │
+ │    source caveat. A non-fire aerosol event would read the same way.       │
+ │    See README limitation 9.                                               │
+ ├───────────────────────────────────────────────────────────────────────────┤
  │ 2. THE SELECTOR ONLY OFFERS SCHOOLS AND HOSPITALS.                         │
  │    The two `authority` institutions (BPBD Pontianak, JPBN Sarawak) are     │
  │    filtered out — they are not an institution-staff audience — but they    │
