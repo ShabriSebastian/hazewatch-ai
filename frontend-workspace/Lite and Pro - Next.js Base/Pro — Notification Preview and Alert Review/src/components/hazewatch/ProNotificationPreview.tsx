@@ -37,6 +37,32 @@ function localTime(iso: string, country: string) {
   }).format(new Date(iso));
 }
 
+/**
+ * A standalone timestamp needs its date. Bare HH:MM on the message header and
+ * footer read as "today" while the replay clock sits days away - the same defect
+ * fixed on Institution Detail and Alert History. The peak *window* below is a
+ * start-end range inside one forecast, where bare times are still right.
+ */
+function localStamp(iso: string, country: string) {
+  const timeZone = country === "ID" ? "Asia/Pontianak" : "Asia/Kuching";
+  const day = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(iso));
+  return `${day} ${localTime(iso, country)}`;
+}
+
+/**
+ * The recommended-action sentence stays in English in every language.
+ *
+ * `alert.recommended_actions` comes from RECOMMENDED_ACTIONS in rules.py, which
+ * is keyed by institution type and severity and has no language dimension at
+ * all, so there is nothing to select a translation from. Rather than substitute
+ * different copy or invent translations, the message keeps the English action
+ * and the UI says so - see the untranslated-action note below the preview.
+ */
+
 function peakWindow(alert: Alert, institution: Institution) {
   const peakDate = new Date(alert.forecast_peak_at);
   const start = new Date(peakDate.getTime() - 60 * 60 * 1000).toISOString();
@@ -248,7 +274,18 @@ function ActivePreview({ data, alert }: { data: ScreenData; alert: Alert }) {
             </div>
             <div className="border-l border-red-100 pl-4"><p className="text-[9px] text-slate-500">Forecast trigger peak</p><p className="mt-1 text-lg font-extrabold text-red-600">{alert.forecast_peak_pm25.toFixed(1)} <span className="text-xs">µg/m³</span></p></div>
             <div className="border-l border-red-100 pl-4"><p className="text-[9px] text-slate-500">Expected peak</p><p className="mt-1 text-lg font-extrabold text-orange-600">{expectedWindow}</p></div>
-            <div className="border-l border-red-100 pl-4"><p className="text-[9px] text-slate-500">Warning lead time</p><p className="mt-1 text-lg font-extrabold text-slate-800">{alert.lead_time_hours}h</p></div>
+            {/*
+              The crossing is named so these hours cannot be read as counting to
+              the Expected peak in the cell beside them. lead_time_hours measures
+              to the threshold crossing, an earlier and different moment - at the
+              opening bookmark, 17h against a 21h peak.
+
+              Bare time, not localStamp: the neighbouring cell renders the peak as
+              a bare range and the two are compared against each other inside one
+              forecast horizon, so dating one and not the other would only look
+              inconsistent.
+            */}
+            <div className="border-l border-red-100 pl-4"><p className="text-[9px] text-slate-500">Warning lead time</p><p className="mt-1 text-lg font-extrabold text-slate-800">{alert.lead_time_hours}h</p><p className="text-[9px] text-slate-500">to threshold crossing{alert.threshold_crossed_at ? ` · ${localTime(alert.threshold_crossed_at, institution.country)}` : ""}</p></div>
             <Link href="/pro/institutions" className="justify-self-end text-[9px] font-extrabold text-red-600">View Institution Alert →</Link>
           </section>
 
@@ -279,10 +316,23 @@ function ActivePreview({ data, alert }: { data: ScreenData; alert: Alert }) {
               <div className="mx-auto mt-4 max-w-[680px] overflow-hidden rounded-[28px] border-[5px] border-slate-800 bg-[#efe6d6] shadow-xl">
                 <div className="flex items-center gap-3 bg-white px-4 py-3"><ArrowLeft size={16} /><div className="grid h-8 w-8 place-items-center rounded-full bg-teal-400 text-white"><MessageCircle size={15} /></div><div><p className="text-[11px] font-extrabold text-slate-800">Haze Alert Preview</p><p className="text-[8px] text-slate-400">Prototype message</p></div></div>
                 <div className="p-6">
-                  <p className="mx-auto mb-4 w-fit rounded-full bg-white/80 px-3 py-1 text-[8px] text-slate-400">Preview · {localTime(alert.triggered_at, institution.country)}</p>
-                  <div className="mx-auto max-w-[520px] whitespace-pre-line rounded-xl bg-white p-4 text-[10px] leading-5 text-slate-700 shadow-sm">{message}<p className="mt-4 font-extrabold text-slate-600">Updated: {localTime(alert.triggered_at, institution.country)}</p></div>
+                  <p className="mx-auto mb-4 w-fit rounded-full bg-white/80 px-3 py-1 text-[8px] text-slate-400">Preview · {localStamp(alert.triggered_at, institution.country)}</p>
+                  <div className="mx-auto max-w-[520px] whitespace-pre-line rounded-xl bg-white p-4 text-[10px] leading-5 text-slate-700 shadow-sm">{message}<p className="mt-4 font-extrabold text-slate-600">Updated: {localStamp(alert.triggered_at, institution.country)}</p></div>
                 </div>
               </div>
+
+              {/*
+                Shown only when the preview is not English. The message body is
+                localised but the recommended-action sentence is not: the API
+                serves that copy in English only. Saying so is better than a
+                message that looks fully translated and is not.
+              */}
+              {language !== "en" && (
+                <p className="mt-3 flex items-start gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[9px] leading-4 text-amber-800">
+                  <AlertTriangle size={11} className="mt-0.5 flex-none" />
+                  <span>The recommended action is shown in English. The alert API serves that copy in English only, so it is not translated for this preview — the rest of the message is in {languageLabel(language)}.</span>
+                </p>
+              )}
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2"><p className="flex items-center gap-1 text-[9px] text-slate-400"><Info size={11} /> Preview only — no recipients will be contacted until confirmation, and delivery remains simulated.</p><div className="flex gap-2"><button type="button" onClick={() => setChannel(channel === "whatsapp" && availableChannels.includes("sms") ? "sms" : "whatsapp")} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[9px] font-extrabold text-blue-600">Switch Preview</button><button type="button" onClick={copyPreview} className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[9px] font-extrabold text-blue-600">{copied ? <Check size={12} /> : <Copy size={12} />}{copied ? "Copied" : "Copy Preview"}</button></div></div>
             </section>

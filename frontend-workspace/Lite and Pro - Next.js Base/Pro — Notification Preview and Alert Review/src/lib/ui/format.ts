@@ -14,6 +14,30 @@ export function localTime(iso: string, country: string) {
   }).format(new Date(iso));
 }
 
+/**
+ * A standalone instant, with its date.
+ *
+ * Bare HH:MM reads as "now" while the replay clock sits a day away. On Lite
+ * Overview at the opening bookmark three different instants all render as
+ * "23:00": the replay clock (2 Sep), the forecast peak the banner points at
+ * (3 Sep, a full day out) and the oldest sampled alert (1 Sep).
+ *
+ * Formatted to match the Pro screens - `03 Sept 23:00` - so one timestamp does
+ * not look like two different things across the two modes. `localDayLabel` keeps
+ * its weekday form: it heads day *groups* in Alert History, a different job.
+ *
+ * Not for times that already sit under a date, and not for `peakTime`, which
+ * also feeds the recipient-facing message body.
+ */
+export function localStamp(iso: string, country: string) {
+  const day = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timeZoneFor(country),
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(iso));
+  return `${day} ${localTime(iso, country)}`;
+}
+
 export function localDayKey(iso: string, country: string) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: timeZoneFor(country),

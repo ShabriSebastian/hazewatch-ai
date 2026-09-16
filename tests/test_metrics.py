@@ -6,7 +6,7 @@ values: real degradation trips them, ordinary retraining noise does not.
 
 Measured on the held-out 2023 event (see models/v1/metrics.json):
     skill vs persistence   +12.7% @6h   +24.2% @12h   +14.7% @24h
-    alerts (p90 trigger)   hit 83.5%    false alarm 25.6%    median lead 24h
+    alerts (p90 trigger)   hit 79.5%    false alarm 25.4%    median lead 24h
 """
 
 from __future__ import annotations

@@ -420,6 +420,16 @@ Legend: `[ ]` process · `< >` decision · `( )` data store · `>>` user action 
  │ Performance is quoted │ 79.5% hit · 25.4% false alarm · 24h median lead │
  │ from one place        │ · 99 episodes — served by /model/metrics,       │
  │                       │ never hardcoded in the UI.                      │
+ ├───────────────────────┼─────────────────────────────────────────────────┤
+ │ "Median lead" is a    │ alert_metrics searches a window of exactly      │
+ │ capped maximum, not   │ `horizon` hours before each onset, so per-      │
+ │ an unbounded median   │ episode lead cannot exceed 24 and the median    │
+ │                       │ sits on its bound. It reads 24.0 at EVERY       │
+ │                       │ trigger percentile from p75 to p95 while hit    │
+ │                       │ rate moves 58% → 90% — the signature of a       │
+ │                       │ statistic against its ceiling. True median is   │
+ │                       │ ≥24h and unmeasured; widening the window is     │
+ │                       │ what would turn it into an estimate.            │
  └─────────────────────────────────────────────────────────────────────────┘
 ```
 

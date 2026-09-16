@@ -8,12 +8,17 @@ Two variants, deliberately separated:
   if upwind fire exposure dominates at a Sarawak receptor, the model itself has
   quantified the cross-border link.
 
-* **forecast** - trained *with* lags, predicting +6/+12/+24h. Serves as the
-  fallback forecaster and, via quantile spread across trees, as the source of
-  the prediction bands the API returns.
+* **forecast** - trained *with* lags, one forest per lead time from +1h to
+  +24h. Serves as the promoted forecaster - the GRU was trained as an
+  alternative but did not beat it on held-out data - and, via quantile spread
+  across trees, as the source of the prediction bands the API returns.
+  Metrics are reported at +6/+12/+24h only; that is a reporting choice and
+  not the horizon served.
 """
 
 from __future__ import annotations
+
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
@@ -88,10 +93,15 @@ def train_attribution(
 
 
 def train_forecast(
-    train: pd.DataFrame, features: list[str], horizons=(6, 12, 24)
+    train: pd.DataFrame, features: list[str], horizons: Sequence[int]
 ) -> dict[int, RandomForestRegressor]:
     """One forest per lead time. Direct prediction, no autoregressive rollout,
     so errors cannot compound across steps.
+
+    `horizons` is required rather than defaulted. Both callers pass every lead
+    from 1 to 24; an earlier default of `(6, 12, 24)` described the reporting
+    checkpoints, not the served horizon, and a caller who omitted the argument
+    would have silently trained three forests instead of twenty-four.
 
     Trained in raw ug/m3 space, unlike the attribution model. Back-transforming
     an averaged log prediction yields a geometric mean, which is biased low, and

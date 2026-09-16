@@ -152,7 +152,7 @@ function WhatChanged({ selected, previous }: { selected: ProHistoryEvent; previo
         <div className="flex justify-between gap-4"><span className="text-slate-500">Estimated transport</span><strong>{previous?.transportHours ?? "—"} → {selected.transportHours ?? "—"}</strong></div>
         <div className="flex justify-between gap-4"><span className="text-slate-500">Haze direction</span><strong>{selected.direction ?? "—"}</strong></div>
       </div>
-      <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[9px] leading-4 text-slate-600">The event summary only reflects fields available from the API or the swappable demo fixture.</div>
+      <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-[9px] leading-4 text-slate-600">Rebuilt from sampled /alerts responses. That endpoint carries status, peak and source country, but no transport estimate — that lives on the forecast attribution, shown on Institution Detail.</div>
     </section>
   );
 }
@@ -251,8 +251,13 @@ export function ProAlertHistory() {
             <div className="flex items-center justify-between gap-3"><div><h3 className="text-sm font-extrabold text-slate-800">Alert Timeline</h3><p className="mt-1 text-[10px] text-slate-500">Chronological history of major forecast-state changes.</p></div><span className="text-[9px] text-slate-400">{filtered.length} shown</span></div>
             <div className="mt-3 space-y-2">
               {filtered.map((event) => (
-                <button key={event.id} onClick={() => setSelectedId(event.id)} className={`grid w-full grid-cols-[58px_18px_70px_1fr_auto] items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${selected.id === event.id ? "border-blue-300 bg-blue-50/50" : event.status === "alert" ? "border-red-200 bg-red-50/40" : event.status === "watch" ? "border-amber-200 bg-amber-50/40" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
-                  <span className="text-[10px] font-extrabold text-slate-700">{formatClock(event.timestamp)}</span>
+                <button key={event.id} onClick={() => setSelectedId(event.id)} className={`grid w-full grid-cols-[92px_18px_70px_1fr_auto] items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${selected.id === event.id ? "border-blue-300 bg-blue-50/50" : event.status === "alert" ? "border-red-200 bg-red-50/40" : event.status === "watch" ? "border-amber-200 bg-amber-50/40" : "border-slate-200 bg-white hover:bg-slate-50"}`}>
+                  {/*
+                    Dated, like the Alert Details panel above. The timeline spans
+                    exactly 24 hours, so its first and last rows rendered the same
+                    bare HH:MM and read as duplicates.
+                  */}
+                  <span className="text-[10px] font-extrabold text-slate-700">{formatDay(event.timestamp).replace(/ \d{4}$/, "")} {formatClock(event.timestamp)}</span>
                   <span className={`h-2.5 w-2.5 rounded-full ${dotClass(event.status)}`} />
                   <span className={`rounded-full px-2 py-1 text-center text-[9px] font-extrabold ${statusClasses(event.status)}`}>{statusLabel(event.status)}</span>
                   <span className="min-w-0"><strong className="block text-[10px] text-slate-800">{event.title}</strong><span className="mt-1 block truncate text-[9px] text-slate-500">{event.description}</span></span>

@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Health, Institution } from "@/lib/api/types";
+import { PRO_HORIZON_HOURS } from "@/lib/data/source";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { BrandMark } from "./BrandMark";
 
@@ -33,7 +34,10 @@ export function ProAppShell({
   children,
   activePage = "live-monitor",
   scopeLabel = "Regional View",
-  forecastLabel = "Next 12 Hours",
+  // Derived, not a literal: this default was "Next 12 Hours" while the Live Monitor
+  // was the one screen that never passed the prop, so the header kept claiming 12
+  // independently of the horizon actually being requested.
+  forecastLabel = `Next ${PRO_HORIZON_HOURS} Hours`,
   institutions = [],
   current,
   health,
@@ -61,12 +65,10 @@ export function ProAppShell({
     <div className="min-h-screen bg-[#f5f7fb]">
       <div className="min-h-screen w-full overflow-hidden bg-white">
         <header className="grid min-h-[104px] grid-cols-[270px_1fr] border-b border-slate-200 xl:grid-cols-[270px_1fr_auto]">
-          <div className="flex items-center gap-4 border-r border-slate-200 px-6">
+          <div className="flex flex-col justify-center gap-1.5 border-r border-slate-200 px-6">
+            <h1 className="sr-only">HazeWatch AI</h1>
             <BrandMark />
-            <div>
-              <h1 className="text-[21px] font-extrabold tracking-tight text-ink">HazeWatch AI</h1>
-              <p className="mt-1 text-xs leading-4 text-slate-500">Transboundary Haze<br />Monitoring</p>
-            </div>
+            <p className="text-xs leading-4 text-slate-500">Transboundary Haze<br />Monitoring</p>
           </div>
 
           <div className="flex items-center gap-5 px-8">

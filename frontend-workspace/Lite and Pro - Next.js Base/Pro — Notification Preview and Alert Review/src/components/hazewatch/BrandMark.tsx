@@ -1,9 +1,22 @@
-import { Waves } from "lucide-react";
+import Image from "next/image";
 
+/** The supplied brand asset is the full lockup - circular mark plus the
+ * "HazeWatch" wordmark - so the shells no longer print the name beside it.
+ * They carry a visually-hidden <h1> instead, which is also where the "AI" in
+ * the product name survives now that the wordmark itself omits it.
+ *
+ * `alt` is deliberately empty: the lockup is decorative once that heading
+ * names the product, and a filled alt would make screen readers say it twice.
+ */
 export function BrandMark() {
   return (
-    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-sky-400 via-blue-500 to-emerald-400 text-white shadow-lg shadow-blue-200/60">
-      <Waves size={23} strokeWidth={2.2} />
-    </div>
+    <Image
+      src="/hazewatch-logo.png"
+      alt=""
+      width={1200}
+      height={401}
+      priority
+      className="h-auto w-[200px]"
+    />
   );
 }

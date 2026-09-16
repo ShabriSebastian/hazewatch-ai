@@ -49,12 +49,10 @@ export function AppShell({
     <div className="min-h-screen bg-[#f5f7fb]">
       <div className="min-h-screen w-full overflow-hidden bg-white">
         <header className="grid min-h-[104px] grid-cols-[270px_1fr] border-b border-slate-200 xl:grid-cols-[270px_1fr_auto]">
-          <div className="flex items-center gap-4 border-r border-slate-200 px-6">
+          <div className="flex flex-col justify-center gap-1.5 border-r border-slate-200 px-6">
+            <h1 className="sr-only">HazeWatch AI</h1>
             <BrandMark />
-            <div>
-              <h1 className="text-[21px] font-extrabold tracking-tight text-ink">HazeWatch AI</h1>
-              <p className="mt-1 text-xs leading-4 text-slate-500">Transboundary Haze<br />Monitoring</p>
-            </div>
+            <p className="text-xs leading-4 text-slate-500">Transboundary Haze<br />Monitoring</p>
           </div>
 
           <div className="flex items-center px-8">

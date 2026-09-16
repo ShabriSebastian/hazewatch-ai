@@ -84,9 +84,9 @@ SEQUENCE_LENGTH_HOURS = 48
 # point forecast, because missing an episode and raising a false alarm are not
 # equally costly. Chosen from a measured sweep on held-out data, re-recorded in
 # metrics.json under `trigger_sweep` on every training run:
-#   p75 -> hit 62.0% / FAR 14.9%      p90 -> hit 83.5% / FAR 25.6%   <- chosen
-#   p80 -> hit 67.2% / FAR 17.1%      p95 -> hit 92.0% / FAR 33.0%
-#   p85 -> hit 74.1% / FAR 21.1%
+#   p75 -> hit 58.2% / FAR 14.6%      p90 -> hit 79.5% / FAR 25.4%   <- chosen
+#   p80 -> hit 63.4% / FAR 17.1%      p95 -> hit 90.1% / FAR 33.6%
+#   p85 -> hit 69.8% / FAR 20.8%
 # p90 is the most aggressive setting that still keeps false alarms under 30%.
 # The right value moves when the model changes, which is why the sweep is
 # recomputed and published rather than fixed once.
