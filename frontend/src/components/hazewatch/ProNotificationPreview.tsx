@@ -23,6 +23,7 @@ import {
 } from "@/lib/data/source";
 import { getLiteRiskStatus } from "@/lib/ui/status";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
+import { DataUnavailable } from "./DataUnavailable";
 import { ProAppShell } from "./ProAppShell";
 
 type ScreenData = Awaited<ReturnType<typeof loadProNotificationPreviewData>>;
@@ -188,7 +189,7 @@ export function ProNotificationPreview() {
   if (error) {
     return (
       <ProAppShell activePage="notification-preview" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`}>
-        <main className="p-8"><div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700"><strong>Could not load Notification Preview.</strong><p className="mt-2">{error}</p><p className="mt-2">For an offline demo, set NEXT_PUBLIC_HAZE_DATA_MODE=mock.</p></div></main>
+        <main className="p-8"><DataUnavailable detail={error} /></main>
       </ProAppShell>
     );
   }
@@ -196,7 +197,7 @@ export function ProNotificationPreview() {
   if (!data) {
     return <ProAppShell activePage="notification-preview" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`}><main className="p-8 text-sm text-slate-500">
           Loading notification preview…
-          <p className="mt-2 text-xs text-slate-400">The first request can take up to a minute if the demo server is waking from idle.</p>
+          <p className="mt-2 text-xs text-slate-400">Reading the published snapshot. This is a single static file, so it should be quick.</p>
         </main></ProAppShell>;
   }
 
@@ -252,7 +253,7 @@ function ActivePreview({ data, alert }: { data: ScreenData; alert: Alert }) {
   }
 
   return (
-    <ProAppShell activePage="notification-preview" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} institutions={data.institutions} current={institution} health={data.health} at={data.at}>
+    <ProAppShell activePage="notification-preview" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} institutions={data.institutions} current={institution} health={data.health} at={data.at} issuedAt={data.issuedAt} issuedOffsetHours={data.issuedOffsetHours}>
       <main className="min-w-0 bg-white">
         <div className="px-6 py-5 xl:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">

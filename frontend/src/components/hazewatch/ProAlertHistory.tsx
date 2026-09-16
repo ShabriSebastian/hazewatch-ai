@@ -17,7 +17,8 @@ import { useEffect, useMemo, useState } from "react";
 import { loadProAlertHistoryData, PRO_HORIZON_HOURS } from "@/lib/data/source";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { ALERT_THRESHOLD_PM25, GOOD_MAX_PM25 } from "@/lib/ui/threshold";
-import type { ProHistoryEvent, ProHistoryStatus } from "@/lib/data/proAlertHistoryMock";
+import type { ProHistoryEvent, ProHistoryStatus } from "@/lib/data/source";
+import { DataUnavailable } from "./DataUnavailable";
 import { ProAppShell } from "./ProAppShell";
 
 type ScreenData = Awaited<ReturnType<typeof loadProAlertHistoryData>>;
@@ -207,10 +208,10 @@ export function ProAlertHistory() {
   const selectedIndex = selected && data ? data.historyEvents.findIndex((event) => event.id === selected.id) : -1;
   const previous = selectedIndex >= 0 && data ? data.historyEvents[selectedIndex + 1] : undefined;
 
-  if (error) return <ProAppShell activePage="alert-history"><main className="p-8"><div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">Unable to load alert history: {error}</div></main></ProAppShell>;
+  if (error) return <ProAppShell activePage="alert-history"><main className="p-8"><DataUnavailable detail={error} /></main></ProAppShell>;
   if (!data || !selected) return <ProAppShell activePage="alert-history"><main className="p-8 text-sm text-slate-500">
           Loading alert history…
-          <p className="mt-2 text-xs text-slate-400">The first request can take up to a minute if the demo server is waking from idle.</p>
+          <p className="mt-2 text-xs text-slate-400">Reading the published snapshot. This is a single static file, so it should be quick.</p>
         </main></ProAppShell>;
 
   const currentStatus = data.historyEvents[0]?.status ?? selected.status;
@@ -218,7 +219,7 @@ export function ProAlertHistory() {
   const latestWatch = data.historyEvents.find((event) => event.status === "watch");
 
   return (
-    <ProAppShell activePage="alert-history" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} institutions={data.institutions} current={data.institution} health={data.health} at={data.at}>
+    <ProAppShell activePage="alert-history" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} institutions={data.institutions} current={data.institution} health={data.health} at={data.at} issuedAt={data.issuedAt} issuedOffsetHours={data.issuedOffsetHours}>
       <main className="min-w-0 bg-white">
         <div className="px-6 py-5 xl:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">

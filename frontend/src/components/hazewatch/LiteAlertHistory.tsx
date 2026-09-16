@@ -12,13 +12,14 @@ import {
   RotateCw,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { latestTransition, type StatusTimelinePoint } from "@/lib/api/hazewatch";
+import { latestTransition, type StatusTimelinePoint } from "@/lib/ui/timeline";
 import type { Institution } from "@/lib/api/types";
 import { loadLiteAlertHistoryData } from "@/lib/data/source";
 import { getWhatThisMeansLine } from "@/lib/ui/copy";
 import { localDayKey, localDayLabel, localStamp, localTime } from "@/lib/ui/format";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { getLiteRiskStatus, type LiteRiskStatus } from "@/lib/ui/status";
+import { DataUnavailable } from "./DataUnavailable";
 import { AppShell } from "./AppShell";
 
 type ScreenData = Awaited<ReturnType<typeof loadLiteAlertHistoryData>>;
@@ -202,11 +203,7 @@ export function LiteAlertHistory() {
     return (
       <AppShell activePage="alert-history">
         <main className="p-8">
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-            <strong>Could not load Alert History.</strong>
-            <p className="mt-2">{error}</p>
-            <p className="mt-2">For an offline demo, set NEXT_PUBLIC_HAZE_DATA_MODE=mock.</p>
-          </div>
+          <DataUnavailable detail={error} />
         </main>
       </AppShell>
     );
@@ -217,7 +214,7 @@ export function LiteAlertHistory() {
       <AppShell activePage="alert-history">
         <main className="p-8 text-sm text-slate-500">
           Loading alert history…
-          <p className="mt-2 text-xs text-slate-400">The first request can take up to a minute if the demo server is waking from idle.</p>
+          <p className="mt-2 text-xs text-slate-400">Reading the published snapshot. This is a single static file, so it should be quick.</p>
         </main>
       </AppShell>
     );
@@ -227,13 +224,13 @@ export function LiteAlertHistory() {
 }
 
 function Loaded({ data }: { data: ScreenData }) {
-  const { institution, institutions, forecast, alertResponse, statusTimeline, health, at } = data;
+  const { institution, institutions, forecast, alertResponse, statusTimeline, health, at, issuedAt, issuedOffsetHours } = data;
   const risk = useMemo(() => getLiteRiskStatus(forecast, alertResponse), [forecast, alertResponse]);
   const alert = alertResponse.alert;
   const latestTime = alert ? localStamp(alert.triggered_at, institution.country) : localStamp(forecast.issued_at, institution.country);
 
   return (
-    <AppShell activePage="alert-history" institutions={institutions} current={institution} health={health} at={at}>
+    <AppShell activePage="alert-history" institutions={institutions} current={institution} health={health} at={at} issuedAt={issuedAt} issuedOffsetHours={issuedOffsetHours}>
       <main className="min-w-0 px-6 py-5 lg:px-7 lg:py-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>

@@ -1,11 +1,12 @@
 "use client";
 
-import { Bell, Building2, CheckSquare2, Home, RefreshCw } from "lucide-react";
+import { Bell, Building2, CheckSquare2, Home } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Health, Institution } from "@/lib/api/types";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { BrandMark } from "./BrandMark";
+import { SnapshotProvenance, SnapshotStaleNotice } from "./SnapshotProvenance";
 
 export type LiteNavPage = "overview" | "institution-detail" | "alert-history" | "alert-review";
 
@@ -29,14 +30,20 @@ export function AppShell({
   current,
   health,
   at,
+  issuedAt,
+  issuedOffsetHours,
 }: {
   children: ReactNode;
   activePage?: LiteNavPage;
   institutions?: readonly Institution[];
   current?: Institution;
   health?: Health;
-  /** This visitor's pinned replay clock, shown so the demo state is legible. */
+  /** When the snapshot on screen was published. */
   at?: string | null;
+  /** The instant the forecast inside it was issued for. */
+  issuedAt?: string | null;
+  /** How far behind `generated_at` that issuance sits, in hours. */
+  issuedOffsetHours?: number | null;
 }) {
   const { setInstitutionId } = useSelectedInstitution();
   // Only schools and hospitals are addressable in the Lite build; `authority`
@@ -85,9 +92,11 @@ export function AppShell({
 
           <div className="col-span-2 flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 px-6 py-4 xl:col-span-1 xl:border-t-0">
             <span className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-bold text-emerald-700">● Prototype Active</span>
-            <span className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-600">
-              ◷ {health?.data_source === "scenario_db" ? "Scenario replay" : health?.data_source === "fixtures" ? "Fixture data" : "Demo data"} · {at ? `${at.slice(0, 16).replace("T", " ")}Z` : "local replay"} <RefreshCw size={13} />
-            </span>
+            <SnapshotProvenance
+              generatedAt={at}
+              issuedAt={issuedAt}
+              issuedOffsetHours={issuedOffsetHours}
+            />
             {/* Labels the DESTINATION, not the mode you are in: pressing it
                 takes you to Pro. The mirror control in ProAppShell says "Lite
                 Mode" for the same reason. */}
@@ -134,7 +143,22 @@ export function AppShell({
             </div>
           </aside>
 
-          {children}
+          <div className="min-w-0">
+            {/* Rendered here rather than per screen: every screen shows the
+                same data, so the warning belongs to the shell. It returns null
+                when the snapshot is fresh, and when the shell is used for a
+                loading or error state with no provenance to report. */}
+            {at && (
+              <div className="px-6 pt-6 lg:px-8">
+                <SnapshotStaleNotice
+                  generatedAt={at}
+                  issuedAt={issuedAt}
+                  issuedOffsetHours={issuedOffsetHours}
+                />
+              </div>
+            )}
+            {children}
+          </div>
         </div>
       </div>
     </div>

@@ -13,12 +13,13 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { loadLiteOverviewData } from "@/lib/data/source";
-import { alertOnsets, type StatusTimelinePoint } from "@/lib/api/hazewatch";
+import { alertOnsets, type StatusTimelinePoint } from "@/lib/ui/timeline";
 import type { Alert, Forecast, Institution } from "@/lib/api/types";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { attributionLine, formatLocation, localStamp, reliabilityNote } from "@/lib/ui/format";
 import { getLiteRiskStatus, type LiteRiskStatus } from "@/lib/ui/status";
 import { getStatusCopy } from "@/lib/ui/copy";
+import { DataUnavailable } from "./DataUnavailable";
 import { AppShell } from "./AppShell";
 
 type ScreenData = Awaited<ReturnType<typeof loadLiteOverviewData>>;
@@ -112,11 +113,7 @@ export function LiteOverview() {
     return (
       <AppShell activePage="overview">
         <main className="p-8">
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-            <strong>Could not load Institution Overview.</strong>
-            <p className="mt-2">{error}</p>
-            <p className="mt-2">For an offline demo, set NEXT_PUBLIC_HAZE_DATA_MODE=mock.</p>
-          </div>
+          <DataUnavailable detail={error} />
         </main>
       </AppShell>
     );
@@ -127,7 +124,7 @@ export function LiteOverview() {
       <AppShell activePage="overview">
         <main className="p-8 text-sm text-slate-500">
           Loading institution overview…
-          <p className="mt-2 text-xs text-slate-400">The first request can take up to a minute if the demo server is waking from idle.</p>
+          <p className="mt-2 text-xs text-slate-400">Reading the published snapshot. This is a single static file, so it should be quick.</p>
         </main>
       </AppShell>
     );
@@ -137,7 +134,7 @@ export function LiteOverview() {
 }
 
 function LiteOverviewLoaded({ data }: { data: ScreenData }) {
-  const { institution, institutions, forecast, alertResponse, statusTimeline, health, at } = data;
+  const { institution, institutions, forecast, alertResponse, statusTimeline, health, at, issuedAt, issuedOffsetHours } = data;
   const status = useMemo(() => getLiteRiskStatus(forecast, alertResponse), [forecast, alertResponse]);
   const style = statusStyle[status];
   const copy = getStatusCopy(institution.type, status);
@@ -149,7 +146,7 @@ function LiteOverviewLoaded({ data }: { data: ScreenData }) {
   const peakAt = alert?.forecast_peak_at ?? forecast.peak.timestamp;
 
   return (
-    <AppShell activePage="overview" institutions={institutions} current={institution} health={health} at={at}>
+    <AppShell activePage="overview" institutions={institutions} current={institution} health={health} at={at} issuedAt={issuedAt} issuedOffsetHours={issuedOffsetHours}>
       <main className="min-w-0 p-6 lg:p-8">
         <div className="mb-3">
           <h2 className="text-3xl font-extrabold tracking-tight text-ink">Institution Overview</h2>

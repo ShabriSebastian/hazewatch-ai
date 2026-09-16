@@ -26,8 +26,8 @@ import { loadProLiveMonitorData, PRO_HORIZON_HOURS } from "@/lib/data/source";
 import { attributionLine } from "@/lib/ui/format";
 import { getStatusFromAlerts, type LiteRiskStatus } from "@/lib/ui/status";
 import { ALERT_THRESHOLD_PM25, GOOD_MAX_PM25 } from "@/lib/ui/threshold";
+import { DataUnavailable } from "./DataUnavailable";
 import { ProAppShell } from "./ProAppShell";
-import { ProLiveSnapshot } from "./ProLiveSnapshot";
 
 type ScreenData = Awaited<ReturnType<typeof loadProLiveMonitorData>>;
 type RegionalStatus = LiteRiskStatus;
@@ -318,11 +318,7 @@ export function ProLiveMonitor() {
     return (
       <ProAppShell activePage="live-monitor">
         <main className="p-8">
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-            <strong>Could not load Pro Live Monitor.</strong>
-            <p className="mt-2">{error}</p>
-            <p className="mt-2">For an offline demo, set NEXT_PUBLIC_HAZE_DATA_MODE=mock.</p>
-          </div>
+          <DataUnavailable detail={error} />
         </main>
       </ProAppShell>
     );
@@ -333,7 +329,7 @@ export function ProLiveMonitor() {
       <ProAppShell activePage="live-monitor">
         <main className="p-8 text-sm text-slate-500">
           Loading regional monitor…
-          <p className="mt-2 text-xs text-slate-400">The first request can take up to a minute if the demo server is waking from idle.</p>
+          <p className="mt-2 text-xs text-slate-400">Reading the published snapshot. This is a single static file, so it should be quick.</p>
         </main>
       </ProAppShell>
     );
@@ -343,7 +339,7 @@ export function ProLiveMonitor() {
 }
 
 function Loaded({ data }: { data: ScreenData }) {
-  const { institutions, forecasts, alerts, hotspotSummary, health, at } = data;
+  const { institutions, forecasts, alerts, hotspotSummary, health, at, issuedAt, issuedOffsetHours } = data;
   const status = useMemo(() => regionalStatus(forecasts, alerts), [forecasts, alerts]);
   const sortedForecasts = useMemo(() => [...forecasts].sort((a, b) => peakUpper(b) - peakUpper(a)), [forecasts]);
   const highest = sortedForecasts[0];
@@ -373,7 +369,7 @@ function Loaded({ data }: { data: ScreenData }) {
   const destinationRegion = receptorInstitution?.admin_region ?? null;
 
   return (
-    <ProAppShell activePage="live-monitor" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} health={health} at={at}>
+    <ProAppShell activePage="live-monitor" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} health={health} at={at} issuedAt={issuedAt} issuedOffsetHours={issuedOffsetHours}>
       <main className="min-w-0 bg-[#fbfcfe] p-5 lg:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -452,7 +448,6 @@ function Loaded({ data }: { data: ScreenData }) {
           </div>
         </div>
 
-        <div className="mt-3"><ProLiveSnapshot /></div>
 
         <div className="mt-3"><Pipeline /></div>
         <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] text-slate-400"><Info size={11} /> PM2.5 current values are labelled by API provenance; forecasts are model outputs. Cross-border attribution is surfaced from the forecast attribution block.</p>

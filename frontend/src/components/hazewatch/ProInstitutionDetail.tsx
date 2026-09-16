@@ -20,10 +20,11 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { Alert, Forecast, Health, HotspotSummary, Institution } from "@/lib/api/types";
 import { loadProInstitutionDetailData, PRO_HORIZON_HOURS } from "@/lib/data/source";
-import { alertOnsets } from "@/lib/api/hazewatch";
+import { alertOnsets } from "@/lib/ui/timeline";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { getRiskStatus, type LiteRiskStatus } from "@/lib/ui/status";
 import { ALERT_THRESHOLD_PM25, GOOD_MAX_PM25, thresholdFor } from "@/lib/ui/threshold";
+import { DataUnavailable } from "./DataUnavailable";
 import { ProAppShell } from "./ProAppShell";
 
 type ScreenData = Awaited<ReturnType<typeof loadProInstitutionDetailData>>;
@@ -260,14 +261,14 @@ export function ProInstitutionDetail() {
   }, [institutionId]);
 
   if (error) {
-    return <ProAppShell activePage="institutions" scopeLabel="Institution View"><main className="p-8"><div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">{error}</div></main></ProAppShell>;
+    return <ProAppShell activePage="institutions" scopeLabel="Institution View"><main className="p-8"><DataUnavailable detail={error} /></main></ProAppShell>;
   }
 
   if (!data) {
     return <ProAppShell activePage="institutions" scopeLabel="Institution View"><main className="p-8"><div className="h-64 animate-pulse rounded-2xl bg-slate-100" /></main></ProAppShell>;
   }
 
-  const { health, institutions, institution, forecast, alertResponse, statusTimeline, hotspotSummary, at } = data;
+  const { health, institutions, institution, forecast, alertResponse, statusTimeline, hotspotSummary, at, issuedAt, issuedOffsetHours } = data;
   const alert = alertResponse.alert;
   const status = getRiskStatus(forecast, alert);
   const peak = peakTriggerValue(forecast);
@@ -279,7 +280,7 @@ export function ProInstitutionDetail() {
   const forecastWindow = warningWindow(alert, forecast);
 
   return (
-    <ProAppShell activePage="institutions" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} institutions={institutions} current={institution} health={health} at={at}>
+    <ProAppShell activePage="institutions" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} institutions={institutions} current={institution} health={health} at={at} issuedAt={issuedAt} issuedOffsetHours={issuedOffsetHours}>
       <main className="min-w-0 bg-white px-5 py-5 lg:px-7">
         <div className="mx-auto max-w-[1500px]">
           <div className="flex flex-wrap items-end justify-between gap-3">

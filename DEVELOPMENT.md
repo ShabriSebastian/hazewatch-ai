@@ -39,3 +39,29 @@ replay promotes it app-wide.
 Restoring an automated cadence needs the FIRMS fetch to run from a non-cloud IP — a
 self-hosted runner, or a VPS in a residential range. Re-enabling the cron is a two-line
 change in the workflow file once that host exists. Until then, assume manual.
+
+## Mock mode has been removed
+
+`NEXT_PUBLIC_HAZE_DATA_MODE=mock` and the three fixture modules behind it
+(`lib/data/mock.ts`, `proMock.ts`, `proAlertHistoryMock.ts`) are gone.
+
+It existed so the demo would survive the backend being asleep or unreachable on
+a free tier. That failure mode retired with the backend: the dashboard now reads
+one static file from a CDN. Keeping three fixture sets in step with a schema
+that has to mirror the entire dashboard was a standing cost with no consumer —
+mock mode was a build-time switch, never a fallback, so nothing in production
+ever reached it.
+
+`createLocalNotification` was the one thing in those modules that ran in every
+mode, because Confirm & Send is simulated locally regardless of data source. It
+now lives in `lib/data/notification.ts`.
+
+For local work, generate a snapshot and point the app at it:
+
+```bash
+python scripts/07_live_snapshot.py --out frontend/public/dev-snapshot.json
+echo 'NEXT_PUBLIC_HAZE_SNAPSHOT_URL=/dev-snapshot.json' > frontend/.env.local
+cd frontend && npm run dev
+```
+
+Both that file and `.env.local` are gitignored.

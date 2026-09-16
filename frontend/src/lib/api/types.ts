@@ -1,5 +1,9 @@
-// Minimal exact subset of the frozen OpenAPI schemas used by Lite Overview.
-// Do not add UI-only fields here. For the full generated contract run: npm run generate:api
+// The shapes the dashboard renders.
+//
+// These began as a minimal subset of the frozen OpenAPI schemas. That contract
+// is retired along with the API; the published snapshot now mirrors the same
+// shapes, so the types stayed rather than being rewritten around a new one.
+// Do not add UI-only fields here.
 
 export type AqiCategory =
   | "GOOD"
@@ -12,7 +16,13 @@ export type AqiCategory =
 export type InstitutionType = "school" | "hospital" | "authority";
 export type Role = "source_region" | "affected_region";
 export type Channel = "sms" | "whatsapp";
-export type Pm25Source = "cams_reanalysis" | "model_forecast" | "ground_station";
+// `cams_open_meteo` is what the live pipeline emits: CAMS composition served
+// through Open-Meteo rather than the reanalysis archive the replay used.
+export type Pm25Source =
+  | "cams_reanalysis"
+  | "cams_open_meteo"
+  | "model_forecast"
+  | "ground_station";
 export type AlertStatus = "active" | "pending" | "resolved";
 export type DeliveryStatus = "queued" | "sent" | "delivered" | "failed";
 
