@@ -318,7 +318,6 @@ SERVED_ARTIFACTS = [
     config.MODELS / "rf_forecast.joblib",
     config.MODELS / "rf_attribution.joblib",
     config.METRICS_JSON,
-    config.SCENARIO_DB,
 ]
 
 

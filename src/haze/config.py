@@ -26,13 +26,10 @@ DATA = ROOT / "data"
 RAW_FIRMS = DATA / "raw" / "firms"
 RAW_METEO = DATA / "raw" / "openmeteo"
 PROCESSED = DATA / "processed"
-REPLAY_DIR = DATA / "replay"
 MODELS = ROOT / "models" / "v1"
-CONTRACT = ROOT / "api_contract"
 
 FEATURES_PARQUET = PROCESSED / "features.parquet"
 HOTSPOTS_PARQUET = PROCESSED / "hotspots.parquet"
-SCENARIO_DB = REPLAY_DIR / "scenario_2023_sept.sqlite"
 METRICS_JSON = MODELS / "metrics.json"
 METRICS_BY_EVENT_JSON = MODELS / "metrics_by_event.json"
 FEATURE_SPEC = MODELS / "feature_spec.json"
@@ -116,81 +113,6 @@ UFEI_DIRECTIONAL_POWER = 2.0  # sharpness of the upwind cone
 UFEI_WINDOWS_H = (24, 48, 72)
 RING_EDGES_KM = (0, 50, 150, 400)
 
-# --------------------------------------------------------------------------
-# Demo scenario
-# --------------------------------------------------------------------------
-SCENARIO_ID = "sept_2023_wkal_sarawak"
-SCENARIO_NAME = "West Kalimantan -> Sarawak, 28 Aug - 8 Sep 2023"
-SCENARIO_START = "2023-08-28T00:00:00Z"
-SCENARIO_END = "2023-09-08T23:00:00Z"
-
-# Presenter jump targets. Every one of these was selected by querying the
-# precomputed scenario for what the system actually produces, not chosen from
-# the daily-mean reconnaissance and hoped for. The figures in each description
-# are the ones the API returns at that instant.
-BOOKMARKS = [
-    {
-        "key": "calm",
-        "label": "Baseline",
-        "timestamp": "2023-08-28T09:00:00Z",
-        "description": (
-            "No active alerts anywhere. The state the system is watching for a "
-            "departure from."
-        ),
-    },
-    {
-        "key": "first_warning",
-        "label": "Sarawak warned before Indonesia",
-        "timestamp": "2023-08-30T19:00:00Z",
-        "description": (
-            "All three Sarawak institutions alerted 18 hours ahead, while no "
-            "Indonesian institution is alerted at all - the smoke is already crossing "
-            "the border. Air outside still reads 27 ug/m3. Observation later confirms "
-            "a peak of 53 ug/m3."
-        ),
-    },
-    {
-        "key": "crossborder",
-        "label": "Both countries alerted, 18h ahead",
-        "timestamp": "2023-09-02T16:00:00Z",
-        "description": (
-            "All six institutions alerted across two countries. Kuching is warned 17 "
-            "hours ahead while its air reads 12.8 ug/m3 - good, nothing visibly wrong. "
-            "Observation later confirms a peak of 49.2 ug/m3. Pontianak, alerted from "
-            "its own fires, is forecast to 57.7 ug/m3. Attribution for Sarawak: "
-            "West Kalimantan, Indonesia."
-        ),
-    },
-    {
-        "key": "severe",
-        "label": "Severe episode, Pontianak",
-        "timestamp": "2023-09-04T21:00:00Z",
-        "description": (
-            "Pontianak institutions forecast to reach 86 ug/m3 (unhealthy), with "
-            "Sarawak simultaneously alerted 17 hours ahead."
-        ),
-    },
-]
-DEFAULT_BOOKMARK = "calm"
-
-# --------------------------------------------------------------------------
-# Runtime
-# --------------------------------------------------------------------------
-REPLAY_MODE = os.getenv("HAZE_REPLAY_MODE", "true").lower() in ("1", "true", "yes")
-DEFAULT_REPLAY_SPEED = 120.0  # 120x real time: the 11-day scenario plays in ~2 min
-
-# Browser origins permitted to call the API, comma-separated in
-# HAZE_ALLOWED_ORIGINS. The default stays "*", which is correct here rather than
-# merely convenient: the API is a public read-only demo, it carries no
-# credentials or cookies, and a wildcard is only rejected by browsers when
-# `allow_credentials` is on - which it is not. Set the variable to the deployed
-# dashboard's origin to narrow it, without a code change or a redeploy of the
-# frontend contract.
-ALLOWED_ORIGINS = [
-    o.strip() for o in os.getenv("HAZE_ALLOWED_ORIGINS", "*").split(",") if o.strip()
-] or ["*"]
-
-
 def parse_ts(value: str) -> datetime:
     """Parse an ISO-8601 timestamp, tolerating a trailing 'Z', as tz-aware UTC."""
     dt = datetime.fromisoformat(value.replace("Z", "+00:00"))
@@ -200,7 +122,3 @@ def parse_ts(value: str) -> datetime:
 def iso(dt: datetime) -> str:
     """Serialise a datetime as ISO-8601 UTC with a trailing 'Z'."""
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def bookmark(key: str) -> dict | None:
-    return next((b for b in BOOKMARKS if b["key"] == key), None)

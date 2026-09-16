@@ -1,11 +1,10 @@
 PY := .venv/bin/python
 export PYTHONPATH := src
 
-.PHONY: help venv contract data features train validate report saturation ablations attribution scenario serve demo check test offline refresh clean
+.PHONY: help venv data features train validate report saturation ablations attribution demo check test refresh clean
 
 help:
 	@echo "make venv      - create .venv and install dependencies"
-	@echo "make contract  - export api_contract/openapi.json (frozen; --force to change)"
 	@echo "make data      - download and cache all external inputs (network required, once)"
 	@echo "make features  - build data/processed/features.parquet"
 	@echo "make train     - train models, write models/v1/metrics.json"
@@ -14,21 +13,16 @@ help:
 	@echo "make saturation- fire-feature saturation diagnostic, no retrain"
 	@echo "make ablations - isolated feature ablations, incl. no_ufei (~40 min)"
 	@echo "make attribution- daily-resolution attribution refit + lag profile (~1 min)"
-	@echo "make scenario  - precompute the demo scenario SQLite"
-	@echo "make serve     - run the API on :8000"
-	@echo "make check     - contract + offline + metrics regression gates"
-	@echo "make offline   - pre-recording gate: run with Wi-Fi OFF"
+	@echo "make check     - test suite: metrics and forecast-uncertainty gates"
 	@echo "make refresh   - regenerate the published live snapshot (~60s, needs internet)"
 
-# The full development environment: serving deps plus everything needed to
-# rebuild the demo. A deployment installs the base package only - see Dockerfile.
+# There is no longer a serving install to keep separate: the API was retired
+# and this package exists only to build data and train models. `pipeline` is
+# therefore the normal install, not an extra for developers.
 venv:
 	python3 -m venv .venv
 	$(PY) -m pip install -q --upgrade pip
 	$(PY) -m pip install -q -e ".[dev,pipeline]"
-
-contract:
-	$(PY) scripts/00_export_contract.py
 
 data:
 	$(PY) scripts/01_download.py
@@ -51,21 +45,12 @@ validate:
 report:
 	$(PY) scripts/10_metrics_and_calibration.py
 
-scenario:
-	$(PY) scripts/04_precompute_scenario.py
-
-serve:
-	$(PY) -m uvicorn haze.api.main:app --reload --port 8000
-
 # Full rebuild from cached raw data. Does not touch the network.
-demo: features train scenario
-	@echo "Demo artifacts rebuilt. Run 'make offline' before recording."
+demo: features train
+	@echo "Model artifacts rebuilt. Run 'make refresh' to publish a snapshot."
 
 test:
 	$(PY) -m pytest -q
-
-offline:
-	$(PY) scripts/05_offline_smoke_test.py
 
 # Regenerate and publish the live snapshot the Pro dashboard reads. Safe to run
 # at any time: it publishes only if the new snapshot passes its checks, and
@@ -73,7 +58,7 @@ offline:
 refresh:
 	@bash scripts/refresh_snapshot.sh
 
-check: test offline
+check: test
 	@echo "All gates passed."
 
 clean:

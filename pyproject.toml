@@ -3,30 +3,31 @@ name = "haze-early-warning"
 version = "1.0.0"
 description = "Transboundary haze early-warning backend: PM2.5 forecasting and last-mile alerting for institutions in West Kalimantan and Sarawak"
 requires-python = ">=3.11"
-# Serving only. The deployed API reads a precomputed SQLite scenario and never
-# loads a model, so pandas, scikit-learn, pyarrow and joblib are not needed at
-# request time - verified by exercising every endpoint and inspecting
-# sys.modules. Keeping them out of the runtime install is worth roughly 200 MB
-# of image on a free-tier host.
+# This package builds data and trains models. It no longer serves anything.
+#
+# The API that used to live under `src/haze/api/` was retired along with the
+# September 2023 replay it existed to narrate; the dashboard reads a published
+# snapshot instead. FastAPI, uvicorn and pydantic went with it. The split
+# between a slim "serving" install and a heavier "pipeline" extra went with it
+# too - there is no longer a runtime whose image size that split was protecting,
+# so what used to be an extra is simply the dependency list.
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.30",
-    "pydantic>=2.9",
     "numpy>=1.26",
-]
-
-[project.optional-dependencies]
-# Everything needed to rebuild the demo from raw data: feature building,
-# training, evaluation, and precompute. Not required to serve.
-pipeline = [
     "pandas>=2.2",
     "scikit-learn>=1.5",
     "pyarrow>=17",
     "joblib>=1.4",
 ]
+
+[project.optional-dependencies]
+# Retained as an alias so `pip install -e ".[dev,pipeline]"` in existing notes
+# and in `make venv` keeps working. Everything it named is now a hard
+# dependency above.
+pipeline = []
 # The GRU forecaster. The Random Forest path works without this.
 torch = ["torch>=2.4"]
-dev = ["pytest>=8.0", "httpx>=0.27"]
+# httpx went with the API: it was here only for fastapi's TestClient.
+dev = ["pytest>=8.0"]
 
 [build-system]
 requires = ["setuptools>=68"]

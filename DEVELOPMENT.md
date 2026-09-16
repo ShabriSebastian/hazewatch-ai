@@ -97,3 +97,72 @@ The publish gate (`scripts/08_gate_snapshot.py`) exits 2 when a candidate
 differs from the published one only by timestamps, so an unchanged snapshot
 never reaches the append step. The appender is also idempotent by
 `generated_at`, so running it by hand cannot double-record.
+
+## The API and its contract were retired
+
+Much of the older documentation in this repository — `README.md`,
+`SYSTEM_FLOW.md`, `USER_FLOW.md`, the diagnostics reports — describes a FastAPI
+service, a frozen OpenAPI contract, and a September 2023 replay. None of those
+exist any more. This section records why, because the volume of writing about
+them would otherwise suggest they were lost rather than removed.
+
+### What went
+
+| Removed | What it was |
+|---|---|
+| `src/haze/api/` | 19 routes over the scenario database |
+| `src/haze/replay/` | the SQLite store and the virtual replay clock |
+| `data/replay/scenario_2023_sept.sqlite` | 11 MB, 288 hours × 6 institutions, precomputed |
+| `api_contract/` | the frozen `openapi.json`, its changelog, and `CONTRACT.md` |
+| `Dockerfile`, `DEPLOYMENT.md`, `.dockerignore` | how to deploy the API |
+| `tests/test_contract.py`, `tests/test_offline.py` | 17 tests guarding the contract and the offline promise |
+| `scripts/00_export_contract.py`, `scripts/05_offline_smoke_test.py` | contract export and the pre-recording gate |
+| `scripts/04_precompute_scenario.py` | built the scenario database |
+| `precompute.write_scenario`, `_notification`, `_epoch` | wrote rows into that database |
+| Makefile `serve`, `contract`, `offline`, `scenario` | targets for all of the above |
+| `fastapi`, `uvicorn`, `pydantic`, `httpx`, `openapi-typescript` | dependencies of a service that no longer exists |
+
+### Why, rather than keeping it alongside live data
+
+The backend could not have served live data. It was a read-only row server over
+a precomputed scenario: it loaded no model, opened no socket, and the install
+deliberately excluded `pandas`, `scikit-learn`, `pyarrow` and `joblib` so the
+image stayed small. Offline-ness was enforced in CI. Pointing it at live data
+would have meant reversing both of those guarantees and re-implementing, inside
+a web service, the model run that `scripts/07_live_snapshot.py` already performs
+offline. The architecture that survived — pipeline runs the model, publishes an
+artifact, dashboard reads it — was already how the live path worked.
+
+There was a designed seam for the alternative (`Store`, a five-method Protocol
+in the retired `src/haze/api/store.py`). It went unused: every method was keyed
+by a timestamp, so implementing it honestly would have required the very alert
+history the replay could fake and live data cannot.
+
+### What survived, and what it cost
+
+`src/haze/pipeline/`, `models/`, `ingest/`, `features/` and `alerts/` are
+untouched — `scripts/07_live_snapshot.py` depends on all of them.
+`src/haze/pipeline/precompute.py` keeps its name but is now only the shared
+builders for a forecast point and an attribution block.
+
+The test suite went from 72 tests to 50. `tests/test_metrics.py` (38) was
+unaffected. `tests/test_forecast_uncertainty.py` was **rewritten rather than
+deleted**: it drove the retired forecast endpoint at scenario bookmarks, but the
+code it covers — `extrapolation.summarise()` — became *more* load-bearing in the
+move, since it now builds the `uncertainty` block every reliability surface in
+the dashboard renders. It runs against `tests/fixtures/live_snapshot.json` and
+against the summariser directly.
+
+One assertion changed meaning in that rewrite and is worth knowing about. The
+old test asserted a calm-air band stays below half the model ceiling, which held
+only because it read a bookmark chosen for being calm. It is not the rule:
+saturation fires at `EXTRAPOLATION_SATURATION_FRACTION` (0.85) of the measured
+ceiling, and a band can sit well above half of it while honestly in range — the
+committed fixture reaches 72% with the flag correctly quiet. The test now
+asserts the actual invariant, in both directions, and holds for any snapshot.
+
+The offline guarantee is **retired, not silently broken**. It protected a served
+API that must never reach the network. The pipeline reaches the network by
+design, so there is nothing left for that gate to assert. `make check` no longer
+runs it. `tests/test_forecast_uncertainty.py` keeps the socket-denying fixture
+for its own tests, so nothing under test there can quietly fetch live data.

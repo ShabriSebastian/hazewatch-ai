@@ -1,31 +1,27 @@
-"""Freeze the demo scenario into SQLite.
+"""The shared builders for a forecast payload.
 
-Walks every hour of the scenario window and records what the system would have
-shown at that moment: hotspots, observed PM2.5, a full 24-hour forecast per
-institution, the resulting alert state, and the notification feed.
+One forecast point, and the transboundary attribution block that goes beside it.
+Both are used by `scripts/07_live_snapshot.py`, which is now the only thing that
+assembles a payload.
 
-The point is that the recorded demo does no work at all - it reads rows. No
-inference, no network, no variability between takes.
+This module used to freeze a 12-day scenario into SQLite for the replay
+backend - hence the name, and hence `write_scenario`, which walked every hour of
+the window recording what the system would have shown. That backend and its
+database are retired; what survived is the part that was never about the
+scenario, which is how a point and an attribution block are shaped.
+
+Keeping these here rather than inlining them into the snapshot script is
+deliberate: `tests/test_forecast_uncertainty.py` builds points through `_point`
+so a test cannot accidentally assert against a shape the pipeline never emits.
 """
 
 from __future__ import annotations
 
-import json
-import sqlite3
-from datetime import timedelta
-
-import numpy as np
 import pandas as pd
 
 from .. import config
-from ..alerts import messages, rules, thresholds
-from ..institutions import INSTITUTIONS, Institution
-from ..models import extrapolation
-from ..replay.store import SCHEMA
-
-
-def _epoch(ts) -> int:
-    return int(pd.Timestamp(ts).timestamp())
+from ..alerts import thresholds
+from ..institutions import Institution
 
 
 def _iso(ts) -> str:
@@ -119,231 +115,3 @@ def _transport_hours(row: pd.Series, transboundary: bool) -> int | None:
     distance_km = 275.0 if transboundary else 40.0
     hours = distance_km / (speed * 3.6)  # m/s -> km/h
     return int(round(min(hours, 72)))
-
-
-def write_scenario(
-    features: pd.DataFrame,
-    hotspots: pd.DataFrame,
-    forecasts: dict[str, dict],
-    top_features: list[dict],
-    baselines_by_lead: dict,
-    model_name: str,
-    db_path=None,
-    training_ranges: dict | None = None,
-) -> None:
-    """Write the scenario database.
-
-    `forecasts` maps institution_id -> {issued_at_iso -> list[point dict]}.
-    `training_ranges` is the output of `extrapolation.training_ranges`, already
-    carrying the measured model ceiling; omitted, the uncertainty block is simply
-    left null and the payload stays valid.
-    """
-    db_path = db_path or config.SCENARIO_DB
-    db_path.parent.mkdir(parents=True, exist_ok=True)
-    if db_path.exists():
-        db_path.unlink()
-
-    conn = sqlite3.connect(db_path)
-    conn.executescript(SCHEMA)
-
-    start = config.parse_ts(config.SCENARIO_START)
-    end = config.parse_ts(config.SCENARIO_END)
-
-    # -- meta --------------------------------------------------------------
-    conn.executemany(
-        "INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)",
-        [
-            ("scenario_id", config.SCENARIO_ID),
-            ("scenario_name", config.SCENARIO_NAME),
-            ("start", config.SCENARIO_START),
-            ("end", config.SCENARIO_END),
-            ("model_name", model_name),
-            ("model_version", config.MODEL_VERSION),
-            ("data_version", config.DATA_VERSION),
-        ],
-    )
-
-    # -- hotspots ----------------------------------------------------------
-    window = hotspots[
-        (hotspots["acq_time_utc"] >= start) & (hotspots["acq_time_utc"] <= end)
-    ]
-    rows = []
-    for i, h in enumerate(window.itertuples()):
-        rows.append(
-            (
-                f"h_{_epoch(h.acq_time_utc)}_{i:06d}",
-                float(h.latitude),
-                float(h.longitude),
-                _iso(h.acq_time_utc),
-                _epoch(h.acq_time_utc),
-                float(h.frp),
-                str(h.confidence),
-                str(h.satellite),
-                str(h.instrument),
-                str(h.country),
-                str(h.daynight),
-            )
-        )
-    conn.executemany(
-        "INSERT OR REPLACE INTO hotspots VALUES (?,?,?,?,?,?,?,?,?,?,?)", rows
-    )
-    print(f"  hotspots        {len(rows):,}")
-
-    # -- observations, forecasts, alerts, notifications --------------------
-    obs_rows, fc_rows, meta_rows, alert_rows, notif_rows = [], [], [], [], []
-    last_rank: dict[str, int] = {}
-    notif_seq = 0
-
-    for inst in INSTITUTIONS:
-        site = features[
-            (features["institution_id"] == inst.id)
-            & (features["time"] >= start)
-            & (features["time"] <= end)
-        ].sort_values("time")
-
-        site_forecasts = forecasts.get(inst.id, {})
-
-        for row in site.itertuples():
-            when = row.time
-            pm = float(row.pm25) if not pd.isna(row.pm25) else 0.0
-            obs_rows.append(
-                (
-                    inst.id,
-                    _iso(when),
-                    _epoch(when),
-                    round(pm, 1),
-                    thresholds.categorise(pm),
-                    thresholds.aqi_us(pm),
-                    "cams_reanalysis",
-                )
-            )
-
-            issued = _iso(when)
-            points = site_forecasts.get(issued)
-            if not points:
-                continue
-
-            series = pd.Series({c: getattr(row, c, np.nan) for c in features.columns})
-            attribution = _attribution(series, inst, top_features)
-
-            uncertainty = (
-                extrapolation.summarise(points, training_ranges)
-                if training_ranges
-                else None
-            )
-
-            meta_rows.append(
-                (
-                    inst.id,
-                    issued,
-                    _epoch(when),
-                    model_name,
-                    config.MODEL_VERSION,
-                    json.dumps(attribution),
-                    json.dumps(baselines_by_lead),
-                    json.dumps(uncertainty) if uncertainty else None,
-                )
-            )
-            for p in points:
-                fc_rows.append(
-                    (
-                        inst.id,
-                        issued,
-                        p["lead_hours"],
-                        p["timestamp"],
-                        p["pm25"],
-                        p["pm25_lower"],
-                        p["pm25_upper"],
-                        p["aqi_category"],
-                        p["aqi_us"],
-                        p.get("pm25_p50"),
-                        int(bool(p.get("beyond_training_range"))),
-                        p.get("extrapolation_reason"),
-                    )
-                )
-
-            alert = rules.evaluate(inst, when.to_pydatetime(), points, attribution)
-            payload = alert or {
-                "alert_id": f"alr_clear_{_epoch(when)}_{inst.id}",
-                "institution_id": inst.id,
-                "institution_name": inst.name,
-                "institution_type": inst.type,
-                "country": inst.country,
-                "severity": thresholds.categorise(max(p["pm25"] for p in points)),
-                "status": "resolved",
-                "triggered_at": issued,
-                "forecast_peak_pm25": max(p["pm25"] for p in points),
-                "forecast_peak_at": max(points, key=lambda p: p["pm25"])["timestamp"],
-                "lead_time_hours": 0,
-                "threshold_pm25": thresholds.alert_threshold(inst.type).pm25,
-                "transboundary": attribution["transboundary"],
-                "source_country": attribution["source_country"],
-                "recommended_actions": [],
-                "affected_population": inst.population_served,
-                "resolved_at": issued,
-            }
-            alert_rows.append(
-                (payload["alert_id"], inst.id, _epoch(when), json.dumps(payload))
-            )
-
-            # Notify only on escalation, as a real system would.
-            if alert:
-                rank = thresholds.CATEGORY_RANK[alert["severity"]]
-                if rank > last_rank.get(inst.id, -1):
-                    last_rank[inst.id] = rank
-                    notif_seq += 1
-                    sent_at = when + timedelta(minutes=5)
-                    notification = _notification(inst, alert, sent_at, notif_seq)
-                    notif_rows.append(
-                        (
-                            notification["notification_id"],
-                            inst.id,
-                            _epoch(sent_at),
-                            json.dumps(notification),
-                        )
-                    )
-
-    conn.executemany("INSERT OR REPLACE INTO observations VALUES (?,?,?,?,?,?,?)", obs_rows)
-    conn.executemany("INSERT OR REPLACE INTO forecast_meta VALUES (?,?,?,?,?,?,?,?)", meta_rows)
-    conn.executemany(
-        "INSERT OR REPLACE INTO forecasts VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", fc_rows
-    )
-    conn.executemany("INSERT OR REPLACE INTO alerts VALUES (?,?,?,?)", alert_rows)
-    conn.executemany("INSERT OR REPLACE INTO notifications VALUES (?,?,?,?)", notif_rows)
-
-    conn.commit()
-    conn.execute("VACUUM")
-    conn.close()
-
-    print(f"  observations    {len(obs_rows):,}")
-    print(f"  forecast issues {len(meta_rows):,}")
-    print(f"  forecast points {len(fc_rows):,}")
-    print(f"  alert states    {len(alert_rows):,}")
-    print(f"  notifications   {len(notif_rows):,}")
-    print(f"\n  wrote {db_path} ({db_path.stat().st_size / 1e6:.1f} MB)")
-
-
-def _notification(inst: Institution, alert: dict, sent_at, seq: int) -> dict:
-    lang = messages.default_language(inst)
-    return {
-        "notification_id": f"ntf_{seq:04d}",
-        "alert_id": alert["alert_id"],
-        "institution_id": inst.id,
-        "institution_name": inst.name,
-        "country": inst.country,
-        "channel": "whatsapp" if inst.type != "authority" else "sms",
-        "recipient_group": inst.recipient_group or f"contacts_{inst.id}",
-        "recipient_count": inst.population_served,
-        "language": lang,
-        "sent_at": _iso(sent_at),
-        "status": "delivered",
-        "message": messages.render(
-            inst=inst,
-            severity=alert["severity"],
-            peak_pm25=alert["forecast_peak_pm25"],
-            peak_at=config.parse_ts(alert["forecast_peak_at"]),
-            lead_hours=alert["lead_time_hours"],
-            language=lang,
-        ),
-        "simulated": True,
-    }
