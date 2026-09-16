@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import socket
 import sys
 from datetime import datetime, timedelta, timezone
@@ -44,9 +45,49 @@ from haze.pipeline import precompute  # noqa: E402
 # ufei_72h plus pm25_roll_24h. Seven days is the FIRMS NRT file length anyway.
 WARMUP_DAYS = 7
 
+# Cell size for the gridded fire field. 0.25 deg is what the dashboard has
+# always requested from /hotspots/summary; changing it changes the map.
+HOTSPOT_GRID_DEG = 0.25
+
 
 def _iso(ts) -> str:
     return pd.Timestamp(ts).tz_localize(None).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _grid_cells(hotspots: pd.DataFrame, grid: float, bbox) -> list[dict]:
+    """Aggregate detections onto a lat/lon grid for map rendering.
+
+    Same binning as the retired `/hotspots/summary` router: floor onto the grid,
+    report the cell *centre*. Kept identical so the map renders the fire field
+    the same way it always has, and so `HotspotGridCell` on the frontend needs
+    no change.
+    """
+    lon_min, lat_min, lon_max, lat_max = bbox
+    inside = hotspots[
+        hotspots["longitude"].between(lon_min, lon_max)
+        & hotspots["latitude"].between(lat_min, lat_max)
+    ]
+
+    cells: dict[tuple[int, int], list[float]] = {}
+    for lat, lon, frp in zip(
+        inside["latitude"].to_numpy(),
+        inside["longitude"].to_numpy(),
+        inside["frp"].to_numpy(),
+    ):
+        key = (math.floor(lat / grid), math.floor(lon / grid))
+        slot = cells.setdefault(key, [0, 0.0])
+        slot[0] += 1
+        slot[1] += float(frp)
+
+    return [
+        {
+            "lat": round((gy + 0.5) * grid, 4),
+            "lon": round((gx + 0.5) * grid, 4),
+            "count": int(count),
+            "frp_sum": round(frp_sum, 1),
+        }
+        for (gy, gx), (count, frp_sum) in sorted(cells.items())
+    ]
 
 
 def force_ipv4() -> None:
@@ -110,6 +151,25 @@ def main() -> int:
     if not ranges:
         print("No training_ranges.json - run scripts/03_train.py first.")
         return 1
+
+    # Attribution needs the ranked feature contributions and the forecast
+    # response needs the baseline MAEs, both of which live in the served
+    # metrics artifact. Read exactly as scripts/04_precompute_scenario.py does,
+    # so the live payload and the replay payload cannot disagree about them.
+    metrics = {}
+    if config.METRICS_JSON.exists():
+        with config.METRICS_JSON.open() as fh:
+            metrics = json.load(fh)
+    top_features = metrics.get("top_features", [])
+    model_name = metrics.get("model_name", "rf-forecast")
+    baselines_by_lead = {}
+    for horizon_row in metrics.get("horizons", []):
+        if horizon_row["lead_hours"] == config.FORECAST_HORIZON_HOURS:
+            baselines_by_lead = {
+                "persistence_mae": horizon_row["persistence_mae"],
+                "climatology_mae": horizon_row["climatology_mae"],
+                "model_mae": horizon_row["model_mae"],
+            }
 
     print("HazeWatch live snapshot")
     print("=" * 62)
@@ -206,10 +266,14 @@ def main() -> int:
             )
 
         observed = float(row.iloc[0]["pm25"])
-        alert = rules.evaluate(inst, pd.Timestamp(issued_at).to_pydatetime(), points, None)
+        attribution = precompute._attribution(row.iloc[0], inst, top_features)
+        alert = rules.evaluate(
+            inst, pd.Timestamp(issued_at).to_pydatetime(), points, attribution
+        )
         peak = max(points, key=lambda p: p["pm25_upper"] or p["pm25"])
 
         results.append({
+            # Flat identity fields, kept as they were.
             "institution_id": inst.id,
             "institution_name": inst.name,
             "institution_type": inst.type,
@@ -221,6 +285,33 @@ def main() -> int:
             "peak": peak,
             "alert": alert,
             "out_of_range_features": oor,
+            # Blocks mirroring the retired GET /institutions/{id}/forecast
+            # response, so the dashboard can read this file wherever it used to
+            # read that endpoint.
+            #
+            # `as_dict()` rather than `compact()`: compact() carries lat/lon and
+            # so satisfies the forecast response, but the dashboard also needs
+            # the fields only the full record has - `admin_region` for the haze
+            # attribution copy, `languages` and `recipient_group` for Confirm &
+            # Send, `population_served` for the institution selector. With
+            # GET /institutions retired this file is their only source, and a
+            # superset costs ~200 bytes per institution.
+            "institution": inst.as_dict(),
+            "model": {
+                "name": model_name,
+                "version": config.MODEL_VERSION,
+                "horizon_hours": config.FORECAST_HORIZON_HOURS,
+            },
+            "current": {
+                "timestamp": _iso(issued_at),
+                "pm25": round(observed, 1),
+                "aqi_category": thresholds.categorise(observed),
+                "aqi_us": thresholds.aqi_us(observed),
+                "source": "cams_open_meteo",
+            },
+            "attribution": attribution,
+            "baselines": baselines_by_lead,
+            "uncertainty": extrapolation.summarise(points, ranges),
         })
 
         flagged = sum(p["beyond_training_range"] for p in points)
@@ -249,6 +340,16 @@ def main() -> int:
         "alert_threshold_pm25": thresholds.alert_threshold("school").pm25,
         "alert_trigger_percentile": upper_p,
         "institutions": results,
+        # Replaces the retired GET /hotspots/summary. The map filters these to
+        # its own extent and renders the densest cells, exactly as before; the
+        # scalar count under `provenance.hotspots` stays, because it answers a
+        # different question (how much data went in) than the cells do.
+        "hotspots": {
+            "grid": HOTSPOT_GRID_DEG,
+            "bbox": list(config.DOMAIN_BBOX),
+            "count": int(len(hotspots)),
+            "cells": _grid_cells(hotspots, HOTSPOT_GRID_DEG, config.DOMAIN_BBOX),
+        },
         "provenance": {
             "hotspots": fire_prov,
             "weather": {

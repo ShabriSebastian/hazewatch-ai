@@ -39,3 +39,6 @@ data/live/snapshot_*.json
 # would otherwise be committed every time a threshold sweep is rerun.
 diagnostics/predictions_cache.npz
 diagnostics/predictions_cache.meta.json
+
+# Marketing assets: generated carousel images, not part of the project source.
+linkedin-assets/
