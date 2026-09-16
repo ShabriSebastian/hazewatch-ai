@@ -21,8 +21,13 @@ exercised two ways:
     actually decides all of this and is now load-bearing for the live pipeline -
     `scripts/07_live_snapshot.py` calls it to build the `uncertainty` block that
     every reliability surface in the dashboard renders;
-  * against `tests/fixtures/live_snapshot.json`, a real published snapshot,
-    which pins the shape the dashboard consumes.
+  * against `tests/fixtures/live_snapshot.json`, which pins the shape the
+    dashboard consumes. It is genuine output from `scripts/07_live_snapshot.py`
+    run against live inputs, trimmed to two institutions — but it was **never
+    published**, and is not a record of anything the dashboard ever showed. It
+    is a test fixture and nothing else. The record of what was actually
+    published lives in `data/live/history.json`, which is checked separately by
+    `tests/test_history_append.py`.
 
 The severe-episode fixture could not survive the scenario database, so the
 saturated case is now constructed by pressing synthetic points against the

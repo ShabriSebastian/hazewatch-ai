@@ -3,121 +3,190 @@
   "max_records": 180,
   "records": [
     {
-      "generated_at": "2026-09-16T02:19:00Z",
-      "issued_at": "2026-09-15T14:00:00Z",
+      "generated_at": "2026-09-16T03:27:18Z",
+      "issued_at": "2026-09-15T15:00:00Z",
       "issued_offset_hours": -12,
       "model_version": "1.0.0",
       "institutions": {
         "id-ptk-sman1": {
-          "observed_pm25": 48.2,
+          "observed_pm25": 50.1,
           "observed_category": "UNHEALTHY_SENSITIVE",
-          "peak_pm25_upper": 64.6,
-          "peak_at": "2026-09-15T15:00:00Z",
+          "peak_pm25_upper": 64.3,
+          "peak_at": "2026-09-15T16:00:00Z",
           "beyond_training_range": false,
           "alert": {
-            "alert_id": "alr_2026091514_id-ptk-sman1",
+            "alert_id": "alr_2026091515_id-ptk-sman1",
             "severity": "UNHEALTHY",
             "status": "active",
-            "triggered_at": "2026-09-15T14:00:00Z",
-            "forecast_peak_pm25": 64.6,
-            "forecast_peak_at": "2026-09-15T15:00:00Z",
+            "triggered_at": "2026-09-15T15:00:00Z",
+            "forecast_peak_pm25": 64.3,
+            "forecast_peak_at": "2026-09-15T16:00:00Z",
             "lead_time_hours": 1,
             "peak_lead_hours": 1,
             "threshold_pm25": 35.5,
-            "threshold_crossed_at": "2026-09-15T15:00:00Z",
+            "threshold_crossed_at": "2026-09-15T16:00:00Z",
             "transboundary": false,
             "source_country": "ID"
           }
         },
         "id-ptk-soedarso": {
-          "observed_pm25": 48.2,
+          "observed_pm25": 50.1,
           "observed_category": "UNHEALTHY_SENSITIVE",
-          "peak_pm25_upper": 64.6,
-          "peak_at": "2026-09-15T15:00:00Z",
+          "peak_pm25_upper": 64.3,
+          "peak_at": "2026-09-15T16:00:00Z",
           "beyond_training_range": false,
           "alert": {
-            "alert_id": "alr_2026091514_id-ptk-soedarso",
+            "alert_id": "alr_2026091515_id-ptk-soedarso",
             "severity": "UNHEALTHY",
             "status": "active",
-            "triggered_at": "2026-09-15T14:00:00Z",
-            "forecast_peak_pm25": 64.6,
-            "forecast_peak_at": "2026-09-15T15:00:00Z",
+            "triggered_at": "2026-09-15T15:00:00Z",
+            "forecast_peak_pm25": 64.3,
+            "forecast_peak_at": "2026-09-15T16:00:00Z",
             "lead_time_hours": 1,
             "peak_lead_hours": 1,
             "threshold_pm25": 35.5,
-            "threshold_crossed_at": "2026-09-15T15:00:00Z",
+            "threshold_crossed_at": "2026-09-15T16:00:00Z",
             "transboundary": false,
             "source_country": "ID"
           }
         },
         "id-ptk-bpbd": {
-          "observed_pm25": 48.2,
+          "observed_pm25": 50.1,
           "observed_category": "UNHEALTHY_SENSITIVE",
-          "peak_pm25_upper": 64.6,
-          "peak_at": "2026-09-15T15:00:00Z",
+          "peak_pm25_upper": 64.3,
+          "peak_at": "2026-09-15T16:00:00Z",
           "beyond_training_range": false,
           "alert": {
-            "alert_id": "alr_2026091514_id-ptk-bpbd",
+            "alert_id": "alr_2026091515_id-ptk-bpbd",
             "severity": "UNHEALTHY",
             "status": "active",
-            "triggered_at": "2026-09-15T14:00:00Z",
-            "forecast_peak_pm25": 64.6,
-            "forecast_peak_at": "2026-09-15T15:00:00Z",
+            "triggered_at": "2026-09-15T15:00:00Z",
+            "forecast_peak_pm25": 64.3,
+            "forecast_peak_at": "2026-09-15T16:00:00Z",
             "lead_time_hours": 1,
             "peak_lead_hours": 1,
             "threshold_pm25": 35.5,
-            "threshold_crossed_at": "2026-09-15T15:00:00Z",
+            "threshold_crossed_at": "2026-09-15T16:00:00Z",
             "transboundary": false,
             "source_country": "ID"
           }
         },
         "my-kch-greenroad": {
-          "observed_pm25": 13.4,
+          "observed_pm25": 13.5,
           "observed_category": "MODERATE",
-          "peak_pm25_upper": 35.6,
-          "peak_at": "2026-09-16T05:00:00Z",
+          "peak_pm25_upper": 34.5,
+          "peak_at": "2026-09-16T15:00:00Z",
           "beyond_training_range": false,
-          "alert": {
-            "alert_id": "alr_2026091514_my-kch-greenroad",
-            "severity": "UNHEALTHY_SENSITIVE",
-            "status": "active",
-            "triggered_at": "2026-09-15T14:00:00Z",
-            "forecast_peak_pm25": 35.6,
-            "forecast_peak_at": "2026-09-16T05:00:00Z",
-            "lead_time_hours": 15,
-            "peak_lead_hours": 15,
-            "threshold_pm25": 35.5,
-            "threshold_crossed_at": "2026-09-16T05:00:00Z",
-            "transboundary": true,
-            "source_country": "ID"
-          }
+          "alert": null
         },
         "my-kch-hus": {
-          "observed_pm25": 13.4,
+          "observed_pm25": 13.5,
           "observed_category": "MODERATE",
-          "peak_pm25_upper": 35.6,
-          "peak_at": "2026-09-16T05:00:00Z",
+          "peak_pm25_upper": 34.5,
+          "peak_at": "2026-09-16T15:00:00Z",
           "beyond_training_range": false,
-          "alert": {
-            "alert_id": "alr_2026091514_my-kch-hus",
-            "severity": "UNHEALTHY_SENSITIVE",
-            "status": "active",
-            "triggered_at": "2026-09-15T14:00:00Z",
-            "forecast_peak_pm25": 35.6,
-            "forecast_peak_at": "2026-09-16T05:00:00Z",
-            "lead_time_hours": 15,
-            "peak_lead_hours": 15,
-            "threshold_pm25": 35.5,
-            "threshold_crossed_at": "2026-09-16T05:00:00Z",
-            "transboundary": true,
-            "source_country": "ID"
-          }
+          "alert": null
         },
         "my-kch-jpbn": {
-          "observed_pm25": 13.4,
+          "observed_pm25": 13.5,
           "observed_category": "MODERATE",
-          "peak_pm25_upper": 35.0,
-          "peak_at": "2026-09-16T14:00:00Z",
+          "peak_pm25_upper": 34.9,
+          "peak_at": "2026-09-16T15:00:00Z",
+          "beyond_training_range": false,
+          "alert": null
+        }
+      }
+    },
+    {
+      "generated_at": "2026-09-16T00:45:54Z",
+      "issued_at": "2026-09-15T12:00:00Z",
+      "issued_offset_hours": -12,
+      "model_version": "1.0.0",
+      "institutions": {
+        "id-ptk-sman1": {
+          "observed_pm25": 50.3,
+          "observed_category": "UNHEALTHY_SENSITIVE",
+          "peak_pm25_upper": 68.2,
+          "peak_at": "2026-09-15T13:00:00Z",
+          "beyond_training_range": true,
+          "alert": {
+            "alert_id": "alr_2026091512_id-ptk-sman1",
+            "severity": "UNHEALTHY",
+            "status": "active",
+            "triggered_at": "2026-09-15T12:00:00Z",
+            "forecast_peak_pm25": 68.2,
+            "forecast_peak_at": "2026-09-15T13:00:00Z",
+            "lead_time_hours": 1,
+            "peak_lead_hours": 1,
+            "threshold_pm25": 35.5,
+            "threshold_crossed_at": "2026-09-15T13:00:00Z",
+            "transboundary": false,
+            "source_country": null
+          }
+        },
+        "id-ptk-soedarso": {
+          "observed_pm25": 50.3,
+          "observed_category": "UNHEALTHY_SENSITIVE",
+          "peak_pm25_upper": 69.8,
+          "peak_at": "2026-09-15T13:00:00Z",
+          "beyond_training_range": true,
+          "alert": {
+            "alert_id": "alr_2026091512_id-ptk-soedarso",
+            "severity": "UNHEALTHY",
+            "status": "active",
+            "triggered_at": "2026-09-15T12:00:00Z",
+            "forecast_peak_pm25": 69.8,
+            "forecast_peak_at": "2026-09-15T13:00:00Z",
+            "lead_time_hours": 1,
+            "peak_lead_hours": 1,
+            "threshold_pm25": 35.5,
+            "threshold_crossed_at": "2026-09-15T13:00:00Z",
+            "transboundary": false,
+            "source_country": null
+          }
+        },
+        "id-ptk-bpbd": {
+          "observed_pm25": 50.3,
+          "observed_category": "UNHEALTHY_SENSITIVE",
+          "peak_pm25_upper": 68.2,
+          "peak_at": "2026-09-15T13:00:00Z",
+          "beyond_training_range": true,
+          "alert": {
+            "alert_id": "alr_2026091512_id-ptk-bpbd",
+            "severity": "UNHEALTHY",
+            "status": "active",
+            "triggered_at": "2026-09-15T12:00:00Z",
+            "forecast_peak_pm25": 68.2,
+            "forecast_peak_at": "2026-09-15T13:00:00Z",
+            "lead_time_hours": 1,
+            "peak_lead_hours": 1,
+            "threshold_pm25": 35.5,
+            "threshold_crossed_at": "2026-09-15T13:00:00Z",
+            "transboundary": false,
+            "source_country": null
+          }
+        },
+        "my-kch-greenroad": {
+          "observed_pm25": 12.8,
+          "observed_category": "MODERATE",
+          "peak_pm25_upper": 34.6,
+          "peak_at": "2026-09-16T12:00:00Z",
+          "beyond_training_range": false,
+          "alert": null
+        },
+        "my-kch-hus": {
+          "observed_pm25": 12.8,
+          "observed_category": "MODERATE",
+          "peak_pm25_upper": 34.6,
+          "peak_at": "2026-09-16T12:00:00Z",
+          "beyond_training_range": false,
+          "alert": null
+        },
+        "my-kch-jpbn": {
+          "observed_pm25": 12.8,
+          "observed_category": "MODERATE",
+          "peak_pm25_upper": 34.5,
+          "peak_at": "2026-09-16T12:00:00Z",
           "beyond_training_range": false,
           "alert": null
         }

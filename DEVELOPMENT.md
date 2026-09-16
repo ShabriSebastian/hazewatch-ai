@@ -98,6 +98,27 @@ differs from the published one only by timestamps, so an unchanged snapshot
 never reaches the append step. The appender is also idempotent by
 `generated_at`, so running it by hand cannot double-record.
 
+### Only published snapshots may be recorded
+
+`data/live/history.json` is the record of what the dashboard actually showed.
+Nothing else belongs in it — not a synthetic record, not a local pipeline run
+that was never published, not a back-dated entry created to exercise the UI.
+
+`tests/test_history_append.py::test_committed_history_matches_the_published_snapshot`
+enforces this: the newest record must equal a record derived from
+`data/live/latest.json`, records must be newest-first, and no `generated_at` may
+repeat. A synthetic or unpublished entry fails the suite.
+
+Two related things that are *not* history and must not be confused with it:
+
+- `tests/fixtures/live_snapshot.json` — genuine pipeline output, trimmed to two
+  institutions, **never published**. A test fixture pinning the shape the
+  dashboard consumes.
+- `frontend/public/dev-snapshot.json` and `dev-history.json` — local development
+  files, gitignored, never committed or deployed. A back-dated record here is
+  fine and expected: it is how the sparse-history UI gets exercised without
+  waiting weeks for real gaps to accumulate.
+
 ## The API and its contract were retired
 
 Much of the older documentation in this repository — `README.md`,

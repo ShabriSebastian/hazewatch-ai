@@ -4,9 +4,9 @@ The Next.js dashboard for the transboundary haze early-warning system. It serves
 modes of the product from one app: the **Lite** flow for a single institution, and the
 **Pro** flow for regional cross-border monitoring.
 
-The Python backend that this app reads lives at the repository root; see
-[`../api_contract/CONTRACT.md`](../api_contract/CONTRACT.md) for the contract it is
-written against.
+It reads one published file — there is no backend. The pipeline at the repository root
+writes `data/live/latest.json`; see [`../DEVELOPMENT.md`](../DEVELOPMENT.md) for how
+that is produced, why the refresh is manual, and what the retired API used to do.
 
 ## Stack
 - Next.js 14 (App Router)
@@ -46,38 +46,32 @@ build-time values for the deployed site and is committed deliberately — every 
 a `NEXT_PUBLIC_*` variable that Next.js inlines into the client bundle, so none of them
 are secrets. See the comment at the top of that file before changing it.
 
-## Data modes
+## Where the data comes from
 
-`NEXT_PUBLIC_HAZE_DATA_MODE` switches the whole app between two sources.
-
-### `mock` — offline / recording-safe
-
-Contract-shaped fixtures live in `src/lib/data/`. They are isolated from UI components
-so the data source can be swapped without rebuilding the screens.
-
-### `api` — FastAPI backend
+One published snapshot, `data/live/latest.json`, fetched once per session and shared
+by every screen. There is no backend: the FastAPI service and the September 2023
+replay it served were retired — see `DEVELOPMENT.md` for why and what went with them.
 
 ```bash
-NEXT_PUBLIC_HAZE_DATA_MODE=api
-NEXT_PUBLIC_HAZE_API_BASE_URL=http://localhost:8000/api/v1
-NEXT_PUBLIC_HAZE_INSTITUTION_ID=
+# generate one locally and serve it from the app itself
+python scripts/07_live_snapshot.py --out frontend/public/dev-snapshot.json
+echo 'NEXT_PUBLIC_HAZE_SNAPSHOT_URL=/dev-snapshot.json' > frontend/.env.local
 ```
 
-If no institution id is configured, the data loader requests `/institutions` and chooses
-the first school/hospital returned.
+`src/lib/live/snapshot.ts` fetches and validates it, then re-shapes it into the types
+in `src/lib/api/types.ts`. Validation is strict: a snapshot missing the blocks the main
+body needs is rejected rather than half-rendered, and every screen shows an explicit
+"no data to show" state with the reason. Nothing renders blank.
 
-## Source of truth
+`src/lib/live/history.ts` reads the accumulated alert history beside it. A missing
+history is not fatal — Alert History says it has a single observation.
 
-The backend contract is copied into `api_contract/`:
-- `CONTRACT.md`
-- `openapi.json`
+**The refresh is manual.** The snapshot shows whatever was last published by hand, so
+every screen surfaces `generated_at` and flags anything older than six hours. That
+honesty is a requirement, not decoration; see `DEVELOPMENT.md`.
 
-Do not invent backend fields in UI components. If the contract changes additively,
-regenerate typed OpenAPI definitions with:
-
-```bash
-npm run generate:api
-```
+There is no mock mode. It existed so the demo would survive an unreachable backend,
+and retired with the backend.
 
 ## State logic
 
@@ -87,8 +81,8 @@ Centralized in `src/lib/ui/status.ts`:
 - Watch: 12.1–35.4 µg/m³
 - Alert: >= 35.5 µg/m³
 
-Alert risk uses `pm25_upper` when available, matching the frozen contract. A backend
-`alert` object is authoritative Alert state.
+Alert risk uses `pm25_upper` when available. The `alert` object carried in the
+snapshot is authoritative for Alert state — it is not recomputed in the UI.
 
 **Safe / Watch**
 - Information only.

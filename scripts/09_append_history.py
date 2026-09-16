@@ -65,19 +65,32 @@ def compact_alert(alert: dict | None) -> dict | None:
     return {k: alert.get(k) for k in ALERT_FIELDS if k in alert}
 
 
+def beyond_training_range(inst: dict) -> bool:
+    """Whether this institution's forecast left the model's trained range.
+
+    Reads the summary block when there is one, and falls back to the points
+    themselves when there is not. The fallback is not defensive padding: a
+    snapshot published before the `uncertainty` block existed still carries the
+    per-point flags, and trusting only the summary would record `false` for a
+    forecast whose every point was flagged — a silent false negative on the one
+    field this system exists to be honest about.
+    """
+    uncertainty = inst.get("uncertainty")
+    if uncertainty and "any_point_beyond_training_range" in uncertainty:
+        return bool(uncertainty["any_point_beyond_training_range"])
+    return any(p.get("beyond_training_range") for p in inst.get("forecast", []))
+
+
 def build_record(snapshot: dict) -> dict:
     institutions = {}
     for inst in snapshot.get("institutions", []):
         peak = inst.get("peak") or {}
-        uncertainty = inst.get("uncertainty") or {}
         institutions[inst["institution_id"]] = {
             "observed_pm25": inst.get("observed_pm25"),
             "observed_category": inst.get("observed_category"),
             "peak_pm25_upper": peak.get("pm25_upper") or peak.get("pm25"),
             "peak_at": peak.get("timestamp"),
-            "beyond_training_range": bool(
-                uncertainty.get("any_point_beyond_training_range")
-            ),
+            "beyond_training_range": beyond_training_range(inst),
             "alert": compact_alert(inst.get("alert")),
         }
 
