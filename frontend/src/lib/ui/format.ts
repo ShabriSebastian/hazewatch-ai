@@ -97,3 +97,20 @@ export function reliabilityNote(forecast: Forecast): string | null {
   if (!uncertainty?.any_point_beyond_training_range) return null;
   return uncertainty.note || RELIABILITY_FALLBACK;
 }
+
+/**
+ * A whole number with thousands separators.
+ *
+ * Counts on these screens come from the fire field, which is unbounded: the
+ * replay scenario's window held ~1,500 detections, so every count rendered as
+ * at most four digits and read fine raw. A live seven-day NRT fetch returns
+ * tens of thousands — "36356" is a number you have to stop and parse.
+ *
+ * `en-GB` rather than the viewer's locale on purpose: the rest of this app
+ * pins its formatting (UTC stamps, en-GB dates) so two people looking at the
+ * same screen in different places describe the same thing to each other.
+ */
+export function formatCount(value: number | null | undefined): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat("en-GB").format(Math.round(value));
+}

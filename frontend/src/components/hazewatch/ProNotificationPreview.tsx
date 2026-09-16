@@ -150,9 +150,25 @@ function ReliabilityIndicator({ forecast }: { forecast: Forecast }) {
   );
 }
 
-function EmptyPreview({ institutionName }: { institutionName: string }) {
+/**
+ * `data` is threaded through rather than just the name: the provenance chip is
+ * meant to be on every screen, and an empty state is still a statement about a
+ * particular snapshot. Without it this screen said "no alert requires
+ * confirmation" with nothing on screen saying how current that was.
+ */
+function EmptyPreview({ data }: { data: ScreenData }) {
   return (
-    <ProAppShell activePage="notification-preview" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`}>
+    <ProAppShell
+      activePage="notification-preview"
+      scopeLabel="Institution View"
+      forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`}
+      institutions={data.institutions}
+      current={data.institution}
+      health={data.health}
+      at={data.at}
+      issuedAt={data.issuedAt}
+      issuedOffsetHours={data.issuedOffsetHours}
+    >
       <main className="min-w-0 bg-white px-6 py-5 xl:px-8">
         <h2 className="text-[30px] font-extrabold tracking-tight text-ink">Institution Notification Preview</h2>
         <p className="mt-1 text-xs text-slate-500">Preview a prepared institution alert before simulated delivery.</p>
@@ -161,7 +177,7 @@ function EmptyPreview({ institutionName }: { institutionName: string }) {
             <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 /></div>
             <div>
               <h3 className="text-lg font-extrabold text-slate-800">No alert requires confirmation</h3>
-              <p className="mt-2 max-w-2xl text-sm text-slate-600">{institutionName} is currently in Safe or Watch. These are monitoring states only, so no notification is prepared and Confirm &amp; Send is unavailable.</p>
+              <p className="mt-2 max-w-2xl text-sm text-slate-600">{data.institution.name} is currently in Safe or Watch. These are monitoring states only, so no notification is prepared and Confirm &amp; Send is unavailable.</p>
               <Link href="/pro/institutions" className="mt-5 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700">
                 <ArrowLeft size={14} /> Back to Institution Detail
               </Link>
@@ -203,7 +219,7 @@ export function ProNotificationPreview() {
 
   const risk = getLiteRiskStatus(data.forecast, data.alertResponse);
   if (risk !== "alert" || !data.alertResponse.alert) {
-    return <EmptyPreview institutionName={data.institution.name} />;
+    return <EmptyPreview data={data} />;
   }
 
   return <ActivePreview data={data} alert={data.alertResponse.alert} />;

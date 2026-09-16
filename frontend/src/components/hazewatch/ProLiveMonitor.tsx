@@ -23,7 +23,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import type { Alert, Forecast, HotspotGridCell, Institution } from "@/lib/api/types";
 import { loadProLiveMonitorData, PRO_HORIZON_HOURS } from "@/lib/data/source";
-import { attributionLine } from "@/lib/ui/format";
+import { attributionLine, formatCount } from "@/lib/ui/format";
 import { getStatusFromAlerts, type LiteRiskStatus } from "@/lib/ui/status";
 import { ALERT_THRESHOLD_PM25, GOOD_MAX_PM25 } from "@/lib/ui/threshold";
 import { DataUnavailable } from "./DataUnavailable";
@@ -188,7 +188,7 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
           return (
             <span
               key={`${cell.lon}-${cell.lat}-${index}`}
-              title={`${cell.count} hotspot detections`}
+              title={`${formatCount(cell.count)} hotspot detections`}
               className="absolute z-20 rounded-full bg-orange-500 shadow-[0_0_0_8px_rgba(249,115,22,.08)]"
               style={{ left: `${pos.x}%`, top: `${pos.y}%`, width: size, height: size, transform: "translate(-50%,-50%)" }}
             />
@@ -345,10 +345,23 @@ function Loaded({ data }: { data: ScreenData }) {
   const highest = sortedForecasts[0];
   const highestInstitution = institutions.find((i) => i.id === highest?.institution.id);
   const activeAlert = alerts.find((a) => a.status === "active") ?? alerts[0];
-  const atRisk = useMemo(
-    () => forecasts.filter((f) => getStatusFromAlerts(f, alerts) !== "safe").length,
-    [forecasts, alerts],
-  );
+  /**
+   * Alerting and watching are counted separately.
+   *
+   * This tile used to show one number for "not safe", which was unambiguous
+   * only while the replay had every institution alerting at once. On live data
+   * three institutions alert and three are merely Watch, and a single "6" next
+   * to "Institutions at Risk" reads as six alerts - overstating the situation
+   * on exactly the screen someone would act from. Watch is a monitoring state
+   * with no recommended action; it does not belong in the same number.
+   */
+  const { alerting, watching } = useMemo(() => {
+    const states = forecasts.map((f) => getStatusFromAlerts(f, alerts));
+    return {
+      alerting: states.filter((s) => s === "alert").length,
+      watching: states.filter((s) => s === "watch").length,
+    };
+  }, [forecasts, alerts]);
   const transboundaryForecast = forecasts.find((f) => f.attribution.transboundary);
   const attribution = transboundaryForecast ? attributionLine(transboundaryForecast.attribution) : null;
   const sourceRegion = transboundaryForecast?.attribution.dominant_source_region ?? null;
@@ -399,10 +412,22 @@ function Loaded({ data }: { data: ScreenData }) {
 
         <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <section className="rounded-2xl border border-red-100 bg-red-50/60 p-4">
-            <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-full bg-red-100 text-red-600"><Flame size={24} /></span><div><p className="text-[10px] text-slate-500">Active Hotspots</p><p className="text-2xl font-black text-red-600">{hotspotSummary.count}</p><p className="text-[9px] text-slate-500">aggregated from FIRMS detections</p></div></div>
+            <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-full bg-red-100 text-red-600"><Flame size={24} /></span><div><p className="text-[10px] text-slate-500">Active Hotspots</p><p className="text-2xl font-black text-red-600">{formatCount(hotspotSummary.count)}</p><p className="text-[9px] text-slate-500">aggregated from FIRMS detections</p></div></div>
           </section>
           <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-            <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-full bg-blue-100 text-blue-600"><Building2 size={23} /></span><div><p className="text-[10px] text-slate-500">Institutions at Risk</p><p className="text-2xl font-black text-blue-700">{atRisk}</p><p className="text-[9px] text-slate-500">across Indonesia and Malaysia</p></div></div>
+            <div className="flex items-center gap-4">
+              <span className="grid h-12 w-12 place-items-center rounded-full bg-blue-100 text-blue-600"><Building2 size={23} /></span>
+              <div className="min-w-0">
+                <p className="text-[10px] text-slate-500">Institution status</p>
+                <p className="flex items-baseline gap-3">
+                  <span className="text-2xl font-black text-red-600">{alerting}</span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wide text-red-600">alerting</span>
+                  <span className="text-2xl font-black text-amber-600">{watching}</span>
+                  <span className="text-[10px] font-extrabold uppercase tracking-wide text-amber-600">watch</span>
+                </p>
+                <p className="text-[9px] text-slate-500">of {institutions.length} across Indonesia and Malaysia · Watch is monitoring only</p>
+              </div>
+            </div>
           </section>
           <section className="rounded-2xl border border-violet-100 bg-violet-50/65 p-4">
             <div className="flex items-center gap-4"><span className="grid h-12 w-12 place-items-center rounded-full bg-violet-100 text-violet-600"><CircleDot size={23} /></span><div><p className="text-[10px] text-slate-500">Highest Forecast PM2.5</p><p className="text-2xl font-black text-violet-700">{highest ? peakUpper(highest).toFixed(1) : "—"} <span className="text-sm">µg/m³</span></p><p className="text-[9px] text-slate-500">upper prediction band within {PRO_HORIZON_HOURS}h</p></div></div>

@@ -21,6 +21,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Alert, Forecast, Health, HotspotSummary, Institution } from "@/lib/api/types";
 import { loadProInstitutionDetailData, PRO_HORIZON_HOURS } from "@/lib/data/source";
 import { alertOnsets } from "@/lib/ui/timeline";
+import { formatCount } from "@/lib/ui/format";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { getRiskStatus, type LiteRiskStatus } from "@/lib/ui/status";
 import { ALERT_THRESHOLD_PM25, GOOD_MAX_PM25, thresholdFor } from "@/lib/ui/threshold";
@@ -208,7 +209,7 @@ function SourceMap({ institution, forecast, hotspotSummary }: { institution: Ins
           <path d="M125 145 C230 100, 305 185, 405 135" fill="none" stroke="url(#detailHaze)" strokeWidth="10" strokeLinecap="round" markerEnd="url(#detailHead)" />
           {[{x:80,y:72},{x:105,y:100},{x:90,y:150},{x:135,y:182},{x:120,y:125}].map((dot, index) => <circle key={index} cx={dot.x} cy={dot.y} r="5" fill="#f04b32" />)}
         </svg>
-        <span className="absolute bottom-4 left-4 z-20 rounded-lg bg-white px-2 py-1 text-[10px] font-bold text-red-600 shadow">🔥 {forecast.attribution.contributing_hotspot_count || hotspotSummary.count} contributing hotspots</span>
+        <span className="absolute bottom-4 left-4 z-20 rounded-lg bg-white px-2 py-1 text-[10px] font-bold text-red-600 shadow">🔥 {formatCount(forecast.attribution.contributing_hotspot_count || hotspotSummary.count)} contributing hotspots</span>
         <span className="absolute right-4 top-[43%] z-20 rounded-lg bg-white px-2 py-1 text-[10px] font-bold text-blue-600 shadow">{iconForType(institution.type)} {institution.city} · You are here</span>
       </div>
     </section>
@@ -325,7 +326,7 @@ export function ProInstitutionDetail() {
             <section className="rounded-2xl border border-slate-200 bg-orange-50/50 p-4">
               <h3 className="flex items-center gap-2 text-sm font-extrabold text-slate-800">What’s Driving This Risk? <Info size={13} /></h3>
               <div className="mt-3 space-y-2">
-                <div className="rounded-xl border border-orange-100 bg-white p-3"><div className="flex gap-3"><Flame className="mt-0.5 text-orange-500" size={18} /><div><p className="text-xs font-extrabold text-red-600">Fire Activity</p><p className="mt-1 text-[10px] text-slate-500">{forecast.attribution.contributing_hotspot_count || hotspotSummary.count} contributing hotspots in the source region.</p></div></div></div>
+                <div className="rounded-xl border border-orange-100 bg-white p-3"><div className="flex gap-3"><Flame className="mt-0.5 text-orange-500" size={18} /><div><p className="text-xs font-extrabold text-red-600">Fire Activity</p><p className="mt-1 text-[10px] text-slate-500">{formatCount(forecast.attribution.contributing_hotspot_count || hotspotSummary.count)} contributing hotspots in the source region.</p></div></div></div>
                 <div className="rounded-xl border border-orange-100 bg-white p-3"><div className="flex gap-3"><Wind className="mt-0.5 text-emerald-600" size={18} /><div><p className="text-xs font-extrabold text-emerald-700">Haze Movement</p><p className="mt-1 text-[10px] text-slate-500">{forecast.attribution.transboundary ? `Cross-border transport toward ${institution.admin_region}` : `Transport within ${institution.admin_region}`}.</p>{forecast.attribution.estimated_transport_hours != null && <p className="text-[10px] text-slate-500">Estimated transport: {forecast.attribution.estimated_transport_hours} hours.</p>}</div></div></div>
                 <div className="rounded-xl border border-orange-100 bg-white p-3"><div className="flex gap-3"><Gauge className="mt-0.5 text-violet-600" size={18} /><div><p className="text-xs font-extrabold text-violet-700">PM2.5 Forecast</p><p className="mt-1 text-[10px] text-slate-500">Upper-band trigger peak {peak.toFixed(1)} µg/m³.</p></div></div></div>
               </div>

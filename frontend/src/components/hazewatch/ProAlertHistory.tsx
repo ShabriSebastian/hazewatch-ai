@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   ArrowRight,
   Check,
+  CheckCircle2,
   Clock3,
   Filter,
   Gauge,
@@ -210,14 +211,10 @@ export function ProAlertHistory() {
   const previous = selectedIndex >= 0 && data ? data.historyEvents[selectedIndex + 1] : undefined;
 
   if (error) return <ProAppShell activePage="alert-history"><main className="p-8"><DataUnavailable detail={error} /></main></ProAppShell>;
-  if (!data || !selected) return <ProAppShell activePage="alert-history"><main className="p-8 text-sm text-slate-500">
+  if (!data) return <ProAppShell activePage="alert-history"><main className="p-8 text-sm text-slate-500">
           Loading alert history…
           <p className="mt-2 text-xs text-slate-400">Reading the published snapshot. This is a single static file, so it should be quick.</p>
         </main></ProAppShell>;
-
-  const currentStatus = data.historyEvents[0]?.status ?? selected.status;
-  const highestPeak = Math.max(...data.historyEvents.map((event) => event.forecastPeak ?? 0));
-  const latestWatch = data.historyEvents.find((event) => event.status === "watch");
 
   // Both describe the shape of what was actually recorded, which is the thing
   // this screen has to be honest about.
@@ -229,6 +226,65 @@ export function ProAlertHistory() {
     .map((point) => point.gapHours)
     .filter((g): g is number => typeof g === "number");
   const largestGapHours = gaps.length ? Math.max(...gaps) : null;
+
+  // Loaded, but this institution has no recorded alert in any snapshot. That is
+  // an ordinary outcome - most institutions are not alerting most of the time -
+  // and it must not be confused with "still loading", which is what this screen
+  // did while `selected` was folded into the loading guard. It read as a hang,
+  // indefinitely, on exactly the screens where nothing was wrong.
+  if (!selected) {
+    return (
+      <ProAppShell
+        activePage="alert-history"
+        scopeLabel="Institution View"
+        forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`}
+        institutions={data.institutions}
+        current={data.institution}
+        health={data.health}
+        at={data.at}
+        issuedAt={data.issuedAt}
+        issuedOffsetHours={data.issuedOffsetHours}
+      >
+        <main className="min-w-0 bg-white px-6 py-5 xl:px-8">
+          <h2 className="text-[30px] font-extrabold tracking-tight text-ink">Alert History</h2>
+          <p className="mt-1 text-xs text-slate-500">Alerts recorded at each published snapshot.</p>
+          <RecordedHistoryNotice
+            recordedObservations={data.recordedObservations}
+            spanHours={historySpanHours}
+            largestGapHours={largestGapHours}
+          />
+          <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-7">
+            <div className="flex items-start gap-4">
+              <div className="grid h-12 w-12 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                <CheckCircle2 />
+              </div>
+              <div>
+                <h3 className="text-lg font-extrabold text-slate-800">No alerts recorded for this institution</h3>
+                <p className="mt-2 max-w-2xl text-sm text-slate-600">
+                  {data.institution.name} was not alerting in any of the{" "}
+                  {data.recordedObservations} published snapshot
+                  {data.recordedObservations === 1 ? "" : "s"} on record. That is not the
+                  same as a quiet period: nothing is known about the intervals between
+                  those snapshots, because publishing is manual.
+                </p>
+                <Link
+                  href="/pro/live-monitor"
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-extrabold text-slate-700"
+                >
+                  View the regional monitor
+                </Link>
+              </div>
+            </div>
+          </section>
+        </main>
+      </ProAppShell>
+    );
+  }
+
+  const currentStatus = data.historyEvents[0]?.status ?? selected.status;
+  const highestPeak = Math.max(...data.historyEvents.map((event) => event.forecastPeak ?? 0));
+  const latestWatch = data.historyEvents.find((event) => event.status === "watch");
+
 
   return (
     <ProAppShell activePage="alert-history" scopeLabel="Institution View" forecastLabel={`Next ${PRO_HORIZON_HOURS} Hours`} institutions={data.institutions} current={data.institution} health={data.health} at={data.at} issuedAt={data.issuedAt} issuedOffsetHours={data.issuedOffsetHours}>
