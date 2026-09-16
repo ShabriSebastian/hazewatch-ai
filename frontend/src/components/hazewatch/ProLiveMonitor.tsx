@@ -24,6 +24,15 @@ import { useEffect, useMemo, useState } from "react";
 import type { Alert, Forecast, HotspotGridCell, Institution } from "@/lib/api/types";
 import { loadProLiveMonitorData, PRO_HORIZON_HOURS } from "@/lib/data/source";
 import { attributionLine, formatCount } from "@/lib/ui/format";
+import {
+  CITY_LABELS,
+  COASTLINE_PATH,
+  MAP_ASPECT,
+  project,
+  REGION_LABELS,
+  transportArc,
+  withinMapBounds,
+} from "@/lib/ui/basemap";
 import { getStatusFromAlerts, type LiteRiskStatus } from "@/lib/ui/status";
 import { ALERT_THRESHOLD_PM25, GOOD_MAX_PM25 } from "@/lib/ui/threshold";
 import { DataUnavailable } from "./DataUnavailable";
@@ -32,23 +41,6 @@ import { ProAppShell } from "./ProAppShell";
 type ScreenData = Awaited<ReturnType<typeof loadProLiveMonitorData>>;
 type RegionalStatus = LiteRiskStatus;
 
-const MAP = { lonMin: 108.4, lonMax: 113.2, latMin: -1.0, latMax: 3.3 };
-
-function project(lon: number, lat: number) {
-  const x = ((lon - MAP.lonMin) / (MAP.lonMax - MAP.lonMin)) * 100;
-  const y = (1 - (lat - MAP.latMin) / (MAP.latMax - MAP.latMin)) * 100;
-  return { x: Math.max(2, Math.min(98, x)), y: Math.max(3, Math.min(97, y)) };
-}
-
-/**
- * /hotspots/summary answers over the whole scenario domain (105,-5 to 116,4),
- * which is far wider than the extent this map draws. Cells outside it have to be
- * dropped rather than fed to `project()`, whose clamp would otherwise pile them
- * up on the edges as phantom hotspots.
- */
-function withinMapBounds(lon: number, lat: number) {
-  return lon >= MAP.lonMin && lon <= MAP.lonMax && lat >= MAP.latMin && lat <= MAP.latMax;
-}
 
 function peakUpper(forecast: Forecast) {
   return forecast.peak.pm25_upper ?? forecast.peak.pm25;
@@ -102,13 +94,19 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
 }) {
   const forecastById = new Map(forecasts.map((f) => [f.institution.id, f]));
 
-  // Ranked by detection count, not the API's (lat, lon) ordering: taking the first
-  // twelve as returned meant taking the twelve southernmost cells, every one of them
-  // off this map and clamped into the corners.
+  // Every cell inside the box, not a top-N slice of them.
+  //
+  // This used to take the twelve largest, which was a workaround for a bounding
+  // box so narrow that most of the fire field fell outside it. With the box
+  // covering the real extent, showing twelve would curate the map: the twelve
+  // largest cells all sit in southern West Kalimantan, so Sarawak would read as
+  // empty while its institutions alerted. ~375 absolutely-positioned spans is
+  // nothing for the DOM, and the map is supposed to show the fire field.
+  //
+  // Still sorted by count, so the largest paint last and sit on top.
   const visibleCells = hotspotCells
     .filter((cell) => withinMapBounds(cell.lon, cell.lat))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 12);
+    .sort((a, b) => a.count - b.count);
 
   // Pontianak's three institutions sit within 0.3% of each other and Kuching's within
   // 0.25%, so a fixed nudge left each cluster stacked into one readable card. Group by
@@ -129,6 +127,27 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
     if (hit) hit.members.push(institution.id);
     else clusters.push({ x: pos.x, y: pos.y, members: [institution.id] });
   });
+  // Where the haze is coming from and going to, as projected points. Both come
+  // from the attribution block the forecast already carries - the source region's
+  // country picks the origin city, and the receptor is whichever city is not it.
+  const sourceCountry = forecasts.find((f) => f.attribution.transboundary)?.attribution.source_country
+    ?? forecasts.find((f) => f.attribution.source_country)?.attribution.source_country
+    ?? null;
+  // Anchored to the REGION labels, not the city ones.
+  //
+  // The attribution is a statement about regions - the KPI tile beside this map
+  // reads "West Kalimantan -> Sarawak" - so region anchors say what the data
+  // says. They also sit in open interior, where the city anchors sat directly
+  // under the institution cards and left the arc almost entirely hidden.
+  const REGION_OF = { ID: "WEST KALIMANTAN", MY: "SARAWAK" } as const;
+  const originRegion = REGION_OF[(sourceCountry as keyof typeof REGION_OF) ?? "ID"];
+  const receptorRegion = originRegion === "SARAWAK" ? "WEST KALIMANTAN" : "SARAWAK";
+  const originLabel = REGION_LABELS[originRegion as keyof typeof REGION_LABELS];
+  const receptorLabel = REGION_LABELS[receptorRegion as keyof typeof REGION_LABELS];
+  const transport = sourceCountry && originLabel && receptorLabel
+    ? { from: { x: originLabel.x, y: originLabel.y }, to: { x: receptorLabel.x, y: receptorLabel.y } }
+    : null;
+
   const clusterOf = new Map(
     clusters.flatMap((c) => c.members.map((id, seq) => [id, { seq, size: c.members.length }])),
   );
@@ -139,35 +158,88 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
         <h3 className="text-sm font-extrabold text-ink">Regional Haze Forecast</h3>
         <span className="flex items-center gap-2 text-[10px] font-semibold text-slate-500"><Clock3 size={12} /> West Kalimantan + Sarawak shown together</span>
       </div>
-      <div className="relative h-[380px] overflow-hidden bg-[#cfe9fb]">
-        <div className="absolute -left-[7%] top-[12%] h-[88%] w-[55%] rounded-[48%_52%_38%_50%] bg-[#dfe9c9]" />
-        <div className="absolute right-[-8%] top-[12%] h-[88%] w-[62%] rounded-[48%_38%_50%_45%] bg-[#d9efca]" />
-        <div className="absolute left-[17%] top-[16%] z-10 text-2xl font-black tracking-tight text-slate-800/90">WEST<br />KALIMANTAN</div>
-        <div className="absolute right-[13%] top-[18%] z-10 text-2xl font-black tracking-tight text-slate-800/90">SARAWAK</div>
-        <div className="absolute left-[13%] bottom-[17%] z-10 text-xs font-medium text-slate-600">Pontianak</div>
-        <div className="absolute right-[22%] bottom-[34%] z-10 text-xs font-medium text-slate-600">Kuching</div>
-
-        <svg className="absolute inset-0 z-[5] h-full w-full" viewBox="0 0 1000 500" preserveAspectRatio="none" aria-hidden="true">
-          <defs>
-            <linearGradient id="hazeArrow" x1="0" x2="1">
-              <stop offset="0%" stopColor="#f6b278" stopOpacity="0.42" />
-              <stop offset="65%" stopColor="#ff7a59" stopOpacity="0.70" />
-              <stop offset="100%" stopColor="#f34b2f" stopOpacity="0.88" />
-            </linearGradient>
-            {/*
-              markerUnits defaults to "strokeWidth", which scales the whole marker
-              coordinate system by the stroke width. At strokeWidth 46 this 9x6
-              triangle rendered at ~414x276 units inside a 1000x500 viewBox - 41% of
-              the map's width - which is the orange wedge that was covering the
-              institution labels. userSpaceOnUse sizes the head independently of the
-              band, and the explicit viewBox scales the path to the declared box.
-            */}
-            <marker id="arrowHead" viewBox="0 0 10 7" markerUnits="userSpaceOnUse" markerWidth="34" markerHeight="24" refX="9" refY="3.5" orient="auto">
-              <path d="M0,0 L0,7 L10,3.5 z" fill="#f15b40" />
-            </marker>
-          </defs>
-          <path d="M265 250 C430 190, 555 330, 785 260" fill="none" stroke="url(#hazeArrow)" strokeWidth="14" strokeLinecap="round" markerEnd="url(#arrowHead)" />
+      {/*
+        Sized by aspect, not by a fixed height. The bounding box is taller than
+        it is wide, so a 380px-tall box stretched longitude 1.5x and no coastline
+        survives that. At MAP_ASPECT a degree of longitude and a degree of
+        latitude are the same number of pixels, which is what makes one
+        projection correct for the coastline, the cells and the markers at once.
+        Capped so a very wide column cannot produce an absurdly tall card.
+      */}
+      <div
+        className="relative max-h-[620px] overflow-hidden bg-[#cfe9fb]"
+        style={{ aspectRatio: MAP_ASPECT }}
+      >
+        {/*
+          viewBox 0..100 with preserveAspectRatio="none" puts SVG units in the
+          same percentage space the CSS-positioned dots and cards use, so one
+          coordinate system covers every layer. Strokes are non-scaling, or the
+          uneven x/y scale would render them as uneven weights.
+        */}
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d={COASTLINE_PATH} fill="#dfe9c9" stroke="#9cb389" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         </svg>
+
+        {Object.entries(REGION_LABELS).map(([name, pos]) => (
+          <div
+            key={name}
+            className="pointer-events-none absolute z-[14] text-center text-xl font-black leading-tight tracking-tight text-slate-800/80"
+            style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: "translate(-50%,-50%)" }}
+          >
+            {name.split(" ").map((word) => <div key={word}>{word}</div>)}
+          </div>
+        ))}
+
+        {/*
+          Offset below its point rather than centred on it: the institution card
+          for the same city is centred there, and the two collided.
+        */}
+        {Object.entries(CITY_LABELS).map(([city, pos]) => (
+          <div
+            key={city}
+            className="pointer-events-none absolute z-[14] rounded bg-white/70 px-1 text-[10px] font-semibold text-slate-600"
+            style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: "translate(-50%, 22px)" }}
+          >
+            {city}
+          </div>
+        ))}
+
+        {/*
+          Drawn between two PROJECTED points, not a fixed curve. The old path was
+          a hardcoded cubic that pointed west-to-east because that is how it was
+          drawn, and it kept pointing that way whatever the attribution said.
+          This runs from the attributed source city to the receptor city, so if
+          the transport reverses the arrow reverses with it.
+        */}
+        {transport && (
+          <svg className="pointer-events-none absolute inset-0 z-[12] h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="hazeArrow" x1="0" x2="1">
+                <stop offset="0%" stopColor="#f6b278" stopOpacity="0.42" />
+                <stop offset="65%" stopColor="#ff7a59" stopOpacity="0.70" />
+                <stop offset="100%" stopColor="#f34b2f" stopOpacity="0.88" />
+              </linearGradient>
+              {/*
+                markerUnits defaults to "strokeWidth", which scales the marker's
+                whole coordinate system by the stroke width and produced an
+                orange wedge covering the institution cards. userSpaceOnUse sizes
+                the head independently of the band.
+              */}
+              <marker id="arrowHead" viewBox="0 0 10 7" markerUnits="userSpaceOnUse" markerWidth="6" markerHeight="4.2" refX="9" refY="3.5" orient="auto">
+                <path d="M0,0 L0,7 L10,3.5 z" fill="#f15b40" />
+              </marker>
+            </defs>
+            <path
+              d={transportArc(transport.from, transport.to)}
+              fill="none"
+              stroke="url(#hazeArrow)"
+              strokeWidth="11"
+              strokeLinecap="butt"
+              vectorEffect="non-scaling-stroke"
+              markerEnd="url(#arrowHead)"
+            />
+          </svg>
+        )}
 
         <div className="absolute left-3 top-3 z-30 w-[150px] rounded-xl border border-slate-200 bg-white/95 p-3 shadow-sm backdrop-blur">
           <div className="space-y-2 text-[10px] font-semibold text-slate-600">
@@ -184,12 +256,20 @@ function RegionalMap({ institutions, forecasts, alerts, hotspotCells }: {
 
         {visibleCells.map((cell, index) => {
           const pos = project(cell.lon, cell.lat);
-          const size = Math.max(8, Math.min(18, 7 + cell.count * 1.7));
+          // Square-root scale against a fixed reference, not a linear ramp
+          // against a cap. The old formula was tuned for twelve dots and
+          // saturated almost immediately - the median in-box cell holds 14
+          // detections and the linear form put that at the 18px ceiling, so
+          // nearly every dot drew at maximum size and 375 of them merged into
+          // one orange mass. sqrt spreads 1..900+ across a readable range, and
+          // the fixed reference keeps dot sizes comparable between refreshes
+          // rather than rescaling to whatever the busiest cell happens to be.
+          const size = 3 + 11 * Math.min(1, Math.sqrt(cell.count / 900));
           return (
             <span
               key={`${cell.lon}-${cell.lat}-${index}`}
               title={`${formatCount(cell.count)} hotspot detections`}
-              className="absolute z-20 rounded-full bg-orange-500 shadow-[0_0_0_8px_rgba(249,115,22,.08)]"
+              className="absolute z-[8] rounded-full bg-orange-500/85"
               style={{ left: `${pos.x}%`, top: `${pos.y}%`, width: size, height: size, transform: "translate(-50%,-50%)" }}
             />
           );

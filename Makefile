@@ -1,7 +1,7 @@
 PY := .venv/bin/python
 export PYTHONPATH := src
 
-.PHONY: help venv data features train validate report saturation ablations attribution demo check test refresh clean
+.PHONY: help venv data features train validate report saturation ablations attribution basemap demo check test refresh clean
 
 help:
 	@echo "make venv      - create .venv and install dependencies"
@@ -14,6 +14,7 @@ help:
 	@echo "make ablations - isolated feature ablations, incl. no_ufei (~40 min)"
 	@echo "make attribution- daily-resolution attribution refit + lag profile (~1 min)"
 	@echo "make check     - test suite: metrics and forecast-uncertainty gates"
+	@echo "make basemap   - regenerate the map coastline from Natural Earth"
 	@echo "make refresh   - regenerate the published live snapshot (~60s, needs internet)"
 
 # There is no longer a serving install to keep separate: the API was retired
@@ -49,12 +50,21 @@ report:
 demo: features train
 	@echo "Model artifacts rebuilt. Run 'make refresh' to publish a snapshot."
 
+# PYTHONDONTWRITEBYTECODE: a stale __pycache__ from a different checkout of this
+# repo was once imported in place of the current tests, and the run reported
+# green while three tests were in fact failing. Never writing bytecode is
+# cheaper than remembering to clear it.
 test:
-	$(PY) -m pytest -q
+	PYTHONDONTWRITEBYTECODE=1 $(PY) -m pytest -q -p no:cacheprovider
 
 # Regenerate and publish the live snapshot the Pro dashboard reads. Safe to run
 # at any time: it publishes only if the new snapshot passes its checks, and
 # otherwise leaves the existing one in place. Never touches the replay demo.
+# Rebuild the dashboard's coastline. Only needed when the bounding box or the
+# simplification tolerance changes - the generated .ts is committed.
+basemap:
+	$(PY) scripts/15_build_basemap.py
+
 refresh:
 	@bash scripts/refresh_snapshot.sh
 

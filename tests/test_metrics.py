@@ -497,7 +497,7 @@ def test_readme_does_not_revive_the_uncomputed_correlation(readme, daily):
 
 def test_published_peak_lags_match_the_measurement(readme, daily):
     """The README prints a lag table for the held-out 2023 window. Bind it."""
-    body = section(readme, "## The demo event")
+    body = section(readme, "## The validation episode")
     held = daily["correlation_profile"]["held_out_2023"]
     for city, row in held.items():
         for lag, r in row["r_by_lag_days"].items():
@@ -544,11 +544,11 @@ def test_readme_demo_event_peaks_match_the_reconnaissance(readme, by_event):
     alerting story two sections further down.
     """
     recon = by_event["reconnaissance"]["sept_2023"]["cities"]
-    body = section(readme, "## The demo event")
+    body = section(readme, "## The validation episode")
     for city, stats in recon.items():
         peak = stats["peak_pm25"]
         assert f"{peak}" in body, (
-            f"README's demo-event table does not quote the measured {city} peak "
+            f"README's validation-episode table does not quote the measured {city} peak "
             f"of {peak} ug/m3"
         )
     assert "| 59 µg/m³ | Unhealthy |" not in readme, (
@@ -559,7 +559,7 @@ def test_readme_demo_event_peaks_match_the_reconnaissance(readme, by_event):
 def test_readme_hotspot_counts_match_the_source_region_count(readme, daily):
     """The 1-3 September detection counts, bound to the same definition used
     everywhere else: deduplicated FIRMS detections inside the source bbox."""
-    body = section(readme, "## The demo event")
+    body = section(readme, "## The validation episode")
     assert "deduplicated across MODIS and VIIRS" in body, (
         "the hotspot counts must state which counting definition produced them - "
         "raw and deduplicated counts differ by roughly 50% here"

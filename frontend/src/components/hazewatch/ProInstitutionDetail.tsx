@@ -22,6 +22,14 @@ import type { Alert, Forecast, Health, HotspotSummary, Institution } from "@/lib
 import { loadProInstitutionDetailData, PRO_HORIZON_HOURS } from "@/lib/data/source";
 import { alertOnsets } from "@/lib/ui/timeline";
 import { formatCount } from "@/lib/ui/format";
+import {
+  COASTLINE_PATH,
+  MAP_ASPECT,
+  project,
+  REGION_LABELS,
+  transportArc,
+  withinMapBounds,
+} from "@/lib/ui/basemap";
 import { useSelectedInstitution } from "@/lib/ui/institutionContext";
 import { getRiskStatus, type LiteRiskStatus } from "@/lib/ui/status";
 import { ALERT_THRESHOLD_PM25, GOOD_MAX_PM25, thresholdFor } from "@/lib/ui/threshold";
@@ -184,33 +192,96 @@ function ForecastChart({ forecast }: { forecast: Forecast }) {
 }
 
 function SourceMap({ institution, forecast, hotspotSummary }: { institution: Institution; forecast: Forecast; hotspotSummary: HotspotSummary }) {
+  const cells = hotspotSummary.cells.filter((cell) => withinMapBounds(cell.lon, cell.lat));
+  const here = project(institution.lon, institution.lat);
+
+  // Origin and receptor from the attribution the forecast already carries, so
+  // the arrow follows the data rather than pointing wherever it was drawn.
+  const source = forecast.attribution.source_country;
+  // Anchored to the REGION labels, not the city ones.
+  //
+  // The attribution is a statement about regions - the KPI tile beside this map
+  // reads "West Kalimantan -> Sarawak" - so region anchors say what the data
+  // says. They also sit in open interior, where the city anchors sat directly
+  // under the institution cards and left the arc almost entirely hidden.
+  const REGION_OF = { ID: "WEST KALIMANTAN", MY: "SARAWAK" } as const;
+  const originRegion = REGION_OF[(source as keyof typeof REGION_OF) ?? "ID"];
+  const receptorRegion = originRegion === "SARAWAK" ? "WEST KALIMANTAN" : "SARAWAK";
+  const from = REGION_LABELS[originRegion as keyof typeof REGION_LABELS];
+  const to = REGION_LABELS[receptorRegion as keyof typeof REGION_LABELS];
+  const transport = source && from && to
+    ? { from: { x: from.x, y: from.y }, to: { x: to.x, y: to.y } }
+    : null;
+
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
       <div className="flex items-center gap-2 border-b border-slate-200 px-4 py-3">
         <MapPinned size={15} />
         <h3 className="text-sm font-extrabold text-slate-800">Haze Source &amp; Direction</h3>
       </div>
-      <div className="relative h-[250px] overflow-hidden bg-[#bfe4f6]">
-        <div className="absolute -left-[12%] top-[18%] h-[88%] w-[62%] rounded-[45%] bg-[#dce8c9]" />
-        <div className="absolute right-[-12%] top-[20%] h-[85%] w-[62%] rounded-[45%] bg-[#d8efcb]" />
-        <p className="absolute left-5 top-6 z-10 text-lg font-black text-slate-800">WEST KALIMANTAN</p>
-        <p className="absolute right-5 top-6 z-10 text-lg font-black text-slate-800">SARAWAK</p>
-        <svg className="absolute inset-0 z-[5] h-full w-full" viewBox="0 0 500 260" aria-hidden="true">
-          <defs>
-            <linearGradient id="detailHaze" x1="0" x2="1"><stop offset="0%" stopColor="#f4b47e" stopOpacity=".42" /><stop offset="100%" stopColor="#f35a41" stopOpacity=".85" /></linearGradient>
-            {/*
-              markerUnits defaults to "strokeWidth", scaling the head by the stroke
-              width - at strokeWidth 30 this triangle covered ~270x180 of a 500x260
-              viewBox, over half the panel. Sized in user space instead, as on the
-              regional map.
-            */}
-            <marker id="detailHead" viewBox="0 0 10 7" markerUnits="userSpaceOnUse" markerWidth="22" markerHeight="16" refX="9" refY="3.5" orient="auto"><path d="M0,0 L0,7 L10,3.5 z" fill="#f35a41" /></marker>
-          </defs>
-          <path d="M125 145 C230 100, 305 185, 405 135" fill="none" stroke="url(#detailHaze)" strokeWidth="10" strokeLinecap="round" markerEnd="url(#detailHead)" />
-          {[{x:80,y:72},{x:105,y:100},{x:90,y:150},{x:135,y:182},{x:120,y:125}].map((dot, index) => <circle key={index} cx={dot.x} cy={dot.y} r="5" fill="#f04b32" />)}
+      {/*
+        The same coastline and the same projection as the regional map, at the
+        same aspect so one path serves both. This panel used to draw two rounded
+        divs, a fixed arrow, and FIVE HOTSPOT DOTS AT HARDCODED SVG COORDINATES
+        sitting beside a real "N contributing hotspots" count - decoration
+        presented as data. The dots below are the real cells.
+      */}
+      <div
+        className="relative mx-auto max-h-[440px] overflow-hidden bg-[#cfe9fb]"
+        style={{ aspectRatio: MAP_ASPECT }}
+      >
+        <svg className="absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          <path d={COASTLINE_PATH} fill="#dfe9c9" stroke="#9cb389" strokeWidth="1" vectorEffect="non-scaling-stroke" />
         </svg>
-        <span className="absolute bottom-4 left-4 z-20 rounded-lg bg-white px-2 py-1 text-[10px] font-bold text-red-600 shadow">🔥 {formatCount(forecast.attribution.contributing_hotspot_count || hotspotSummary.count)} contributing hotspots</span>
-        <span className="absolute right-4 top-[43%] z-20 rounded-lg bg-white px-2 py-1 text-[10px] font-bold text-blue-600 shadow">{iconForType(institution.type)} {institution.city} · You are here</span>
+
+        {Object.entries(REGION_LABELS).map(([name, pos]) => (
+          <p
+            key={name}
+            className="pointer-events-none absolute z-[14] text-center text-sm font-black leading-tight text-slate-800/75"
+            style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: "translate(-50%,-50%)" }}
+          >
+            {name}
+          </p>
+        ))}
+
+        {transport && (
+          <svg className="pointer-events-none absolute inset-0 z-[12] h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="detailHaze" x1="0" x2="1"><stop offset="0%" stopColor="#f4b47e" stopOpacity=".42" /><stop offset="100%" stopColor="#f35a41" stopOpacity=".85" /></linearGradient>
+              {/*
+                markerUnits defaults to "strokeWidth", scaling the head by the
+                stroke width until it covered half the panel. Sized in user space
+                instead, as on the regional map.
+              */}
+              <marker id="detailHead" viewBox="0 0 10 7" markerUnits="userSpaceOnUse" markerWidth="7" markerHeight="4.9" refX="9" refY="3.5" orient="auto"><path d="M0,0 L0,7 L10,3.5 z" fill="#f35a41" /></marker>
+            </defs>
+            <path d={transportArc(transport.from, transport.to)} fill="none" stroke="url(#detailHaze)" strokeWidth="9" strokeLinecap="butt" vectorEffect="non-scaling-stroke" markerEnd="url(#detailHead)" />
+          </svg>
+        )}
+
+        {cells.map((cell, index) => (
+          <span
+            key={`${cell.lon}-${cell.lat}-${index}`}
+            title={`${formatCount(cell.count)} hotspot detections`}
+            className="absolute z-[8] rounded-full bg-orange-500/80"
+            style={{
+              left: `${project(cell.lon, cell.lat).x}%`,
+              top: `${project(cell.lon, cell.lat).y}%`,
+              width: 5,
+              height: 5,
+              transform: "translate(-50%,-50%)",
+            }}
+          />
+        ))}
+
+        <span
+          className="absolute z-30 rounded-lg border border-blue-200 bg-white px-2 py-1 text-[10px] font-bold text-blue-600 shadow"
+          style={{ left: `${here.x}%`, top: `${here.y}%`, transform: "translate(-50%,-50%)" }}
+        >
+          {iconForType(institution.type)} {institution.city} · You are here
+        </span>
+
+        <span className="absolute bottom-3 left-3 z-20 rounded-lg bg-white/95 px-2 py-1 text-[10px] font-bold text-red-600 shadow">🔥 {formatCount(forecast.attribution.contributing_hotspot_count || hotspotSummary.count)} contributing hotspots</span>
       </div>
     </section>
   );
